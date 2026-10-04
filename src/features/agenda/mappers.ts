@@ -4,7 +4,7 @@ import type { Agreement, Case, Installment, Note } from "@/lib/types";
 export interface CuotaRow {
   id: string;
   orden: number;
-  tipo: "anticipo" | "cuota";
+  tipo: "anticipo" | "cuota" | "parcial";
   numero: number | null;
   monto: number;
   fecha: string;
@@ -17,6 +17,7 @@ export interface AcuerdoRow {
   id: string;
   creado: string;
   producto: string | null;
+  tipo: "cuotas" | "parcial" | null;
   cuotas: CuotaRow[];
 }
 
@@ -77,6 +78,7 @@ function toAgreement(row: AcuerdoRow): Agreement {
   return {
     id: row.id,
     creado: row.creado,
+    tipo: row.tipo ?? "cuotas",
     producto: row.producto ?? undefined,
     cuotas: [...row.cuotas].sort((a, b) => a.orden - b.orden).map(toInstallment),
   };

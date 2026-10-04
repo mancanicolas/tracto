@@ -1,7 +1,8 @@
 import { addMonthsIso } from "./dates";
 import type { Agreement, Case, Installment } from "./types";
 
-export interface NewAgreement {
+interface NewInstallmentPlan {
+  tipo: "cuotas";
   cuotas: number;
   monto_cuota: number;
   primer_vencimiento: string;
@@ -9,42 +10,55 @@ export interface NewAgreement {
   anticipo?: { fecha: string; monto: number };
 }
 
-export function createAgreement({
-  cuotas,
-  monto_cuota,
-  primer_vencimiento,
-  producto,
-  anticipo,
-}: NewAgreement): Agreement {
+interface NewPartialPayment {
+  tipo: "parcial";
+  monto: number;
+  fecha: string;
+  producto?: string;
+}
+
+export type NewAgreement = NewInstallmentPlan | NewPartialPayment;
+
+function newInstallment(fields: Omit<Installment, "id" | "pagada" | "countedInStats">): Installment {
+  return { id: crypto.randomUUID(), pagada: false, countedInStats: false, ...fields };
+}
+
+function buildInstallments(input: NewAgreement): Installment[] {
+  if (input.tipo === "parcial") {
+    return [newInstallment({ tipo: "parcial", monto: input.monto, fecha: input.fecha })];
+  }
   const installments: Installment[] = [];
-  if (anticipo) {
-    installments.push({
-      id: crypto.randomUUID(),
-      tipo: "anticipo",
-      monto: anticipo.monto,
-      fecha: anticipo.fecha,
-      pagada: false,
-      countedInStats: false,
-    });
+  if (input.anticipo) {
+    installments.push(newInstallment({ tipo: "anticipo", monto: input.anticipo.monto, fecha: input.anticipo.fecha }));
   }
-  for (let numero = 1; numero <= cuotas; numero += 1) {
-    installments.push({
-      id: crypto.randomUUID(),
-      tipo: "cuota",
-      numero,
-      monto: monto_cuota,
-      fecha: addMonthsIso(primer_vencimiento, numero - 1),
-      pagada: false,
-      countedInStats: false,
-    });
+  for (let numero = 1; numero <= input.cuotas; numero += 1) {
+    installments.push(
+      newInstallment({
+        tipo: "cuota",
+        numero,
+        monto: input.monto_cuota,
+        fecha: addMonthsIso(input.primer_vencimiento, numero - 1),
+      }),
+    );
   }
-  return { id: crypto.randomUUID(), creado: new Date().toISOString(), producto, cuotas: installments };
+  return installments;
+}
+
+export function createAgreement(input: NewAgreement): Agreement {
+  return {
+    id: crypto.randomUUID(),
+    creado: new Date().toISOString(),
+    tipo: input.tipo,
+    producto: input.producto,
+    cuotas: buildInstallments(input),
+  };
 }
 
 export function installmentLabel(installment: Installment): string {
-  return installment.tipo === "anticipo" ? "Anticipo" : `Cuota ${installment.numero}`;
+  if (installment.tipo === "anticipo") return "Anticipo";
+  if (installment.tipo === "parcial") return "Pago parcial";
+  return `Cuota ${installment.numero}`;
 }
-
 export function summarizeAgreement(agreement: Agreement) {
   const paidCount = agreement.cuotas.filter((installment) => installment.pagada).length;
   const pendingAmount = agreement.cuotas

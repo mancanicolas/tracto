@@ -89,6 +89,7 @@ export async function replaceAgreement(
     p_caso_id: caseId,
     p_acuerdo_id: agreement.id,
     p_producto: agreement.producto ?? null,
+    p_tipo: agreement.tipo,
     p_cuotas: installmentsToPayload(agreement.cuotas),
     p_pagos_previos: hadPreviousPayments,
   });

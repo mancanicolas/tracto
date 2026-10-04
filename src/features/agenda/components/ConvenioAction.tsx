@@ -68,14 +68,14 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
     const merged = { ...account, nombre: values.nombre, cartera: values.cartera };
 
     if (mode === "copy") {
-      const result = await copyConvenioMessage({ ...merged, entidad }, acuerdo, values.tipo);
+      const result = await copyConvenioMessage({ ...merged, entidad }, acuerdo);
       if (result.ok) toast.show("Convenio copiado");
       else setFeedback({ text: result.error, tone: "error", offersEdit: false });
       return;
     }
 
     setIsGenerating(true);
-    const result = await downloadConvenio(merged, values.tipo);
+    const result = await downloadConvenio(merged);
     setIsGenerating(false);
     if (!result.ok) setFeedback({ text: result.error, tone: "error", offersEdit: false });
     else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success", offersEdit: false });

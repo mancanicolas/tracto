@@ -1,5 +1,6 @@
 import { getPaymentMethods, type PaymentMethod } from "@/constants/entidades";
-import type { ConvenioCase, ConvenioKind } from "./convenio";
+import type { ConvenioCase } from "./convenio";
+import { installmentLabel } from "./agreements";
 import { todayIso } from "./dates";
 import { formatArs } from "./format";
 import { fail, ok, type Result } from "./result";
@@ -18,7 +19,7 @@ function formatFullDate(iso: string): string {
 }
 
 function installmentLine(installment: Installment): string {
-  const label = installment.tipo === "anticipo" ? "Anticipo" : `Cuota #${installment.numero}`;
+  const label = installment.tipo === "cuota" ? `Cuota #${installment.numero}` : installmentLabel(installment);
   return `• ${label}: ${formatArs(installment.monto)} (Vencimiento: ${formatFullDate(installment.fecha)})`;
 }
 
@@ -66,14 +67,9 @@ function numberedBlocks(blocks: string[][]): string[] {
   });
 }
 
-export function buildConvenioMessage(
-  account: ConvenioCase,
-  agreement: Agreement,
-  kind: ConvenioKind,
-  today: string = todayIso(),
-): string {
+export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement, today: string = todayIso()): string {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
-  const isTotal = kind === "total";
+  const isTotal = agreement.tipo === "cuotas";
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const planTitle = isTotal ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS";
   const paymentBlocks = numberedBlocks([transferBlock(methods), cashBlock(methods), otherBlock(methods)]);
@@ -99,13 +95,9 @@ export function buildConvenioMessage(
   ].join("\n");
 }
 
-export async function copyConvenioMessage(
-  account: ConvenioCase,
-  agreement: Agreement,
-  kind: ConvenioKind,
-): Promise<Result> {
+export async function copyConvenioMessage(account: ConvenioCase, agreement: Agreement): Promise<Result> {
   try {
-    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, kind));
+    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement));
     return ok();
   } catch {
     return fail(COPY_ERROR_MESSAGE);

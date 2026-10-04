@@ -3,7 +3,6 @@ import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
-import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
 import { DEFAULT_PORTFOLIO, ENTIDADES } from "@/constants/entidades";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
@@ -14,11 +13,6 @@ import { convenioSchema, type ConvenioValues } from "../schemas";
 export type ConvenioMode = "copy" | "download";
 
 const CARTERAS_LIST_ID = "convenio-carteras";
-
-const KIND_OPTIONS = [
-  { value: "total", label: "Cancelación Total" },
-  { value: "parcial", label: "Pago Parcial / A cuenta" },
-];
 
 const CONFIRM_LABELS: Record<ConvenioMode, string> = {
   copy: "Confirmar y copiar",
@@ -44,7 +38,6 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
     defaultValues: {
       nombre: account.nombre ?? "",
       cartera: account.cartera ?? carteras[0] ?? "",
-      tipo: "total",
     },
   });
 
@@ -73,7 +66,6 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
           <option key={cartera} value={cartera} />
         ))}
       </datalist>
-      <SelectField label="Tipo de acuerdo" options={KIND_OPTIONS} {...register("tipo")} />
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={onCancel}>
           Cancelar

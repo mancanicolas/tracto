@@ -81,17 +81,22 @@ create table if not exists public.acuerdos (
   operador_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   caso_id uuid not null unique references public.casos (id) on delete cascade,
   producto text,
+  tipo text not null default 'cuotas' check (tipo in ('cuotas', 'parcial')),
   creado timestamptz not null default now()
 );
 
 alter table public.acuerdos add column if not exists producto text;
+alter table public.acuerdos add column if not exists tipo text not null default 'cuotas';
+alter table public.acuerdos drop constraint if exists acuerdos_tipo_check;
+alter table public.acuerdos
+  add constraint acuerdos_tipo_check check (tipo in ('cuotas', 'parcial'));
 
 create table if not exists public.cuotas (
   id uuid primary key default gen_random_uuid(),
   operador_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   acuerdo_id uuid not null references public.acuerdos (id) on delete cascade,
   orden integer not null,
-  tipo text not null check (tipo in ('anticipo', 'cuota')),
+  tipo text not null,
   numero integer,
   monto bigint not null check (monto > 0),
   fecha date not null,
@@ -99,6 +104,10 @@ create table if not exists public.cuotas (
   pagada_fecha date,
   sumada_metricas boolean not null default false
 );
+
+alter table public.cuotas drop constraint if exists cuotas_tipo_check;
+alter table public.cuotas
+  add constraint cuotas_tipo_check check (tipo in ('anticipo', 'cuota', 'parcial'));
 
 create index if not exists cuotas_acuerdo_idx on public.cuotas (acuerdo_id, orden);
 
@@ -208,11 +217,13 @@ grant select, insert, update, delete
   to authenticated;
 
 drop function if exists public.reemplazar_acuerdo(uuid, uuid, jsonb, boolean);
+drop function if exists public.reemplazar_acuerdo(uuid, uuid, text, jsonb, boolean);
 
 create or replace function public.reemplazar_acuerdo(
   p_caso_id uuid,
   p_acuerdo_id uuid,
   p_producto text,
+  p_tipo text,
   p_cuotas jsonb,
   p_pagos_previos boolean
 )
@@ -224,7 +235,7 @@ as $$
 begin
   delete from public.acuerdos where caso_id = p_caso_id;
 
-  insert into public.acuerdos (id, caso_id, producto) values (p_acuerdo_id, p_caso_id, p_producto);
+  insert into public.acuerdos (id, caso_id, producto, tipo) values (p_acuerdo_id, p_caso_id, p_producto, p_tipo);
 
   insert into public.cuotas (id, acuerdo_id, orden, tipo, numero, monto, fecha)
   select c.id, p_acuerdo_id, c.orden, c.tipo, c.numero, c.monto, c.fecha
@@ -234,5 +245,5 @@ begin
 end;
 $$;
 
-revoke all on function public.reemplazar_acuerdo(uuid, uuid, text, jsonb, boolean) from public, anon;
-grant execute on function public.reemplazar_acuerdo(uuid, uuid, text, jsonb, boolean) to authenticated;
+revoke all on function public.reemplazar_acuerdo(uuid, uuid, text, text, jsonb, boolean) from public, anon;
+grant execute on function public.reemplazar_acuerdo(uuid, uuid, text, text, jsonb, boolean) to authenticated;

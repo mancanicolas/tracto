@@ -6,7 +6,7 @@ export interface Note {
 
 export interface Installment {
   id: string;
-  tipo: "anticipo" | "cuota";
+  tipo: "anticipo" | "cuota" | "parcial";
   numero?: number;
   monto: number;
   fecha: string;
@@ -15,9 +15,12 @@ export interface Installment {
   countedInStats: boolean;
 }
 
+export type AgreementKind = "cuotas" | "parcial";
+
 export interface Agreement {
   id: string;
   creado: string;
+  tipo: AgreementKind;
   producto?: string;
   cuotas: Installment[];
 }

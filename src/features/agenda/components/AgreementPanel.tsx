@@ -1,6 +1,6 @@
 import type { NewAgreement } from "@/lib/agreements";
 import type { Case } from "@/lib/types";
-import { PlanForm } from "./PlanForm";
+import { AgreementForm } from "./AgreementForm";
 
 interface AgreementPanelProps {
   account: Case;
@@ -14,7 +14,7 @@ export function AgreementPanel({ account, onSave }: AgreementPanelProps) {
       <p className="text-xs text-fg-muted">
         {account.acuerdo ? "Reemplaza por completo el acuerdo vigente." : "Este caso todavía no tiene un acuerdo."}
       </p>
-      <PlanForm entidad={account.entidad} onSave={onSave} />
+      <AgreementForm entidad={account.entidad} balance={account.monto} onSave={onSave} />
     </div>
   );
 }

@@ -8,7 +8,7 @@ const PAGE_SIZE = 1000;
 const LOAD_ERROR_MESSAGE = "No se pudieron cargar los casos. Revisá la conexión y probá de nuevo.";
 
 const CASE_COLUMNS =
-  "*, caso_etiquetas(etiqueta_id), notas(id, texto, creada), agenda(fecha, motivo, resuelto), acuerdos(id, creado, producto, cuotas(*))";
+  "*, caso_etiquetas(etiqueta_id), notas(id, texto, creada), agenda(fecha, motivo, resuelto), acuerdos(id, creado, producto, tipo, cuotas(*))";
 
 export interface AgendaData {
   cases: Case[];

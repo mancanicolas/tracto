@@ -49,8 +49,6 @@ const LIBRE_DE_DEUDA_TEXT =
 const INCUMPLIMIENTO_TEXT =
   "Se deja expresa constancia que, en el supuesto de incumplimiento, el presente acuerdo quedará sin efecto, restableciéndose el saldo original de la deuda con más los intereses y gastos que correspondan.";
 
-export type ConvenioKind = "total" | "parcial";
-
 export type ConvenioField = "nombre" | "DNI" | "entidad" | "producto";
 
 export type ConvenioCase = Case & { nombre: string; entidad: string };
@@ -75,11 +73,14 @@ function formatFullDate(iso: string): string {
 }
 
 function installmentCell(installment: Installment, totalInstallments: number): string {
-  return installment.tipo === "anticipo" ? "Anticipo" : `${installment.numero}/${totalInstallments}`;
+  if (installment.tipo === "anticipo") return "Anticipo";
+  if (installment.tipo === "parcial") return "Unico";
+  return `${installment.numero}/${totalInstallments}`;
 }
 
 function installmentDescription(installment: Installment, isFinal: boolean): string {
   if (installment.tipo === "anticipo") return "Anticipo";
+  if (installment.tipo === "parcial") return "Pago a cuenta";
   return isFinal ? "Cuota Cancelatoria" : "Cuota Convenio";
 }
 
@@ -121,7 +122,7 @@ function clauseTitle(title: string): Content {
   };
 }
 
-function buildPlanTable(agreement: Agreement, kind: ConvenioKind): Content {
+function buildPlanTable(agreement: Agreement): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
@@ -133,7 +134,7 @@ function buildPlanTable(agreement: Agreement, kind: ConvenioKind): Content {
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
     { text: installmentCell(installment, regular.length) },
-    { text: installmentDescription(installment, kind === "total" && installment.id === lastId) },
+    { text: installmentDescription(installment, installment.id === lastId) },
     { text: formatFullDate(installment.fecha) },
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
@@ -248,7 +249,6 @@ function buildFooter(): Content {
 export function buildConvenioDefinition(
   account: ConvenioCase,
   agreement: Agreement,
-  kind: ConvenioKind,
   today: string = todayIso(),
 ): TDocumentDefinitions {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
@@ -289,8 +289,8 @@ export function buildConvenioDefinition(
           formatDni(account.dni),
         ],
       },
-      sectionBar(kind === "total" ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS"),
-      buildPlanTable(agreement, kind),
+      sectionBar(agreement.tipo === "cuotas" ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS"),
+      buildPlanTable(agreement),
       sectionBar("MEDIOS DE PAGO HABILITADOS"),
       paymentCard(methods),
       clauseTitle("LIBRE DE DEUDA"),
@@ -310,28 +310,24 @@ export function buildConvenioDefinition(
   };
 }
 
-export async function buildConvenioBytes(
-  account: ConvenioCase,
-  agreement: Agreement,
-  kind: ConvenioKind,
-): Promise<Uint8Array> {
+export async function buildConvenioBytes(account: ConvenioCase, agreement: Agreement): Promise<Uint8Array> {
   const [{ default: pdfMake }, { default: vfs }] = await Promise.all([
     import("pdfmake/build/pdfmake"),
     import("pdfmake/build/vfs_fonts"),
   ]);
   pdfMake.addVirtualFileSystem(vfs);
-  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement, kind)).getBuffer();
+  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement)).getBuffer();
   return new Uint8Array(buffer);
 }
 
-export async function downloadConvenio(account: Case, kind: ConvenioKind): Promise<Result<SaveOutcome>> {
+export async function downloadConvenio(account: Case): Promise<Result<SaveOutcome>> {
   const { acuerdo, nombre, entidad } = account;
   if (!acuerdo || !nombre?.trim() || !entidad?.trim()) {
     return fail("Faltan datos del caso para generar el convenio.");
   }
   let bytes: Uint8Array;
   try {
-    bytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo, kind);
+    bytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo);
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
   }

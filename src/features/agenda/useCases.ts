@@ -177,9 +177,11 @@ export function useCases() {
 
   const actions = useMemo(
     () => ({
-      addCase: (dni: string) => {
+      addCase: (dni: string, values: CaseDetails) => {
         const id = crypto.randomUUID();
-        void commit({ type: "add", account: { id, dni, etiquetas: [], notas: [] } }, () => writes.insertCase(id, dni));
+        void commit({ type: "add", account: { id, dni, ...values, etiquetas: [], notas: [] } }, () =>
+          writes.insertCase(id, dni, values),
+        );
       },
       updateCase: (dni: string, values: CaseDetails) => {
         const account = findCase(dni);

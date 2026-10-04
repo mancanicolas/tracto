@@ -11,8 +11,18 @@ function toResult(error: PostgrestError | null): Result {
   return error ? fail(SAVE_CHANGE_ERROR_MESSAGE) : ok();
 }
 
-export async function insertCase(id: string, dni: string): Promise<Result> {
-  const { error } = await supabase.from("casos").insert({ id, dni });
+export async function insertCase(id: string, dni: string, values: CaseDetails): Promise<Result> {
+  const { error } = await supabase.from("casos").insert({
+    id,
+    dni,
+    nombre: values.nombre ?? null,
+    telefono: values.telefono ?? null,
+    entidad: values.entidad ?? null,
+    cartera: values.cartera ?? null,
+    producto: values.producto ?? null,
+    mail: values.mail ?? null,
+    monto: values.monto ?? null,
+  });
   return toResult(error);
 }
 
@@ -24,6 +34,7 @@ export async function updateCaseDetails(id: string, values: CaseDetails): Promis
       telefono: values.telefono ?? null,
       entidad: values.entidad ?? null,
       cartera: values.cartera ?? null,
+      producto: values.producto ?? null,
       mail: values.mail ?? null,
       monto: values.monto ?? null,
     })

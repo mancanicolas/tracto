@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { TextField } from "@/components/ui/TextField";
@@ -9,6 +9,7 @@ import { formatCentsInput, formatDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { caseEditSchema, type CaseEditValues } from "../schemas";
+import { EntityFields } from "./EntityFields";
 
 interface EditCaseFormProps {
   account: Case;
@@ -18,27 +19,31 @@ interface EditCaseFormProps {
 
 export function EditCaseForm({ account, onSave, onCancel }: EditCaseFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CaseEditValues>({
+  const methods = useForm<CaseEditValues>({
     resolver: zodResolver(caseEditSchema),
     defaultValues: {
       nombre: account.nombre ?? "",
       telefono: account.telefono ?? "",
       entidad: account.entidad ?? "",
       cartera: account.cartera ?? "",
+      producto: account.producto ?? "",
       mail: account.mail ?? "",
       monto: account.monto === undefined ? "" : formatCentsInput(account.monto),
     },
   });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = methods;
 
   useSubmitShortcut(formRef);
 
   const submit = handleSubmit(onSave);
 
   return (
+    <FormProvider {...methods}>
     <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
@@ -65,8 +70,7 @@ export function EditCaseForm({ account, onSave, onCancel }: EditCaseFormProps) {
           error={errors.telefono?.message}
           {...register("telefono")}
         />
-        <TextField label="Entidad" autoComplete="off" error={errors.entidad?.message} {...register("entidad")} />
-        <TextField label="Cartera" autoComplete="off" error={errors.cartera?.message} {...register("cartera")} />
+        <EntityFields />
         <TextField
           label="Mail"
           type="email"
@@ -94,5 +98,6 @@ export function EditCaseForm({ account, onSave, onCancel }: EditCaseFormProps) {
         </Button>
       </div>
     </form>
+    </FormProvider>
   );
 }

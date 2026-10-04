@@ -60,6 +60,7 @@ create table if not exists public.casos (
   nombre text,
   telefono text,
   cartera text,
+  producto text,
   entidad text,
   monto bigint check (monto is null or monto >= 0),
   mail text,
@@ -68,6 +69,8 @@ create table if not exists public.casos (
   created_at timestamptz not null default now(),
   unique (operador_id, dni)
 );
+
+alter table public.casos add column if not exists producto text;
 
 create table if not exists public.caso_etiquetas (
   caso_id uuid not null references public.casos (id) on delete cascade,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasMultipleProducts } from "@/constants/entidades";
 import { todayIso } from "@/lib/dates";
 import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { LABEL_COLORS } from "@/lib/labels";
@@ -17,37 +18,62 @@ const positiveMoney = z
   .refine((value) => parseMoneyToCents(value) !== null, "Ingresá un monto válido, por ejemplo 1.500,00.")
   .refine((value) => (parseMoneyToCents(value) ?? 0) > 0, "El monto tiene que ser mayor a cero.");
 
-export function newCaseSchema(existingDnis: string[]) {
-  return z.object({
-    dni: z
-      .string()
-      .trim()
-      .min(1, "Ingresá el DNI.")
-      .refine((value) => /^\d{7,8}$/.test(normalizeDni(value)), "El DNI tiene 7 u 8 dígitos.")
-      .refine((value) => !existingDnis.includes(normalizeDni(value)), "Ya existe un caso con ese DNI."),
-  });
+const entityFields = {
+  entidad: z.string(),
+  cartera: z.string(),
+  producto: z.string(),
+};
+
+function requireProductWhenNeeded(
+  values: { entidad: string; producto: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (hasMultipleProducts(values.entidad) && !values.producto) {
+    ctx.addIssue({ code: "custom", path: ["producto"], message: "Elegí el producto." });
+  }
 }
 
-export const caseEditSchema = z.object({
-  nombre: z.string().trim().max(80, "Máximo 80 caracteres."),
-  telefono: z
-    .string()
-    .trim()
-    .refine(
-      (value) => value === "" || /^\d{8,13}$/.test(value.replace(/[\s()+-]/g, "")),
-      "Ingresá un teléfono válido, con código de área.",
-    ),
-  entidad: z.string().trim().max(60, "Máximo 60 caracteres."),
-  cartera: z.string().trim().max(60, "Máximo 60 caracteres."),
-  mail: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || z.email().safeParse(value).success, "Ingresá un email válido."),
-  monto: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || parseMoneyToCents(value) !== null, "Ingresá un monto válido, por ejemplo 1.500,00."),
-});
+export function newCaseSchema(existingDnis: string[]) {
+  return z
+    .object({
+      dni: z
+        .string()
+        .trim()
+        .min(1, "Ingresá el DNI.")
+        .refine((value) => /^\d{7,8}$/.test(normalizeDni(value)), "El DNI tiene 7 u 8 dígitos.")
+        .refine((value) => !existingDnis.includes(normalizeDni(value)), "Ya existe un caso con ese DNI."),
+      nombre: z.string().trim().min(1, "Ingresá el nombre del titular.").max(80, "Máximo 80 caracteres."),
+      monto: positiveMoney,
+      ...entityFields,
+      entidad: z.string().min(1, "Elegí la entidad."),
+    })
+    .superRefine(requireProductWhenNeeded);
+}
+
+export const caseEditSchema = z
+  .object({
+    ...entityFields,
+    nombre: z.string().trim().max(80, "Máximo 80 caracteres."),
+    telefono: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === "" || /^\d{8,13}$/.test(value.replace(/[\s()+-]/g, "")),
+        "Ingresá un teléfono válido, con código de área.",
+      ),
+    mail: z
+      .string()
+      .trim()
+      .refine((value) => value === "" || z.email().safeParse(value).success, "Ingresá un email válido."),
+    monto: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === "" || parseMoneyToCents(value) !== null,
+        "Ingresá un monto válido, por ejemplo 1.500,00.",
+      ),
+  })
+  .superRefine(requireProductWhenNeeded);
 
 export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),
@@ -106,6 +132,7 @@ export function labelSchema(existingNames: string[]) {
 }
 
 export type CaseEditValues = z.infer<typeof caseEditSchema>;
+export type NewCaseValues = z.infer<ReturnType<typeof newCaseSchema>>;
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type PlanValues = z.infer<typeof planSchema>;

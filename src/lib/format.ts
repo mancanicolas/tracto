@@ -8,6 +8,8 @@ export type Cents = bigint | number | string;
 
 const money = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "ARS" });
 
+const amount = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function centsToDecimalString(cents: Cents): string {
   let value: bigint;
   if (typeof cents === "number") {
@@ -26,6 +28,10 @@ function centsToDecimalString(cents: Cents): string {
 
 export function formatMoney(cents: Cents): string {
   return money.format(centsToDecimalString(cents) as unknown as number);
+}
+
+export function formatAmount(cents: Cents): string {
+  return amount.format(centsToDecimalString(cents) as unknown as number);
 }
 
 function toTz(date: Date | string | number): TZDate {

@@ -1,8 +1,8 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
+import { getPaymentMethods, hasMultipleProducts, type PaymentMethod } from "@/constants/entidades";
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
 import { formatDni, formatMoney } from "./format";
-import { getPaymentMethods, type PaymentMethods } from "./paymentMethods";
 import { fail, type Result } from "./result";
 import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
 import type { Agreement, Case, Installment } from "./types";
@@ -44,15 +44,16 @@ const LIBRE_DE_DEUDA_TEXT =
 const INCUMPLIMIENTO_TEXT =
   "Se deja expresa constancia que, en el supuesto de incumplimiento, el presente acuerdo quedará sin efecto, restableciéndose el saldo original de la deuda con más los intereses y gastos que correspondan.";
 
-export type ConvenioField = "nombre" | "DNI" | "entidad";
+export type ConvenioField = "nombre" | "DNI" | "entidad" | "producto";
 
-type ConvenioCase = Case & { nombre: string; entidad: string };
+export type ConvenioCase = Case & { nombre: string; entidad: string };
 
 export function missingConvenioFields(account: Case): ConvenioField[] {
   const missing: ConvenioField[] = [];
   if (!account.nombre?.trim()) missing.push("nombre");
   if (!account.dni.trim()) missing.push("DNI");
   if (!account.entidad?.trim()) missing.push("entidad");
+  else if (hasMultipleProducts(account.entidad) && !account.producto) missing.push("producto");
   return missing;
 }
 
@@ -163,7 +164,7 @@ function buildPlanTable(agreement: Agreement): Content {
 function labelValueTable(entries: [string, string][]): Content {
   return {
     table: {
-      widths: [56, "*"],
+      widths: [110, "*"],
       body: entries.map(([label, value]) => [
         { text: label, color: MUTED, border: [false, false, false, false] },
         { text: value, bold: true, border: [false, false, false, false] },
@@ -180,37 +181,15 @@ function labelValueTable(entries: [string, string][]): Content {
   };
 }
 
-function paymentCard(methods: PaymentMethods): Content {
-  const { transferencia, efectivo } = methods;
+function paymentCard(methods: PaymentMethod[]): Content {
+  const entries: [string, string][] =
+    methods.length > 0
+      ? methods.map((paymentMethod) => [paymentMethod.nombre, paymentMethod.detalle.join(" / ") || "Habilitado"])
+      : [["Consultar", "Los medios de pago se informan por el Departamento de Cobranza"]];
   return {
     table: {
-      widths: ["*", 175],
-      body: [
-        [
-          {
-            stack: [
-              { text: "Transferencia bancaria", bold: true, color: BRAND_PRIMARY, margin: [0, 0, 0, 3] },
-              labelValueTable([
-                ["Titular", transferencia.titular],
-                ["CBU", transferencia.cbu],
-                ["Alias", transferencia.alias],
-                ["Banco", transferencia.banco],
-              ]),
-            ],
-            margin: [8, 6, 8, 6],
-          },
-          {
-            stack: [
-              { text: "Pago en efectivo", bold: true, color: BRAND_PRIMARY, margin: [0, 0, 0, 3] },
-              labelValueTable([
-                ["Rapipago", efectivo.rapipago],
-                ["Pago Fácil", efectivo.pagoFacil],
-              ]),
-            ],
-            margin: [8, 6, 8, 6],
-          },
-        ],
-      ],
+      widths: ["*"],
+      body: [[{ stack: [labelValueTable(entries)], margin: [8, 6, 8, 6] }]],
     },
     layout: {
       hLineWidth: () => 0.8,
@@ -264,7 +243,7 @@ export function buildConvenioDefinition(
   agreement: Agreement,
   today: string = todayIso(),
 ): TDocumentDefinitions {
-  const methods = getPaymentMethods(account.entidad);
+  const methods = getPaymentMethods(account.entidad, account.producto);
   const debtorName = account.nombre;
 
   return {

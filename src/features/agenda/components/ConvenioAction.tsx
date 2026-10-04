@@ -1,7 +1,10 @@
-import { FileText, Pencil, TriangleAlert } from "lucide-react";
+import { Copy, FileText, Pencil, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Toast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { downloadConvenio, missingConvenioFields } from "@/lib/convenio";
+import { copyConvenioMessage } from "@/lib/convenioMessage";
 import type { Case } from "@/lib/types";
 
 interface ConvenioActionProps {
@@ -23,17 +26,21 @@ function joinFields(fields: string[]): string {
 export function ConvenioAction({ account, onEditCase }: ConvenioActionProps) {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const toast = useToast();
+
+  const hasRequiredData = (): boolean => {
+    const missing = missingConvenioFields(account);
+    if (missing.length === 0) return true;
+    setFeedback({
+      text: `Para generar el convenio falta ${joinFields(missing)}. Editá el caso para completar los datos.`,
+      tone: "error",
+      offersEdit: true,
+    });
+    return false;
+  };
 
   const handleDownload = async () => {
-    const missing = missingConvenioFields(account);
-    if (missing.length > 0) {
-      setFeedback({
-        text: `Para generar el convenio falta ${joinFields(missing)}. Editá el caso para completar los datos.`,
-        tone: "error",
-        offersEdit: true,
-      });
-      return;
-    }
+    if (!hasRequiredData()) return;
     setFeedback(null);
     setIsGenerating(true);
     const result = await downloadConvenio(account);
@@ -42,12 +49,28 @@ export function ConvenioAction({ account, onEditCase }: ConvenioActionProps) {
     else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success", offersEdit: false });
   };
 
+  const handleCopy = async () => {
+    if (!hasRequiredData()) return;
+    const { acuerdo, nombre, entidad } = account;
+    if (!acuerdo || !nombre || !entidad) return;
+    setFeedback(null);
+    const result = await copyConvenioMessage({ ...account, nombre, entidad }, acuerdo);
+    if (result.ok) toast.show("Convenio copiado");
+    else setFeedback({ text: result.error, tone: "error", offersEdit: false });
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      <Button className="self-start" loading={isGenerating} onClick={() => void handleDownload()}>
-        <FileText className="size-4" strokeWidth={1.75} aria-hidden />
-        {isGenerating ? "Generando convenio" : "Descargar convenio"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button loading={isGenerating} onClick={() => void handleDownload()}>
+          <FileText className="size-4" strokeWidth={1.75} aria-hidden />
+          {isGenerating ? "Generando convenio" : "Descargar convenio"}
+        </Button>
+        <Button onClick={() => void handleCopy()}>
+          <Copy className="size-4" strokeWidth={1.75} aria-hidden />
+          Copiar convenio
+        </Button>
+      </div>
       <div aria-live="polite">
         {feedback ? (
           <div
@@ -71,6 +94,7 @@ export function ConvenioAction({ account, onEditCase }: ConvenioActionProps) {
           </div>
         ) : null}
       </div>
+      <Toast message={toast.message} />
     </div>
   );
 }

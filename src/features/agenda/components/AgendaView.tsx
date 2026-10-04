@@ -6,7 +6,8 @@ import type { NewAgreement } from "@/lib/agreements";
 import type { LabelColor } from "@/lib/labels";
 
 import { useShortcut } from "@/lib/shortcuts";
-import { normalizeDni, parseMoneyToCents } from "@/lib/format";
+import type { CaseDetails } from "@/lib/types";
+import { toCaseDetails } from "../caseDetails";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
 import type { CaseEditValues } from "../schemas";
 import { useCases } from "../useCases";
@@ -104,8 +105,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     [visibleCases, selectedDni],
   );
 
-  const createCase = (dni: string) => {
-    addCase(dni);
+  const createCase = (dni: string, details: CaseDetails) => {
+    addCase(dni, details);
     setFilter("todos");
     setQuery("");
     setIsNewCaseOpen(false);
@@ -122,14 +123,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
 
   const saveCaseDetails = (values: CaseEditValues) => {
     if (!selectedCase) return;
-    updateCase(selectedCase.dni, {
-      nombre: values.nombre || undefined,
-      telefono: values.telefono ? normalizeDni(values.telefono) : undefined,
-      entidad: values.entidad || undefined,
-      cartera: values.cartera || undefined,
-      mail: values.mail || undefined,
-      monto: values.monto ? (parseMoneyToCents(values.monto) ?? undefined) : undefined,
-    });
+    updateCase(selectedCase.dni, toCaseDetails(values));
     setIsEditOpen(false);
     setAnnouncement("Caso actualizado");
   };

@@ -21,7 +21,7 @@ export interface Agreement {
   cuotas: Installment[];
 }
 
-export type CaseDetails = Pick<Case, "nombre" | "telefono" | "entidad" | "cartera" | "mail" | "monto">;
+export type CaseDetails = Pick<Case, "nombre" | "telefono" | "entidad" | "cartera" | "producto" | "mail" | "monto">;
 
 export interface Case {
   id: string;
@@ -29,6 +29,7 @@ export interface Case {
   nombre?: string;
   telefono?: string;
   cartera?: string;
+  producto?: string;
   entidad?: string;
   monto?: number;
   mail?: string;

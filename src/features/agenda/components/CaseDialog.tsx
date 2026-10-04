@@ -2,7 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/cn";
-import type { Case } from "@/lib/types";
+import type { Case, CaseDetails } from "@/lib/types";
 import type { CaseEditValues } from "../schemas";
 import { EditCaseForm } from "./EditCaseForm";
 import { NewCaseForm } from "./NewCaseForm";
@@ -12,7 +12,7 @@ interface CaseDialogProps {
   account?: Case;
   existingDnis: string[];
   onOpenChange: (open: boolean) => void;
-  onCreate: (dni: string) => void;
+  onCreate: (dni: string, details: CaseDetails) => void;
   onUpdate: (values: CaseEditValues) => void;
 }
 
@@ -25,7 +25,7 @@ export function CaseDialog({ open, account, existingDnis, onOpenChange, onCreate
         <Dialog.Content
           className={cn(
             "fixed top-1/2 left-1/2 z-30 max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-overlay p-4 shadow-[var(--shadow-modal)]",
-            account ? "w-[28rem]" : "w-80",
+            "w-[28rem]",
           )}
         >
           <div className="mb-3 flex items-start justify-between gap-2">

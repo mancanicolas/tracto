@@ -2,7 +2,6 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { hasMultipleProducts } from "@/constants/entidades";
 import { Kbd } from "@/components/ui/Kbd";
 import { cn } from "@/lib/cn";
 import type { NewAgreement } from "@/lib/agreements";
@@ -114,7 +113,7 @@ export function CaseDetail({
           <InfoValue label="Teléfono" value={account.telefono ? formatPhone(account.telefono) : undefined} mono />
           <InfoValue label="Entidad" value={account.entidad} title={account.entidad} />
           <InfoValue label="Cartera" value={account.cartera} title={account.cartera} />
-          {hasMultipleProducts(account.entidad) ? <InfoValue label="Producto" value={account.producto} /> : null}
+          {account.acuerdo?.producto ? <InfoValue label="Producto" value={account.acuerdo.producto} /> : null}
           <InfoValue label="Mail" value={account.mail} title={account.mail} />
           <InfoValue
             label="Último pago"

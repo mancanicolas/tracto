@@ -53,7 +53,7 @@ export function missingConvenioFields(account: Case): ConvenioField[] {
   if (!account.nombre?.trim()) missing.push("nombre");
   if (!account.dni.trim()) missing.push("DNI");
   if (!account.entidad?.trim()) missing.push("entidad");
-  else if (hasMultipleProducts(account.entidad) && !account.producto) missing.push("producto");
+  else if (hasMultipleProducts(account.entidad) && !account.acuerdo?.producto) missing.push("producto");
   return missing;
 }
 
@@ -243,7 +243,7 @@ export function buildConvenioDefinition(
   agreement: Agreement,
   today: string = todayIso(),
 ): TDocumentDefinitions {
-  const methods = getPaymentMethods(account.entidad, account.producto);
+  const methods = getPaymentMethods(account.entidad, agreement.producto);
   const debtorName = account.nombre;
 
   return {

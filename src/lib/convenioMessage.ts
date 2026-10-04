@@ -13,7 +13,7 @@ function formatFullDate(iso: string): string {
 }
 
 export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement): string {
-  const methods = getPaymentMethods(account.entidad, account.producto).map(formatPaymentMethod).join(" | ");
+  const methods = getPaymentMethods(account.entidad, agreement.producto).map(formatPaymentMethod).join(" | ");
   const pending = agreement.cuotas.filter((installment) => !installment.pagada);
   const source = pending.length > 0 ? pending : agreement.cuotas;
   const total = source.reduce((sum, installment) => sum + installment.monto, 0);

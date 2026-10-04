@@ -23,7 +23,7 @@ export function NewCaseForm({ existingDnis, onCreate, onCancel }: NewCaseFormPro
   const schema = useMemo(() => newCaseSchema(existingDnis), [existingDnis]);
   const methods = useForm<NewCaseValues>({
     resolver: zodResolver(schema),
-    defaultValues: { dni: "", nombre: "", monto: "", entidad: "", cartera: "", producto: "" },
+    defaultValues: { dni: "", nombre: "", monto: "", entidad: "", cartera: "" },
   });
   const {
     register,

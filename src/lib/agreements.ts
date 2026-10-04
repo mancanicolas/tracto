@@ -5,10 +5,17 @@ export interface NewAgreement {
   cuotas: number;
   monto_cuota: number;
   primer_vencimiento: string;
+  producto?: string;
   anticipo?: { fecha: string; monto: number };
 }
 
-export function createAgreement({ cuotas, monto_cuota, primer_vencimiento, anticipo }: NewAgreement): Agreement {
+export function createAgreement({
+  cuotas,
+  monto_cuota,
+  primer_vencimiento,
+  producto,
+  anticipo,
+}: NewAgreement): Agreement {
   const installments: Installment[] = [];
   if (anticipo) {
     installments.push({
@@ -31,7 +38,7 @@ export function createAgreement({ cuotas, monto_cuota, primer_vencimiento, antic
       countedInStats: false,
     });
   }
-  return { id: crypto.randomUUID(), creado: new Date().toISOString(), cuotas: installments };
+  return { id: crypto.randomUUID(), creado: new Date().toISOString(), producto, cuotas: installments };
 }
 
 export function installmentLabel(installment: Installment): string {

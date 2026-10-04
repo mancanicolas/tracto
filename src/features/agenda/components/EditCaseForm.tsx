@@ -26,7 +26,6 @@ export function EditCaseForm({ account, onSave, onCancel }: EditCaseFormProps) {
       telefono: account.telefono ?? "",
       entidad: account.entidad ?? "",
       cartera: account.cartera ?? "",
-      producto: account.producto ?? "",
       mail: account.mail ?? "",
       monto: account.monto === undefined ? "" : formatCentsInput(account.monto),
     },

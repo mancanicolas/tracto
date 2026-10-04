@@ -14,7 +14,7 @@ export function AgreementPanel({ account, onSave }: AgreementPanelProps) {
       <p className="text-xs text-fg-muted">
         {account.acuerdo ? "Reemplaza por completo el acuerdo vigente." : "Este caso todavía no tiene un acuerdo."}
       </p>
-      <PlanForm onSave={onSave} />
+      <PlanForm entidad={account.entidad} onSave={onSave} />
     </div>
   );
 }

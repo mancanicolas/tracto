@@ -19,7 +19,6 @@ export async function insertCase(id: string, dni: string, values: CaseDetails): 
     telefono: values.telefono ?? null,
     entidad: values.entidad ?? null,
     cartera: values.cartera ?? null,
-    producto: values.producto ?? null,
     mail: values.mail ?? null,
     monto: values.monto ?? null,
   });
@@ -34,7 +33,6 @@ export async function updateCaseDetails(id: string, values: CaseDetails): Promis
       telefono: values.telefono ?? null,
       entidad: values.entidad ?? null,
       cartera: values.cartera ?? null,
-      producto: values.producto ?? null,
       mail: values.mail ?? null,
       monto: values.monto ?? null,
     })
@@ -90,6 +88,7 @@ export async function replaceAgreement(
   const { error } = await supabase.rpc("reemplazar_acuerdo", {
     p_caso_id: caseId,
     p_acuerdo_id: agreement.id,
+    p_producto: agreement.producto ?? null,
     p_cuotas: installmentsToPayload(agreement.cuotas),
     p_pagos_previos: hadPreviousPayments,
   });

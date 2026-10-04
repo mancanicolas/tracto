@@ -1,10 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { Kbd } from "@/components/ui/Kbd";
+import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
+import { ENTIDADES, hasMultipleProducts } from "@/constants/entidades";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import type { NewAgreement } from "@/lib/agreements";
 import { addDaysIso, todayIso } from "@/lib/dates";
@@ -12,15 +14,17 @@ import { formatMoney, parseMoneyToCents } from "@/lib/format";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { planSchema, type PlanValues } from "../schemas";
 
-
 interface PlanFormProps {
+  entidad?: string;
   onSave: (agreement: NewAgreement) => void;
 }
 
 const MONEY_INPUT_CLASS = "font-mono tabular-nums text-right";
 
-export function PlanForm({ onSave }: PlanFormProps) {
+export function PlanForm({ entidad, onSave }: PlanFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const requiresProduct = hasMultipleProducts(entidad);
+  const schema = useMemo(() => planSchema(requiresProduct), [requiresProduct]);
   const {
     register,
     handleSubmit,
@@ -28,11 +32,12 @@ export function PlanForm({ onSave }: PlanFormProps) {
     reset,
     formState: { errors },
   } = useForm<PlanValues>({
-    resolver: zodResolver(planSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       cuotas: "",
       monto_cuota: "",
       primer_vencimiento: addDaysIso(todayIso(), 30),
+      producto: "",
       tiene_anticipo: false,
       anticipo_fecha: addDaysIso(todayIso(), 1),
       anticipo_monto: "",
@@ -61,6 +66,7 @@ export function PlanForm({ onSave }: PlanFormProps) {
       cuotas: Number(values.cuotas),
       monto_cuota: montoCuotaCents,
       primer_vencimiento: values.primer_vencimiento,
+      producto: requiresProduct ? values.producto : undefined,
       anticipo:
         values.tiene_anticipo && anticipoCents !== null
           ? { fecha: values.anticipo_fecha, monto: anticipoCents }
@@ -72,6 +78,17 @@ export function PlanForm({ onSave }: PlanFormProps) {
   return (
     <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
+        {requiresProduct ? (
+          <div className="col-span-2">
+            <SelectField
+              label="Producto"
+              placeholder="Elegir el producto"
+              options={(ENTIDADES[entidad ?? ""]?.productos ?? []).map((value) => ({ value, label: value }))}
+              error={errors.producto?.message}
+              {...register("producto")}
+            />
+          </div>
+        ) : null}
         <TextField
           label="Cantidad de cuotas"
           inputMode="numeric"

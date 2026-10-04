@@ -1,11 +1,10 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { SelectField } from "@/components/ui/SelectField";
-import { DEFAULT_PORTFOLIO, ENTIDADES, ENTIDAD_NAMES, hasMultipleProducts } from "@/constants/entidades";
+import { DEFAULT_PORTFOLIO, ENTIDADES, ENTIDAD_NAMES } from "@/constants/entidades";
 
 interface EntityFormValues {
   entidad: string;
   cartera: string;
-  producto: string;
 }
 
 const toOption = (value: string) => ({ value, label: value });
@@ -34,7 +33,6 @@ export function EntityFields() {
         onChange={(event) => {
           void entidadField.onChange(event);
           setValue("cartera", ENTIDADES[event.target.value]?.carteras[0] ?? "");
-          setValue("producto", "");
         }}
       />
       <SelectField
@@ -44,15 +42,6 @@ export function EntityFields() {
         error={errors.cartera?.message}
         {...register("cartera")}
       />
-      {hasMultipleProducts(entidad) ? (
-        <SelectField
-          label="Producto"
-          placeholder="Elegí el producto"
-          options={(ENTIDADES[entidad]?.productos ?? []).map(toOption)}
-          error={errors.producto?.message}
-          {...register("producto")}
-        />
-      ) : null}
     </>
   );
 }

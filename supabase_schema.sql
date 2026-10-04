@@ -60,7 +60,6 @@ create table if not exists public.casos (
   nombre text,
   telefono text,
   cartera text,
-  producto text,
   entidad text,
   monto bigint check (monto is null or monto >= 0),
   mail text,
@@ -69,8 +68,6 @@ create table if not exists public.casos (
   created_at timestamptz not null default now(),
   unique (operador_id, dni)
 );
-
-alter table public.casos add column if not exists producto text;
 
 create table if not exists public.caso_etiquetas (
   caso_id uuid not null references public.casos (id) on delete cascade,
@@ -83,8 +80,11 @@ create table if not exists public.acuerdos (
   id uuid primary key default gen_random_uuid(),
   operador_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   caso_id uuid not null unique references public.casos (id) on delete cascade,
+  producto text,
   creado timestamptz not null default now()
 );
+
+alter table public.acuerdos add column if not exists producto text;
 
 create table if not exists public.cuotas (
   id uuid primary key default gen_random_uuid(),
@@ -207,9 +207,12 @@ grant select, insert, update, delete
   on public.etiquetas, public.casos, public.caso_etiquetas, public.acuerdos, public.cuotas, public.notas, public.agenda
   to authenticated;
 
+drop function if exists public.reemplazar_acuerdo(uuid, uuid, jsonb, boolean);
+
 create or replace function public.reemplazar_acuerdo(
   p_caso_id uuid,
   p_acuerdo_id uuid,
+  p_producto text,
   p_cuotas jsonb,
   p_pagos_previos boolean
 )
@@ -221,7 +224,7 @@ as $$
 begin
   delete from public.acuerdos where caso_id = p_caso_id;
 
-  insert into public.acuerdos (id, caso_id) values (p_acuerdo_id, p_caso_id);
+  insert into public.acuerdos (id, caso_id, producto) values (p_acuerdo_id, p_caso_id, p_producto);
 
   insert into public.cuotas (id, acuerdo_id, orden, tipo, numero, monto, fecha)
   select c.id, p_acuerdo_id, c.orden, c.tipo, c.numero, c.monto, c.fecha
@@ -231,5 +234,5 @@ begin
 end;
 $$;
 
-revoke all on function public.reemplazar_acuerdo(uuid, uuid, jsonb, boolean) from public, anon;
-grant execute on function public.reemplazar_acuerdo(uuid, uuid, jsonb, boolean) to authenticated;
+revoke all on function public.reemplazar_acuerdo(uuid, uuid, text, jsonb, boolean) from public, anon;
+grant execute on function public.reemplazar_acuerdo(uuid, uuid, text, jsonb, boolean) to authenticated;

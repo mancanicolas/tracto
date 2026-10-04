@@ -16,6 +16,7 @@ export interface CuotaRow {
 export interface AcuerdoRow {
   id: string;
   creado: string;
+  producto: string | null;
   cuotas: CuotaRow[];
 }
 
@@ -37,7 +38,6 @@ export interface CasoRow {
   nombre: string | null;
   telefono: string | null;
   cartera: string | null;
-  producto: string | null;
   entidad: string | null;
   monto: number | null;
   mail: string | null;
@@ -77,6 +77,7 @@ function toAgreement(row: AcuerdoRow): Agreement {
   return {
     id: row.id,
     creado: row.creado,
+    producto: row.producto ?? undefined,
     cuotas: [...row.cuotas].sort((a, b) => a.orden - b.orden).map(toInstallment),
   };
 }
@@ -94,7 +95,6 @@ export function toCase(row: CasoRow): Case {
     nombre: row.nombre ?? undefined,
     telefono: row.telefono ?? undefined,
     cartera: row.cartera ?? undefined,
-    producto: row.producto ?? undefined,
     entidad: row.entidad ?? undefined,
     monto: row.monto ?? undefined,
     mail: row.mail ?? undefined,

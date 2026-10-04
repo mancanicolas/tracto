@@ -1,4 +1,4 @@
-import { DEFAULT_PORTFOLIO, ENTIDADES, resolveProduct } from "@/constants/entidades";
+import { DEFAULT_PORTFOLIO, ENTIDADES } from "@/constants/entidades";
 import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import type { CaseDetails } from "@/lib/types";
 
@@ -9,7 +9,6 @@ interface CaseFormFields {
   monto?: string;
   entidad: string;
   cartera: string;
-  producto: string;
 }
 
 export function toCaseDetails(values: CaseFormFields): CaseDetails {
@@ -22,6 +21,5 @@ export function toCaseDetails(values: CaseFormFields): CaseDetails {
     monto: values.monto ? (parseMoneyToCents(values.monto) ?? undefined) : undefined,
     entidad,
     cartera,
-    producto: resolveProduct(entidad, values.producto),
   };
 }

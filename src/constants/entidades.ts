@@ -66,14 +66,6 @@ export function hasMultipleProducts(entidad: string | undefined): boolean {
   return entidad !== undefined && (ENTIDADES[entidad]?.productos.length ?? 0) > 1;
 }
 
-export function resolveProduct(entidad: string | undefined, producto: string | undefined): string | undefined {
-  if (!entidad) return undefined;
-  const entity = ENTIDADES[entidad];
-  if (!entity) return producto || undefined;
-  if (entity.productos.length > 1) return producto || undefined;
-  return entity.productos[0];
-}
-
 export function getPaymentMethods(entidad: string, producto: string | undefined): PaymentMethod[] {
   const entity = ENTIDADES[entidad];
   if (!entity) return [];

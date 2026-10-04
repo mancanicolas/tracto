@@ -31,11 +31,20 @@ export function ConvenioAction({ account, onEditCase }: ConvenioActionProps) {
   const hasRequiredData = (): boolean => {
     const missing = missingConvenioFields(account);
     if (missing.length === 0) return true;
-    setFeedback({
-      text: `Para generar el convenio falta ${joinFields(missing)}. Editá el caso para completar los datos.`,
-      tone: "error",
-      offersEdit: true,
-    });
+    const missingData = missing.filter((field) => field !== "producto");
+    setFeedback(
+      missingData.length > 0
+        ? {
+            text: `Para generar el convenio falta ${joinFields(missingData)}. Editá el caso para completar los datos.`,
+            tone: "error",
+            offersEdit: true,
+          }
+        : {
+            text: "Falta el producto del acuerdo (TC o PYC). Registrá el acuerdo de nuevo eligiendo el producto.",
+            tone: "error",
+            offersEdit: false,
+          },
+    );
     return false;
   };
 

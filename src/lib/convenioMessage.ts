@@ -55,7 +55,12 @@ function cashBlock(methods: PaymentMethod[]): string[] {
 function otherBlock(methods: PaymentMethod[]): string[] {
   const others = methods.filter((paymentMethod) => paymentMethod.tipo === "otro");
   if (others.length === 0) return [];
-  return ["*Otros medios de pago*", ...others.map((paymentMethod) => `• *${paymentMethod.nombre}*`)];
+  return [
+    "*Otros medios de pago*",
+    ...others.map((paymentMethod) =>
+      paymentMethod.detalle ? `• *${paymentMethod.nombre}:* ${paymentMethod.detalle}` : `• *${paymentMethod.nombre}*`,
+    ),
+  ];
 }
 
 function numberedBlocks(blocks: string[][]): string[] {

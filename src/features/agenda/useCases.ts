@@ -60,7 +60,11 @@ function reducer(state: State, action: Action): State {
     case "schedule_resolve":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, agendado_resuelto: true })));
     case "agreement_set":
-      return withCases(update(state.cases, action.dni, (a) => ({ ...a, acuerdo: action.agreement })));
+      return withCases(update(state.cases, action.dni, (a) => ({
+          ...a,
+          acuerdo: action.agreement,
+          pagos_previos: a.pagos_previos || (a.acuerdo?.cuotas.some((installment) => installment.pagada) ?? false),
+        })));
     case "agreement_delete":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, acuerdo: undefined })));
     case "installment_toggle":

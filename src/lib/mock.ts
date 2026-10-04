@@ -39,6 +39,7 @@ export interface Case {
   agendado_resuelto?: boolean;
   notas: Note[];
   acuerdo?: Agreement;
+  pagos_previos?: boolean;
 }
 
 export function createMockLabels(): Label[] {

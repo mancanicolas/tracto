@@ -54,6 +54,15 @@ export const planSchema = z
     if (!values.tiene_anticipo) return;
     if (!requiredFutureDate.safeParse(values.anticipo_fecha).success) {
       ctx.addIssue({ code: "custom", path: ["anticipo_fecha"], message: "Elegí una fecha desde hoy." });
+    } else if (
+      requiredFutureDate.safeParse(values.primer_vencimiento).success &&
+      values.anticipo_fecha >= values.primer_vencimiento
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["anticipo_fecha"],
+        message: "Tiene que ser anterior a la fecha de la primera cuota.",
+      });
     }
     if (!positiveMoney.safeParse(values.anticipo_monto).success) {
       ctx.addIssue({ code: "custom", path: ["anticipo_monto"], message: "Ingresá un monto válido." });

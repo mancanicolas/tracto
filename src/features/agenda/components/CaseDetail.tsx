@@ -11,11 +11,12 @@ import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Case } from "@/lib/mock";
 import { resolveCaseStatus } from "@/lib/status";
+import { AgendaSummary } from "./AgendaSummary";
 import { AgreementAccordion } from "./AgreementAccordion";
 import { AgreementPanel } from "./AgreementPanel";
 import { InfoValue } from "./InfoValue";
 import { NoteForm } from "./NoteForm";
-import { SchedulePanel } from "./SchedulePanel";
+import { ScheduleForm } from "./ScheduleForm";
 import { TagsEditor } from "./TagsEditor";
 
 export type ManagementTab = "nota" | "agendar" | "acuerdos";
@@ -116,14 +117,17 @@ export function CaseDetail({
         />
       </header>
 
-      {account.acuerdo ? (
-        <div className="border-b border-line-subtle p-3">
-          <AgreementAccordion
-            key={account.dni}
-            agreement={account.acuerdo}
-            onToggleInstallment={onToggleInstallment}
-            onDelete={onDeleteAgreement}
-          />
+      {account.agendado_para || account.acuerdo ? (
+        <div className="flex flex-col gap-3 border-b border-line-subtle p-3">
+          <AgendaSummary account={account} onResolve={onResolveSchedule} />
+          {account.acuerdo ? (
+            <AgreementAccordion
+              key={account.dni}
+              agreement={account.acuerdo}
+              onToggleInstallment={onToggleInstallment}
+              onDelete={onDeleteAgreement}
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -149,7 +153,7 @@ export function CaseDetail({
           <NoteForm key={account.dni} notes={account.notas} onSave={onSaveNote} />
         </Tabs.Content>
         <Tabs.Content value="agendar" className="p-3">
-          <SchedulePanel key={account.dni} account={account} onSave={onSchedule} onResolve={onResolveSchedule} />
+          <ScheduleForm key={account.dni} onSave={onSchedule} />
         </Tabs.Content>
         <Tabs.Content value="acuerdos" className="p-3">
           <AgreementPanel key={account.dni} account={account} onSave={onSaveAgreement} />

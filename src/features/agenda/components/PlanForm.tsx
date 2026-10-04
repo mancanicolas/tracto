@@ -92,7 +92,7 @@ export function PlanForm({ onSave }: PlanFormProps) {
           {...register("monto_cuota")}
         />
         <TextField
-          label="Primer vencimiento"
+          label="Fecha de primera cuota"
           type="date"
           min={todayIso()}
           className="font-mono tabular-nums"
@@ -100,7 +100,7 @@ export function PlanForm({ onSave }: PlanFormProps) {
           {...register("primer_vencimiento")}
         />
       </div>
-      <CheckboxField label="Anticipo" {...register("tiene_anticipo")} />
+      <CheckboxField label="Anticipo (pago parcial)" {...register("tiene_anticipo")} />
       {hasDownPayment ? (
         <div className="grid grid-cols-2 gap-3">
           <TextField

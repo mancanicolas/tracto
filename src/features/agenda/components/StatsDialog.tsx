@@ -5,8 +5,9 @@ import { CheckboxField } from "@/components/ui/CheckboxField";
 import { IconButton } from "@/components/ui/IconButton";
 import { formatMoney } from "@/lib/format";
 import type { Case } from "@/lib/mock";
-import { downloadReport } from "@/lib/exportReport";
-import { collectedRows, computeStats, projectedRows } from "@/lib/stats";
+import { cn } from "@/lib/cn";
+import { downloadReport, type ReportKind } from "@/lib/exportReport";
+import { collectedRows, computeStats, projectedRows, type InstallmentRow } from "@/lib/stats";
 
 interface StatsDialogProps {
   open: boolean;
@@ -46,7 +47,15 @@ function plural(count: number, singular: string, pluralForm: string): string {
 
 export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
   const [includeColchon, setIncludeColchon] = useState(true);
+  const [exportMessage, setExportMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const stats = useMemo(() => computeStats(cases, includeColchon), [cases, includeColchon]);
+
+  const exportReport = async (kind: ReportKind, rows: InstallmentRow[]) => {
+    setExportMessage(null);
+    const result = await downloadReport(kind, rows);
+    if (!result.ok) setExportMessage({ text: result.error, isError: true });
+    else if (result.data === "saved") setExportMessage({ text: "Archivo guardado.", isError: false });
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -74,7 +83,7 @@ export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
               download={{
                 label: "Descargar pagos del mes",
                 disabled: stats.countedInstallments === 0,
-                onDownload: () => void downloadReport("pagos", collectedRows(cases)),
+                onDownload: () => void exportReport("pagos", collectedRows(cases)),
               }}
             />
             <StatCard
@@ -83,7 +92,7 @@ export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
               download={{
                 label: "Descargar proyección del mes",
                 disabled: stats.projectedCases === 0,
-                onDownload: () => void downloadReport("proyeccion", projectedRows(cases, includeColchon)),
+                onDownload: () => void exportReport("proyeccion", projectedRows(cases, includeColchon)),
               }}
               caption={`Cuota de este mes de ${plural(stats.projectedCases, "caso", "casos")} en ${
                 includeColchon ? "acuerdo y acuerdo colchón" : "acuerdo"
@@ -101,6 +110,13 @@ export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
               caption="En estado acuerdo o acuerdo colchón"
             />
           </dl>
+          <p
+            role={exportMessage?.isError ? "alert" : "status"}
+            aria-live="polite"
+            className={cn("mt-2 min-h-4 text-xs leading-4", exportMessage?.isError ? "text-danger" : "text-fg-muted")}
+          >
+            {exportMessage?.text}
+          </p>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

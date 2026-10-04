@@ -194,10 +194,10 @@ Los estados son **automáticos**: se calculan desde el acuerdo del caso con `res
 |---|---|---|---|---|
 | `pago` | Pagó una cuota en el mes en curso | `success` | `CircleCheck` | Pago |
 | `acuerdo` | Acuerdo activo, ninguna cuota pagada | `info` | `Handshake` | Acuerdo |
-| `acuerdo colchon` | Acuerdo activo, pagó cuotas en meses anteriores y ninguna en el mes en curso | `warning` | `Clock` | Acuerdo colchón |
+| `acuerdo colchon` | Acuerdo activo, pagó cuotas en meses anteriores y ninguna en el mes en curso | `info` | `Handshake` | Acuerdo colchón |
 | `cancelado` | Todas las cuotas del acuerdo pagadas | `neutral` | `CheckCheck` | Cancelado |
 
-El estado se recalcula en tiempo real al marcar cuotas como pagadas o pendientes, y al cambiar de mes un caso en `pago` pasa a `acuerdo colchon`. Se muestra sólo en la lista y en el encabezado del detalle.
+El estado se recalcula en tiempo real al marcar cuotas como pagadas o pendientes, y al cambiar de mes un caso en `pago` pasa a `acuerdo colchon`. `acuerdo` y `acuerdo colchon` comparten token, ícono y color: se distinguen sólo por el texto. Se muestra sólo en la lista y en el encabezado del detalle. Los filtros de la lista usan el estado: Pagos = `pago`; Acuerdo = `acuerdo` o `acuerdo colchon`.
 
 Por qué `info` es violeta y no azul: el celeste está reservado para interacción (foco, selección). Si "acuerdo" fuera celeste, el operador confundiría un estado con una fila seleccionada.
 

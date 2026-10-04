@@ -11,6 +11,7 @@ import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Case } from "@/lib/mock";
 import { resolveCaseStatus } from "@/lib/status";
+import { AgreementAccordion } from "./AgreementAccordion";
 import { AgreementPanel } from "./AgreementPanel";
 import { InfoValue } from "./InfoValue";
 import { NoteForm } from "./NoteForm";
@@ -115,6 +116,17 @@ export function CaseDetail({
         />
       </header>
 
+      {account.acuerdo ? (
+        <div className="border-b border-line-subtle p-3">
+          <AgreementAccordion
+            key={account.dni}
+            agreement={account.acuerdo}
+            onToggleInstallment={onToggleInstallment}
+            onDelete={onDeleteAgreement}
+          />
+        </div>
+      ) : null}
+
       <Tabs.Root
         value={tab}
         onValueChange={(value) => onTabChange(value as ManagementTab)}
@@ -140,13 +152,7 @@ export function CaseDetail({
           <SchedulePanel key={account.dni} account={account} onSave={onSchedule} onResolve={onResolveSchedule} />
         </Tabs.Content>
         <Tabs.Content value="acuerdos" className="p-3">
-          <AgreementPanel
-            key={account.dni}
-            account={account}
-            onSave={onSaveAgreement}
-            onToggleInstallment={onToggleInstallment}
-            onDelete={onDeleteAgreement}
-          />
+          <AgreementPanel key={account.dni} account={account} onSave={onSaveAgreement} />
         </Tabs.Content>
       </Tabs.Root>
     </article>

@@ -1,10 +1,10 @@
-import { CheckCheck, CircleCheck, Clock, Handshake, type LucideIcon } from "lucide-react";
+import { CheckCheck, CircleCheck, Handshake, type LucideIcon } from "lucide-react";
 import { todayIso } from "./dates";
 import type { Case } from "./mock";
 
 export type AccountStatus = "pago" | "acuerdo" | "acuerdo colchon" | "cancelado";
 
-export type StatusTone = "success" | "warning" | "info" | "neutral";
+export type StatusTone = "success" | "info" | "neutral";
 
 export interface StatusMeta {
   tone: StatusTone;
@@ -15,13 +15,12 @@ export interface StatusMeta {
 export const STATUS: Record<AccountStatus, StatusMeta> = {
   pago: { tone: "success", icon: CircleCheck, label: "Pago" },
   acuerdo: { tone: "info", icon: Handshake, label: "Acuerdo" },
-  "acuerdo colchon": { tone: "warning", icon: Clock, label: "Acuerdo colchón" },
+  "acuerdo colchon": { tone: "info", icon: Handshake, label: "Acuerdo colchón" },
   cancelado: { tone: "neutral", icon: CheckCheck, label: "Cancelado" },
 };
 
 export const TONE_CLASSES: Record<StatusTone, string> = {
   success: "bg-success-subtle text-success border border-success-border",
-  warning: "bg-warning-subtle text-warning border border-warning-border",
   info: "bg-info-subtle text-info border border-info-border",
   neutral: "bg-neutral-subtle text-neutral border border-neutral/30",
 };

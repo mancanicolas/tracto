@@ -278,7 +278,7 @@ export function buildConvenioDefinition(
       },
       { text: `Buenos Aires, ${formatLongDate(today)}`, alignment: "right", margin: [0, 0, 0, 8] },
       {
-        text: `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${account.entidad}, se hace constar que:`,
+        text: `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${account.entidad}, se formaliza el convenio de pago con el titular, sujeto a los términos y condiciones que se detallan a continuación:`,
       },
       sectionBar("DATOS DEL DEUDOR"),
       {

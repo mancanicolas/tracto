@@ -49,15 +49,25 @@ export const ENTIDADES: Record<string, Entidad> = {
     pagoFacil("CGF COBRANZAS + DNI"),
     other("Mercado Pago"),
   ),
-  CENCOSUD: generalEntity(pagoFacil(), other("Pago Mis Cuentas"), other("App CencoPay")),
-  "CREDITO DIRECTO": generalEntity(transfer({ cbu: "3380014930000000248447" })),
-  UALA: {
-    carteras: [DEFAULT_PORTFOLIO],
-    productos: ["TC", "PYC"],
+  "CENCOSUD EXTRA": {
+    carteras: ["General"],
+    productos: ["General"],
     metodosPago: {
-      TC: [transfer({ cbu: "3840100200000000619567" })],
-      PYC: [transfer({ cbu: "3840100200000004686158" })],
-    },
+      "General": [
+        "En efectivo: Línea de cajas indicando número de tarjeta Cencosud y monto a abonar (Easy, Disco, Jumbo y Vea)",
+        "Mercado Pago: En la sección Pago Mis Cuentas indicando número de tarjeta Cencosud y monto a abonar"
+      ]
+    }
+  },
+  "CENCOSUD LIGA": {
+    carteras: ["General"],
+    productos: ["General"],
+    metodosPago: {
+      "General": [
+        "En efectivo: Línea de cajas indicando número de tarjeta Cencosud y monto a abonar (Easy, Disco, Jumbo y Vea)",
+        "Mercado Pago: En la sección Pago Mis Cuentas indicando número de tarjeta Cencosud y monto a abonar"
+      ]
+    }
   },
   "EXI GROUP": generalEntity(transfer({ cbu: "0070339820000018156535" }), rapipago("Empresa 3875")),
   PARETO: generalEntity(transfer({ cbu: "3220001805007135800029" })),

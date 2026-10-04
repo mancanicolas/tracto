@@ -16,7 +16,11 @@ import { AgendaStatus } from "./AgendaStatus";
 import { CaseDialog } from "./CaseDialog";
 import { StatsDialog } from "./StatsDialog";
 
-export function AgendaView() {
+interface AgendaViewProps {
+  operatorName: string;
+}
+
+export function AgendaView({ operatorName }: AgendaViewProps) {
   const {
     status,
     cases,
@@ -244,7 +248,7 @@ export function AgendaView() {
         onCreate={createCase}
         onUpdate={saveCaseDetails}
       />
-      <StatsDialog open={isStatsOpen} cases={cases} onOpenChange={setIsStatsOpen} />
+      <StatsDialog open={isStatsOpen} cases={cases} operator={operatorName} onOpenChange={setIsStatsOpen} />
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>

@@ -23,6 +23,6 @@ export function App() {
         />
       );
     case "licensed":
-      return <OverlayShell email={access.email} onSignOut={signOut} />;
+      return <OverlayShell email={access.email} operatorName={access.operatorName} onSignOut={signOut} />;
   }
 }

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release:json": "node scripts/generateLatestJson.mjs"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
@@ -24,6 +25,7 @@
     "@tauri-apps/api": "^2.12.1",
     "@tauri-apps/plugin-dialog": "^2.8.1",
     "@tauri-apps/plugin-fs": "^2.6.0",
+    "@tauri-apps/plugin-updater": "^2.13.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.51.0",

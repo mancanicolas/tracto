@@ -10,11 +10,13 @@ async function resolveAccess(session: Session | null): Promise<AccessState> {
   const email = session.user.email ?? "";
   const { data, error } = await supabase
     .from("profiles")
-    .select("is_licensed")
+    .select("is_licensed, full_name")
     .eq("id", session.user.id)
     .maybeSingle();
   if (error) return { status: "license_error", email };
-  return data?.is_licensed === true ? { status: "licensed", email } : { status: "unlicensed", email };
+  if (data?.is_licensed !== true) return { status: "unlicensed", email };
+  const operatorName = typeof data.full_name === "string" ? data.full_name.trim() : "";
+  return { status: "licensed", email, operatorName: operatorName || email };
 }
 
 export function useAuth() {

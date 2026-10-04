@@ -12,6 +12,7 @@ import { collectedRows, computeStats, projectedRows, type InstallmentRow } from 
 interface StatsDialogProps {
   open: boolean;
   cases: Case[];
+  operator: string;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -45,14 +46,14 @@ function plural(count: number, singular: string, pluralForm: string): string {
   return `${count} ${count === 1 ? singular : pluralForm}`;
 }
 
-export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
+export function StatsDialog({ open, cases, operator, onOpenChange }: StatsDialogProps) {
   const [includeColchon, setIncludeColchon] = useState(true);
   const [exportMessage, setExportMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const stats = useMemo(() => computeStats(cases, includeColchon), [cases, includeColchon]);
 
   const exportReport = async (kind: ReportKind, rows: InstallmentRow[]) => {
     setExportMessage(null);
-    const result = await downloadReport(kind, rows);
+    const result = await downloadReport(kind, rows, operator);
     if (!result.ok) setExportMessage({ text: result.error, isError: true });
     else if (result.data === "saved") setExportMessage({ text: "Archivo guardado.", isError: false });
   };

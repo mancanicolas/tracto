@@ -13,10 +13,12 @@ const PAGE_WIDTH = 595.28;
 const PAGE_MARGIN = 44;
 const LOGO_WIDTH = 90;
 
-const NAVY = "#24377A";
-const NAVY_SOFT = "#DCE6F2";
-const TINT = "#F3F6FA";
-const RULE = "#D5DDE8";
+const BRAND_PRIMARY = "#155595";
+const BRAND_DEEP = "#24377A";
+const BRAND_SKY = "#2598D3";
+const PRIMARY_SOFT = "#D6E6F3";
+const TINT = "#F1F7FB";
+const RULE = "#CCDDEB";
 const WHITE = "#FFFFFF";
 const MUTED = "#6B7280";
 
@@ -78,7 +80,12 @@ function sectionBar(title: string): ContentTable {
       widths: ["*"],
       body: [[{ text: title, bold: true, color: WHITE, fontSize: 10, margin: [8, 3, 8, 3] }]],
     },
-    layout: { hLineWidth: () => 0, vLineWidth: () => 0, fillColor: () => NAVY },
+    layout: {
+      hLineWidth: (index) => (index === 1 ? 1.5 : 0),
+      hLineColor: () => BRAND_SKY,
+      vLineWidth: () => 0,
+      fillColor: () => BRAND_PRIMARY,
+    },
     margin: [0, 12, 0, 6],
   };
 }
@@ -86,7 +93,7 @@ function sectionBar(title: string): ContentTable {
 function clauseTitle(title: string): Content {
   return {
     stack: [
-      { text: title, bold: true, fontSize: 9, color: NAVY },
+      { text: title, bold: true, fontSize: 9, color: BRAND_PRIMARY },
       {
         canvas: [
           {
@@ -96,7 +103,7 @@ function clauseTitle(title: string): Content {
             x2: PAGE_WIDTH - PAGE_MARGIN * 2,
             y2: 2,
             lineWidth: 0.6,
-            lineColor: NAVY,
+            lineColor: BRAND_PRIMARY,
           },
         ],
       },
@@ -122,10 +129,10 @@ function buildPlanTable(agreement: Agreement): Content {
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
   const totalRow: TableCell[] = [
-    { text: "TOTAL", colSpan: 3, bold: true, fontSize: 10.5, color: NAVY, alignment: "right" },
+    { text: "TOTAL", colSpan: 3, bold: true, fontSize: 10.5, color: BRAND_PRIMARY, alignment: "right" },
     {},
     {},
-    { text: formatMoney(total), bold: true, fontSize: 10.5, color: NAVY, alignment: "right" },
+    { text: formatMoney(total), bold: true, fontSize: 10.5, color: BRAND_PRIMARY, alignment: "right" },
   ];
   const lastRowIndex = rows.length + 1;
 
@@ -137,15 +144,15 @@ function buildPlanTable(agreement: Agreement): Content {
     },
     layout: {
       hLineWidth: (index, node) => (index === node.table.body.length - 1 ? 1.2 : 0.4),
-      hLineColor: (index, node) => (index === node.table.body.length - 1 ? NAVY : RULE),
+      hLineColor: (index, node) => (index === node.table.body.length - 1 ? BRAND_PRIMARY : RULE),
       vLineWidth: () => 0,
       paddingTop: () => 4,
       paddingBottom: () => 4,
       paddingLeft: () => 8,
       paddingRight: () => 8,
       fillColor: (rowIndex) => {
-        if (rowIndex === 0) return NAVY;
-        if (rowIndex === lastRowIndex) return NAVY_SOFT;
+        if (rowIndex === 0) return BRAND_PRIMARY;
+        if (rowIndex === lastRowIndex) return PRIMARY_SOFT;
         return rowIndex % 2 === 0 ? TINT : null;
       },
     },
@@ -181,7 +188,7 @@ function paymentCard(methods: PaymentMethods): Content {
         [
           {
             stack: [
-              { text: "Transferencia bancaria", bold: true, color: NAVY, margin: [0, 0, 0, 3] },
+              { text: "Transferencia bancaria", bold: true, color: BRAND_PRIMARY, margin: [0, 0, 0, 3] },
               labelValueTable([
                 ["Titular", transferencia.titular],
                 ["CBU", transferencia.cbu],
@@ -193,7 +200,7 @@ function paymentCard(methods: PaymentMethods): Content {
           },
           {
             stack: [
-              { text: "Pago en efectivo", bold: true, color: NAVY, margin: [0, 0, 0, 3] },
+              { text: "Pago en efectivo", bold: true, color: BRAND_PRIMARY, margin: [0, 0, 0, 3] },
               labelValueTable([
                 ["Rapipago", efectivo.rapipago],
                 ["Pago Fácil", efectivo.pagoFacil],
@@ -205,10 +212,10 @@ function paymentCard(methods: PaymentMethods): Content {
       ],
     },
     layout: {
-      hLineWidth: () => 0.6,
-      vLineWidth: () => 0.6,
-      hLineColor: () => RULE,
-      vLineColor: () => RULE,
+      hLineWidth: () => 0.8,
+      vLineWidth: () => 0.8,
+      hLineColor: () => BRAND_PRIMARY,
+      vLineColor: () => BRAND_PRIMARY,
       fillColor: () => TINT,
     },
   };
@@ -271,7 +278,7 @@ export function buildConvenioDefinition(
           {
             width: "*",
             stack: [
-              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: NAVY },
+              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: BRAND_DEEP },
               { text: account.entidad, alignment: "center", bold: true, fontSize: 13, margin: [0, 2, 0, 4] },
               { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED },
             ],

@@ -1,9 +1,6 @@
-﻿import { useMemo, useReducer } from "react";
+import { useMemo, useReducer } from "react";
+import { createAgreement, type NewAgreement } from "@/lib/agreements";
 import type { Agreement, Case, Etiqueta, Note } from "@/lib/mock";
-
-type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
-
-export type NewAgreement = DistributiveOmit<Agreement, "id" | "creado">;
 
 type Action =
   | { type: "add"; account: Case }
@@ -12,10 +9,16 @@ type Action =
   | { type: "note_add"; dni: string; note: Note }
   | { type: "schedule"; dni: string; fecha: string; motivo: string }
   | { type: "schedule_resolve"; dni: string }
-  | { type: "agreement_add"; dni: string; agreement: Agreement };
+  | { type: "agreement_set"; dni: string; agreement: Agreement }
+  | { type: "agreement_delete"; dni: string }
+  | { type: "installment_toggle"; dni: string; installmentId: string };
 
 function withTag(tags: Etiqueta[], tag: Etiqueta): Etiqueta[] {
   return tags.includes(tag) ? tags : [...tags, tag];
+}
+
+function withAgreementTag(tags: Etiqueta[]): Etiqueta[] {
+  return tags.includes("acuerdo") || tags.includes("acuerdo colchon") ? tags : [...tags, "acuerdo"];
 }
 
 function update(cases: Case[], dni: string, change: (account: Case) => Case): Case[] {
@@ -41,12 +44,30 @@ function reducer(cases: Case[], action: Action): Case[] {
       }));
     case "schedule_resolve":
       return update(cases, action.dni, (a) => ({ ...a, agendado_resuelto: true }));
-    case "agreement_add":
+    case "agreement_set":
       return update(cases, action.dni, (a) => ({
         ...a,
-        acuerdos: [action.agreement, ...a.acuerdos],
-        etiquetas: withTag(a.etiquetas, action.agreement.tipo === "plan" ? "Acuerdo" : "Pago parcial"),
+        acuerdo: action.agreement,
+        etiquetas: withAgreementTag(a.etiquetas),
       }));
+    case "agreement_delete":
+      return update(cases, action.dni, (a) => ({ ...a, acuerdo: undefined }));
+    case "installment_toggle":
+      return update(cases, action.dni, (a) =>
+        a.acuerdo
+          ? {
+              ...a,
+              acuerdo: {
+                ...a.acuerdo,
+                cuotas: a.acuerdo.cuotas.map((installment) =>
+                  installment.id === action.installmentId
+                    ? { ...installment, pagada: !installment.pagada }
+                    : installment,
+                ),
+              },
+            }
+          : a,
+      );
   }
 }
 
@@ -55,8 +76,7 @@ export function useCases(initial: () => Case[]) {
 
   const actions = useMemo(
     () => ({
-      addCase: (dni: string) =>
-        dispatch({ type: "add", account: { dni, etiquetas: [], notas: [], acuerdos: [] } }),
+      addCase: (dni: string) => dispatch({ type: "add", account: { dni, etiquetas: [], notas: [] } }),
       addTag: (dni: string, tag: Etiqueta) => dispatch({ type: "tag_add", dni, tag }),
       removeTag: (dni: string, tag: Etiqueta) => dispatch({ type: "tag_remove", dni, tag }),
       addNote: (dni: string, texto: string) =>
@@ -67,12 +87,11 @@ export function useCases(initial: () => Case[]) {
         }),
       schedule: (dni: string, fecha: string, motivo: string) => dispatch({ type: "schedule", dni, fecha, motivo }),
       resolveSchedule: (dni: string) => dispatch({ type: "schedule_resolve", dni }),
-      addAgreement: (dni: string, agreement: NewAgreement) =>
-        dispatch({
-          type: "agreement_add",
-          dni,
-          agreement: { ...agreement, id: crypto.randomUUID(), creado: new Date().toISOString() } as Agreement,
-        }),
+      setAgreement: (dni: string, input: NewAgreement) =>
+        dispatch({ type: "agreement_set", dni, agreement: createAgreement(input) }),
+      deleteAgreement: (dni: string) => dispatch({ type: "agreement_delete", dni }),
+      toggleInstallment: (dni: string, installmentId: string) =>
+        dispatch({ type: "installment_toggle", dni, installmentId }),
     }),
     [],
   );

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { todayIso } from "@/lib/dates";
-import { formatMoney, normalizeDni, parseMoneyToCents } from "@/lib/format";
+import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -58,17 +58,6 @@ export const planSchema = z
     }
   });
 
-export function partialSchema(balance: number | undefined) {
-  return z.object({
-    fecha: requiredFutureDate,
-    monto: positiveMoney.refine(
-      (value) => balance === undefined || (parseMoneyToCents(value) ?? 0) < balance,
-      balance === undefined ? "" : `Tiene que ser menor al saldo de ${formatMoney(balance)}.`,
-    ),
-  });
-}
-
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type PlanValues = z.infer<typeof planSchema>;
-export type PartialValues = z.infer<ReturnType<typeof partialSchema>>;

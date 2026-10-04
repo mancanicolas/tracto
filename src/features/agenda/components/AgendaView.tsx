@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { todayIso } from "@/lib/dates";
+import type { NewAgreement } from "@/lib/agreements";
 import { createMockCases, type Etiqueta } from "@/lib/mock";
 import { useShortcut } from "@/lib/shortcuts";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
-import { useCases, type NewAgreement } from "../useCases";
+import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
 import { CaseList } from "./CaseList";
 import { NewCaseDialog } from "./NewCaseDialog";
 
 export function AgendaView() {
-  const { cases, addCase, addTag, removeTag, addNote, schedule, resolveSchedule, addAgreement } = useCases(() =>
+  const { cases, addCase, addTag, removeTag, addNote, schedule, resolveSchedule, setAgreement, deleteAgreement, toggleInstallment } = useCases(() =>
     createMockCases(),
   );
   const [filter, setFilter] = useState<FilterKey>("todos");
@@ -99,7 +100,7 @@ export function AgendaView() {
   useShortcut("4", () => setFilter(FILTERS[3].key), { enabled: shortcutsEnabled });
 
   const saveAgreement = (dni: string, agreement: NewAgreement) => {
-    addAgreement(dni, agreement);
+    setAgreement(dni, agreement);
     finishManagement("Acuerdo registrado");
   };
 
@@ -150,6 +151,14 @@ export function AgendaView() {
                 setAnnouncement("Seguimiento resuelto");
               }}
               onSaveAgreement={(agreement) => saveAgreement(selectedCase.dni, agreement)}
+              onToggleInstallment={(installmentId) => {
+                toggleInstallment(selectedCase.dni, installmentId);
+                setAnnouncement("Cuota actualizada");
+              }}
+              onDeleteAgreement={() => {
+                deleteAgreement(selectedCase.dni);
+                setAnnouncement("Acuerdo eliminado");
+              }}
             />
           ) : (
             <p className="p-3 text-[13px] text-fg-muted">Elegí un caso de la lista.</p>

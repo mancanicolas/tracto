@@ -20,7 +20,7 @@ export function matchesFilter(account: Case, filter: FilterKey, today: string = 
     case "todos":
       return true;
     case "acuerdo":
-      return account.etiquetas.includes("Acuerdo") || account.etiquetas.includes("Acuerdo colchón");
+      return account.etiquetas.includes("acuerdo") || account.etiquetas.includes("acuerdo colchon");
     case "pagos":
       return Boolean(account.ultimo_pago_fecha && isInCurrentMonth(account.ultimo_pago_fecha));
     case "agenda":

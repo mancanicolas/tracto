@@ -1,5 +1,3 @@
-import { formatIsoRelativeDay, todayIso } from "./dates";
-import type { Case } from "./mock";
 import {
   CalendarClock,
   CalendarX,
@@ -51,25 +49,4 @@ export const TONE_CLASSES: Record<StatusTone, string> = {
 
 export function statusLabel(status: AccountStatus, param?: string | number): string {
   return STATUS[status].label.replace("{x}", param === undefined ? "" : String(param)).trim();
-}
-
-export interface ResolvedStatus {
-  status: AccountStatus;
-  param?: string;
-}
-
-export function resolveCaseStatus(
-  account: Pick<Case, "agendado_para" | "agendado_resuelto" | "etiquetas" | "ultimo_pago_fecha">,
-  today: string = todayIso(),
-): ResolvedStatus {
-  if (account.agendado_para && !account.agendado_resuelto) {
-    return { status: "follow_up", param: formatIsoRelativeDay(account.agendado_para) };
-  }
-  if (account.etiquetas.includes("Pago parcial") || account.etiquetas.includes("A cuenta")) {
-    return { status: "partial" };
-  }
-  if (account.ultimo_pago_fecha && account.ultimo_pago_fecha.slice(0, 7) === today.slice(0, 7)) {
-    return { status: "paid" };
-  }
-  return { status: "no_action" };
 }

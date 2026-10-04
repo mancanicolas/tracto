@@ -1,19 +1,16 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { ArrowLeft, Check } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { ArrowLeft } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/cn";
-import { formatIsoDate, formatIsoRelativeDay } from "@/lib/dates";
+import type { NewAgreement } from "@/lib/agreements";
+import { formatIsoDate } from "@/lib/dates";
 import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Case, Etiqueta } from "@/lib/mock";
-import { resolveCaseStatus } from "@/lib/status";
-import type { NewAgreement } from "../useCases";
 import { AgreementPanel } from "./AgreementPanel";
 import { InfoValue } from "./InfoValue";
 import { NoteForm } from "./NoteForm";
-import { ScheduleForm } from "./ScheduleForm";
+import { SchedulePanel } from "./SchedulePanel";
 import { TagsEditor } from "./TagsEditor";
 
 export type ManagementTab = "nota" | "agendar" | "acuerdos";
@@ -35,6 +32,8 @@ interface CaseDetailProps {
   onSchedule: (fecha: string, motivo: string) => void;
   onResolveSchedule: () => void;
   onSaveAgreement: (agreement: NewAgreement) => void;
+  onToggleInstallment: (installmentId: string) => void;
+  onDeleteAgreement: () => void;
 }
 
 export function CaseDetail({
@@ -48,9 +47,9 @@ export function CaseDetail({
   onSchedule,
   onResolveSchedule,
   onSaveAgreement,
+  onToggleInstallment,
+  onDeleteAgreement,
 }: CaseDetailProps) {
-  const { status, param } = resolveCaseStatus(account);
-  const hasPendingSchedule = Boolean(account.agendado_para && !account.agendado_resuelto);
 
   return (
     <article className="flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="Detalle del caso">
@@ -66,9 +65,6 @@ export function CaseDetail({
             >
               {account.nombre ?? "Sin info"}
             </h2>
-            <div>
-              <StatusBadge status={status} param={param} />
-            </div>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-xs leading-4 text-fg-muted">Monto</span>
@@ -95,19 +91,6 @@ export function CaseDetail({
           />
         </dl>
 
-        {hasPendingSchedule && account.agendado_para ? (
-          <div className="flex items-center justify-between gap-2 rounded-sm border border-info-border bg-info-subtle px-2.5 py-1.5">
-            <p className="min-w-0 text-[13px] leading-5 text-fg-secondary">
-              <span className="font-medium text-info">Agendado {formatIsoRelativeDay(account.agendado_para)}</span>
-              {account.agendado_motivo ? <span className="text-fg-secondary"> · {account.agendado_motivo}</span> : null}
-            </p>
-            <Button size="small" onClick={onResolveSchedule}>
-              <Check className="size-3.5" strokeWidth={1.75} aria-hidden />
-              Marcar resuelto
-            </Button>
-          </div>
-        ) : null}
-
         <TagsEditor tags={account.etiquetas} onAdd={onAddTag} onRemove={onRemoveTag} />
       </header>
 
@@ -133,10 +116,16 @@ export function CaseDetail({
           <NoteForm key={account.dni} notes={account.notas} onSave={onSaveNote} />
         </Tabs.Content>
         <Tabs.Content value="agendar" className="p-3">
-          <ScheduleForm key={account.dni} onSave={onSchedule} />
+          <SchedulePanel key={account.dni} account={account} onSave={onSchedule} onResolve={onResolveSchedule} />
         </Tabs.Content>
         <Tabs.Content value="acuerdos" className="p-3">
-          <AgreementPanel key={account.dni} account={account} onSave={onSaveAgreement} />
+          <AgreementPanel
+            key={account.dni}
+            account={account}
+            onSave={onSaveAgreement}
+            onToggleInstallment={onToggleInstallment}
+            onDelete={onDeleteAgreement}
+          />
         </Tabs.Content>
       </Tabs.Root>
     </article>

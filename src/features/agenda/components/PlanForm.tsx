@@ -6,11 +6,12 @@ import { CheckboxField } from "@/components/ui/CheckboxField";
 import { Kbd } from "@/components/ui/Kbd";
 import { TextField } from "@/components/ui/TextField";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
+import type { NewAgreement } from "@/lib/agreements";
 import { addDaysIso, todayIso } from "@/lib/dates";
 import { formatMoney, parseMoneyToCents } from "@/lib/format";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { planSchema, type PlanValues } from "../schemas";
-import type { NewAgreement } from "../useCases";
+
 
 interface PlanFormProps {
   onSave: (agreement: NewAgreement) => void;
@@ -56,7 +57,6 @@ export function PlanForm({ onSave }: PlanFormProps) {
     const anticipoCents = parseMoneyToCents(values.anticipo_monto);
     if (montoCuotaCents === null) return;
     onSave({
-      tipo: "plan",
       cuotas: Number(values.cuotas),
       monto_cuota: montoCuotaCents,
       anticipo:

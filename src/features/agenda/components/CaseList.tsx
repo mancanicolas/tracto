@@ -2,11 +2,10 @@ import { Plus, Search } from "lucide-react";
 import type { KeyboardEvent, Ref, RefObject } from "react";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Tag } from "@/components/ui/Tag";
 import { cn } from "@/lib/cn";
 import { formatDni, formatMoney } from "@/lib/format";
 import type { Case } from "@/lib/mock";
-import { resolveCaseStatus } from "@/lib/status";
 import { FILTERS, type FilterKey } from "../filters";
 
 interface CaseListProps {
@@ -134,7 +133,6 @@ interface CaseRowProps {
 }
 
 function CaseRow({ account, selected, onClick }: CaseRowProps) {
-  const { status, param } = resolveCaseStatus(account);
   return (
     <li
       id={`case-${account.dni}`}
@@ -161,7 +159,11 @@ function CaseRow({ account, selected, onClick }: CaseRowProps) {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-xs leading-4 tabular-nums text-fg-muted">{formatDni(account.dni)}</span>
-        <StatusBadge status={status} param={param} />
+        <span className="flex min-w-0 items-center justify-end gap-1">
+          {account.etiquetas.map((tag) => (
+            <Tag key={tag} label={tag} />
+          ))}
+        </span>
       </div>
     </li>
   );

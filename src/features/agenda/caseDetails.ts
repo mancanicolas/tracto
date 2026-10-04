@@ -1,4 +1,4 @@
-import { DEFAULT_PORTFOLIO, ENTIDADES } from "@/constants/entidades";
+import { DEFAULT_PORTFOLIO, findEntity } from "@/constants/entidades";
 import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import type { CaseDetails } from "@/lib/types";
 
@@ -13,7 +13,7 @@ interface CaseFormFields {
 
 export function toCaseDetails(values: CaseFormFields): CaseDetails {
   const entidad = values.entidad || undefined;
-  const cartera = entidad ? values.cartera || ENTIDADES[entidad]?.carteras[0] || DEFAULT_PORTFOLIO : undefined;
+  const cartera = entidad ? values.cartera || findEntity(entidad)?.carteras[0] || DEFAULT_PORTFOLIO : undefined;
   return {
     nombre: values.nombre?.trim() || undefined,
     telefono: values.telefono ? normalizeDni(values.telefono) : undefined,

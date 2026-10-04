@@ -6,7 +6,7 @@ import { CheckboxField } from "@/components/ui/CheckboxField";
 import { Kbd } from "@/components/ui/Kbd";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
-import { ENTIDADES, hasMultipleProducts } from "@/constants/entidades";
+import { findEntity, hasMultipleProducts } from "@/constants/entidades";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import type { NewAgreement } from "@/lib/agreements";
 import { cn } from "@/lib/cn";
@@ -112,7 +112,7 @@ export function AgreementForm({ entidad, balance, onSave }: AgreementFormProps) 
         <SelectField
           label="Producto"
           placeholder="Elegir el producto"
-          options={(ENTIDADES[entidad ?? ""]?.productos ?? []).map((value) => ({ value, label: value }))}
+          options={(findEntity(entidad)?.productos ?? []).map((value) => ({ value, label: value }))}
           error={errors.producto?.message}
           {...register("producto")}
         />

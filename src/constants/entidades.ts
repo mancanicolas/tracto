@@ -87,12 +87,29 @@ export const ENTIDADES: Record<string, Entidad> = {
 
 export const ENTIDAD_NAMES = Object.keys(ENTIDADES);
 
+function foldName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toUpperCase();
+}
+
+export function findEntity(name: string | undefined): Entidad | undefined {
+  if (!name) return undefined;
+  const exact = ENTIDADES[name];
+  if (exact) return exact;
+  const folded = foldName(name);
+  const match = ENTIDAD_NAMES.find((candidate) => foldName(candidate) === folded);
+  return match ? ENTIDADES[match] : undefined;
+}
+
 export function hasMultipleProducts(entidad: string | undefined): boolean {
-  return entidad !== undefined && (ENTIDADES[entidad]?.productos.length ?? 0) > 1;
+  return (findEntity(entidad)?.productos.length ?? 0) > 1;
 }
 
 export function getPaymentMethods(entidad: string, producto: string | undefined): PaymentMethod[] {
-  const entity = ENTIDADES[entidad];
+  const entity = findEntity(entidad);
   if (!entity) return [];
   return entity.metodosPago[producto ?? DEFAULT_PRODUCT] ?? [];
 }

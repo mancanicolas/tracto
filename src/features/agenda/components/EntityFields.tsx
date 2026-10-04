@@ -1,6 +1,6 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { SelectField } from "@/components/ui/SelectField";
-import { DEFAULT_PORTFOLIO, ENTIDADES, ENTIDAD_NAMES } from "@/constants/entidades";
+import { DEFAULT_PORTFOLIO, ENTIDAD_NAMES, findEntity } from "@/constants/entidades";
 
 interface EntityFormValues {
   entidad: string;
@@ -19,7 +19,7 @@ export function EntityFields() {
   const entidad = useWatch({ control, name: "entidad" });
 
   const entityNames = entidad && !ENTIDAD_NAMES.includes(entidad) ? [...ENTIDAD_NAMES, entidad] : ENTIDAD_NAMES;
-  const carteras = ENTIDADES[entidad]?.carteras ?? [DEFAULT_PORTFOLIO];
+  const carteras = findEntity(entidad)?.carteras ?? [DEFAULT_PORTFOLIO];
   const entidadField = register("entidad");
 
   return (
@@ -32,7 +32,7 @@ export function EntityFields() {
         {...entidadField}
         onChange={(event) => {
           void entidadField.onChange(event);
-          setValue("cartera", ENTIDADES[event.target.value]?.carteras[0] ?? "");
+          setValue("cartera", findEntity(event.target.value)?.carteras[0] ?? "");
         }}
       />
       <SelectField

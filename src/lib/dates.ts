@@ -1,5 +1,5 @@
 import { TZDate } from "@date-fns/tz";
-import { addDays, addMonths, format, startOfMonth } from "date-fns";
+import { addDays, addMonths, differenceInCalendarDays, format, startOfMonth } from "date-fns";
 import { TIME_ZONE, formatDate, formatRelativeDay } from "./format";
 
 const ISO_DATE_FORMAT = "yyyy-MM-dd";
@@ -35,4 +35,22 @@ export function formatIsoDate(iso: string, now?: Date): string {
 
 export function formatIsoRelativeDay(iso: string, now?: Date): string {
   return formatRelativeDay(parseIsoDate(iso), now);
+}
+
+const DAYS_PER_WEEK = 7;
+const DAYS_PER_MONTH = 30;
+const DAYS_PER_YEAR = 365;
+
+function pluralize(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+export function formatNoteAge(isoDateTime: string, now: Date = new Date()): string {
+  const days = differenceInCalendarDays(new TZDate(now, TIME_ZONE), new TZDate(new Date(isoDateTime), TIME_ZONE));
+  if (days <= 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < DAYS_PER_WEEK) return `hace ${days} días`;
+  if (days < DAYS_PER_MONTH) return `hace ${pluralize(Math.floor(days / DAYS_PER_WEEK), "semana", "semanas")}`;
+  if (days < DAYS_PER_YEAR) return `hace ${pluralize(Math.floor(days / DAYS_PER_MONTH), "mes", "meses")}`;
+  return `hace ${pluralize(Math.floor(days / DAYS_PER_YEAR), "año", "años")}`;
 }

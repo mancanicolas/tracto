@@ -5,7 +5,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/cn";
-import { formatDni, formatMoney } from "@/lib/format";
+import { formatNoteAge } from "@/lib/dates";
+import { formatDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
 import { FILTERS, type FilterKey } from "../filters";
@@ -143,6 +144,7 @@ interface CaseRowProps {
 
 function CaseRow({ account, selected, onClick }: CaseRowProps) {
   const status = resolveCaseStatus(account);
+  const lastNote = account.notas[0];
   return (
     <li
       id={`case-${account.dni}`}
@@ -161,11 +163,9 @@ function CaseRow({ account, selected, onClick }: CaseRowProps) {
         >
           {account.nombre ?? "Sin info"}
         </span>
-        {account.monto !== undefined ? (
-          <span className="shrink-0 text-right font-mono text-[13px] leading-5 tabular-nums text-fg-secondary">
-            {formatMoney(account.monto)}
-          </span>
-        ) : null}
+        <span className="shrink-0 text-xs leading-5 text-fg-muted">
+          {lastNote ? `Última nota ${formatNoteAge(lastNote.creada)}` : "Sin notas"}
+        </span>
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-xs leading-4 tabular-nums text-fg-muted">{formatDni(account.dni)}</span>

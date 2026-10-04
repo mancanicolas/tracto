@@ -40,6 +40,16 @@ export async function updateCaseDetails(id: string, values: CaseDetails): Promis
   return toResult(error);
 }
 
+export async function updateCaseArchived(id: string, isArchived: boolean): Promise<Result> {
+  const { error } = await supabase.from("casos").update({ archivado: isArchived }).eq("id", id);
+  return toResult(error);
+}
+
+export async function deleteCase(id: string): Promise<Result> {
+  const { error } = await supabase.from("casos").delete().eq("id", id);
+  return toResult(error);
+}
+
 export async function insertLabel(label: Label): Promise<Result> {
   const { error } = await supabase
     .from("etiquetas")

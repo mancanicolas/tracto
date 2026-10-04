@@ -21,6 +21,8 @@ type Action =
   | { type: "load_failed" }
   | { type: "add"; account: Case }
   | { type: "case_update"; dni: string; values: CaseDetails }
+  | { type: "case_archive"; dni: string; isArchived: boolean }
+  | { type: "case_remove"; dni: string }
   | { type: "label_create"; label: Label }
   | { type: "label_apply"; dni: string; labelId: string }
   | { type: "label_remove"; dni: string; labelId: string }
@@ -77,6 +79,10 @@ function reducer(state: State, action: Action): State {
       return withCases([action.account, ...state.cases]);
     case "case_update":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, ...action.values })));
+    case "case_archive":
+      return withCases(update(state.cases, action.dni, (a) => ({ ...a, archivado: action.isArchived })));
+    case "case_remove":
+      return withCases(state.cases.filter((a) => a.dni !== action.dni));
     case "label_create":
       return { ...state, labels: [...state.labels, action.label] };
     case "label_apply":
@@ -187,6 +193,16 @@ export function useCases() {
         const account = findCase(dni);
         if (!account) return;
         void commit({ type: "case_update", dni, values }, () => writes.updateCaseDetails(account.id, values));
+      },
+      archiveCase: (dni: string, isArchived: boolean) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "case_archive", dni, isArchived }, () => writes.updateCaseArchived(account.id, isArchived));
+      },
+      removeCase: (dni: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "case_remove", dni }, () => writes.deleteCase(account.id));
       },
       applyLabel: (dni: string, labelId: string) => {
         const account = findCase(dni);

@@ -44,6 +44,7 @@ export interface CasoRow {
   mail: string | null;
   ultimo_pago_fecha: string | null;
   pagos_previos: boolean;
+  archivado: boolean;
   caso_etiquetas: { etiqueta_id: string }[];
   notas: NotaRow[];
   agenda: AgendaRow | AgendaRow[] | null;
@@ -108,6 +109,7 @@ export function toCase(row: CasoRow): Case {
     notas: [...row.notas].sort((a, b) => b.creada.localeCompare(a.creada)).map(toNote),
     acuerdo: acuerdo ? toAgreement(acuerdo) : undefined,
     pagos_previos: row.pagos_previos,
+    archivado: row.archivado,
   };
 }
 

@@ -12,11 +12,17 @@ export const FILTERS = [
 
 export type FilterKey = (typeof FILTERS)[number]["key"];
 
+export const ARCHIVED_VIEW = "archivados";
+
+export type ListView = FilterKey | typeof ARCHIVED_VIEW;
+
 export function hasPendingAgenda(account: Case, today: string = todayIso()): boolean {
   return Boolean(account.agendado_para && !account.agendado_resuelto && account.agendado_para <= today);
 }
 
-export function matchesFilter(account: Case, filter: FilterKey, today: string = todayIso()): boolean {
+export function matchesFilter(account: Case, filter: ListView, today: string = todayIso()): boolean {
+  if (filter === ARCHIVED_VIEW) return Boolean(account.archivado);
+  if (account.archivado) return false;
   const status = resolveCaseStatus(account, today);
   switch (filter) {
     case "todos":
@@ -50,16 +56,17 @@ export function matchesQuery(account: Case, query: string): boolean {
   return account.dni.includes(digits) || (account.telefono ?? "").includes(digits);
 }
 
-export function countByFilter(cases: Case[], today: string = todayIso()): Record<FilterKey, number> {
+export function countByFilter(cases: Case[], today: string = todayIso()): Record<ListView, number> {
   return {
-    todos: cases.length,
+    todos: cases.filter((c) => matchesFilter(c, "todos", today)).length,
+    archivados: cases.filter((c) => matchesFilter(c, ARCHIVED_VIEW, today)).length,
     acuerdo: cases.filter((c) => matchesFilter(c, "acuerdo", today)).length,
     pagos: cases.filter((c) => matchesFilter(c, "pagos", today)).length,
     agenda: cases.filter((c) => matchesFilter(c, "agenda", today)).length,
   };
 }
 
-export function selectVisibleCases(cases: Case[], filter: FilterKey, query: string, today: string = todayIso()): Case[] {
+export function selectVisibleCases(cases: Case[], filter: ListView, query: string, today: string = todayIso()): Case[] {
   const visible = cases.filter((c) => matchesFilter(c, filter, today) && matchesQuery(c, query));
   if (filter !== "agenda") return visible;
   return [...visible].sort((a, b) => (a.agendado_para ?? "").localeCompare(b.agendado_para ?? ""));

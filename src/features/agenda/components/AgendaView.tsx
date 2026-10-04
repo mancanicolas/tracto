@@ -8,7 +8,7 @@ import type { LabelColor } from "@/lib/labels";
 import { useShortcut } from "@/lib/shortcuts";
 import type { CaseDetails } from "@/lib/types";
 import { toCaseDetails } from "../caseDetails";
-import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
+import { FILTERS, countByFilter, selectVisibleCases, type ListView } from "../filters";
 import type { CaseEditValues } from "../schemas";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
@@ -39,10 +39,12 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     resolveSchedule,
     setAgreement,
     deleteAgreement,
+    archiveCase,
+    removeCase,
     toggleInstallment,
     toggleInstallmentStats,
   } = useCases();
-  const [filter, setFilter] = useState<FilterKey>("todos");
+  const [filter, setFilter] = useState<ListView>("todos");
   const [query, setQuery] = useState("");
   const [pickedDni, setSelectedDni] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -62,7 +64,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   );
   const counts = useMemo(() => countByFilter(cases, today), [cases, today]);
 
-  const selectedDni = pickedDni ?? cases[0]?.dni ?? null;
+  const selectedDni = pickedDni ?? cases.find((account) => !account.archivado)?.dni ?? null;
   const selectedCase = cases.find((account) => account.dni === selectedDni) ?? null;
   const showDetailPane = isWide || isDetailOpen;
   const showListPane = isWide || !isDetailOpen;
@@ -134,6 +136,24 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   useShortcut("3", () => setFilter(FILTERS[2].key), { enabled: shortcutsEnabled });
   useShortcut("4", () => setFilter(FILTERS[3].key), { enabled: shortcutsEnabled });
 
+  const dropSelection = (dni: string) => {
+    if (dni !== selectedDni) return;
+    setSelectedDni(null);
+    setIsDetailOpen(false);
+  };
+
+  const archiveFromList = (dni: string, isArchived: boolean) => {
+    archiveCase(dni, isArchived);
+    dropSelection(dni);
+    setAnnouncement(isArchived ? "Caso archivado" : "Caso desarchivado");
+  };
+
+  const deleteFromList = (dni: string) => {
+    dropSelection(dni);
+    removeCase(dni);
+    setAnnouncement("Caso eliminado");
+  };
+
   const saveAgreement = (dni: string, agreement: NewAgreement) => {
     setAgreement(dni, agreement);
     setAnnouncement("Acuerdo registrado");
@@ -173,6 +193,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
             onMove={moveSelection}
             onNewCase={() => setIsNewCaseOpen(true)}
             onOpenStats={() => setIsStatsOpen(true)}
+            onArchive={archiveFromList}
+            onDelete={deleteFromList}
           />
         </section>
       ) : null}

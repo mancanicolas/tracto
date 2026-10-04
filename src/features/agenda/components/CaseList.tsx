@@ -1,5 +1,5 @@
-import { ChartColumn, Plus, Search } from "lucide-react";
-import type { KeyboardEvent, Ref, RefObject } from "react";
+import { Archive, ChartColumn, Plus, Search } from "lucide-react";
+import { useState, type KeyboardEvent, type MouseEvent, type Ref, type RefObject } from "react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
@@ -9,22 +9,26 @@ import { formatNoteAge } from "@/lib/dates";
 import { formatDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
-import { FILTERS, type FilterKey } from "../filters";
+import { ARCHIVED_VIEW, FILTERS, type ListView } from "../filters";
+import { CaseContextMenu, type ContextMenuTarget } from "./CaseContextMenu";
+import { DeleteCaseDialog } from "./DeleteCaseDialog";
 
 interface CaseListProps {
   cases: Case[];
   selectedDni: string | null;
-  filter: FilterKey;
-  counts: Record<FilterKey, number>;
+  filter: ListView;
+  counts: Record<ListView, number>;
   query: string;
   listRef: RefObject<HTMLUListElement | null>;
   searchRef: Ref<HTMLInputElement>;
-  onFilterChange: (filter: FilterKey) => void;
+  onFilterChange: (filter: ListView) => void;
   onQueryChange: (query: string) => void;
   onOpen: (dni: string) => void;
   onMove: (delta: number) => void;
   onNewCase: () => void;
   onOpenStats: () => void;
+  onArchive: (dni: string, isArchived: boolean) => void;
+  onDelete: (dni: string) => void;
 }
 
 export function CaseList({
@@ -41,7 +45,18 @@ export function CaseList({
   onMove,
   onNewCase,
   onOpenStats,
+  onArchive,
+  onDelete,
 }: CaseListProps) {
+  const [menu, setMenu] = useState<ContextMenuTarget | null>(null);
+  const [pendingDeleteDni, setPendingDeleteDni] = useState<string | null>(null);
+  const pendingDelete = cases.find((account) => account.dni === pendingDeleteDni) ?? null;
+
+  const openMenu = (account: Case, event: MouseEvent) => {
+    event.preventDefault();
+    setMenu({ dni: account.dni, x: event.clientX, y: event.clientY, isArchived: Boolean(account.archivado) });
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -128,10 +143,50 @@ export function CaseList({
               account={account}
               selected={account.dni === selectedDni}
               onClick={() => onOpen(account.dni)}
+              onContextMenu={(event) => openMenu(account, event)}
             />
           ))}
         </ul>
       )}
+
+      <div className="border-t border-line-subtle">
+        <button
+          type="button"
+          aria-pressed={filter === ARCHIVED_VIEW}
+          onClick={() => onFilterChange(filter === ARCHIVED_VIEW ? "todos" : ARCHIVED_VIEW)}
+          className={cn(
+            "flex h-7 w-full items-center justify-center gap-1.5 text-xs transition-colors duration-100 motion-reduce:transition-none",
+            filter === ARCHIVED_VIEW ? "bg-raised text-fg" : "text-fg-muted hover:bg-raised hover:text-fg",
+          )}
+        >
+          <Archive className="size-3.5" strokeWidth={1.75} aria-hidden />
+          {filter === ARCHIVED_VIEW ? "Volver a los casos" : "Archivados"}
+          <span className="font-mono text-[11px] tabular-nums">{counts[ARCHIVED_VIEW]}</span>
+        </button>
+      </div>
+
+      {menu ? (
+        <CaseContextMenu
+          target={menu}
+          onClose={() => setMenu(null)}
+          onArchive={() => {
+            onArchive(menu.dni, !menu.isArchived);
+            setMenu(null);
+          }}
+          onDelete={() => {
+            setPendingDeleteDni(menu.dni);
+            setMenu(null);
+          }}
+        />
+      ) : null}
+      <DeleteCaseDialog
+        account={pendingDelete}
+        onCancel={() => setPendingDeleteDni(null)}
+        onConfirm={() => {
+          if (pendingDeleteDni) onDelete(pendingDeleteDni);
+          setPendingDeleteDni(null);
+        }}
+      />
     </div>
   );
 }
@@ -140,9 +195,10 @@ interface CaseRowProps {
   account: Case;
   selected: boolean;
   onClick: () => void;
+  onContextMenu: (event: MouseEvent) => void;
 }
 
-function CaseRow({ account, selected, onClick }: CaseRowProps) {
+function CaseRow({ account, selected, onClick, onContextMenu }: CaseRowProps) {
   const status = resolveCaseStatus(account);
   const lastNote = account.notas[0];
   return (
@@ -151,6 +207,7 @@ function CaseRow({ account, selected, onClick }: CaseRowProps) {
       role="option"
       aria-selected={selected}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className={cn(
         "flex h-12 cursor-pointer flex-col justify-center gap-0.5 border-b border-line-subtle px-3",
         selected ? "bg-row-selected shadow-[inset_2px_0_0_var(--accent)]" : "hover:bg-row-hover",
@@ -176,12 +233,13 @@ function CaseRow({ account, selected, onClick }: CaseRowProps) {
 }
 
 interface EmptyListProps {
-  filter: FilterKey;
+  filter: ListView;
   hasQuery: boolean;
   onShowAll: () => void;
 }
 
-const EMPTY_MESSAGES: Record<FilterKey, string> = {
+const EMPTY_MESSAGES: Record<ListView, string> = {
+  archivados: "No hay casos archivados.",
   todos: "No hay casos cargados.",
   acuerdo: "No hay casos con acuerdo.",
   pagos: "No hay pagos registrados este mes.",

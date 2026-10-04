@@ -44,4 +44,5 @@ export interface Case {
   notas: Note[];
   acuerdo?: Agreement;
   pagos_previos?: boolean;
+  archivado?: boolean;
 }

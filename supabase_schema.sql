@@ -65,9 +65,12 @@ create table if not exists public.casos (
   mail text,
   ultimo_pago_fecha date,
   pagos_previos boolean not null default false,
+  archivado boolean not null default false,
   created_at timestamptz not null default now(),
   unique (operador_id, dni)
 );
+
+alter table public.casos add column if not exists archivado boolean not null default false;
 
 create table if not exists public.caso_etiquetas (
   caso_id uuid not null references public.casos (id) on delete cascade,

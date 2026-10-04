@@ -138,7 +138,7 @@ export function CaseDetail({
           <AgendaSummary account={account} onResolve={onResolveSchedule} />
           {account.acuerdo ? (
             <AgreementAccordion
-              key={account.dni}
+              key={`agreement-${account.dni}`}
               agreement={account.acuerdo}
               onToggleInstallment={onToggleInstallment}
               onToggleInstallmentStats={onToggleInstallmentStats}
@@ -147,7 +147,7 @@ export function CaseDetail({
           ) : null}
           {status !== null && status !== "cancelado" ? (
             <ConvenioAction
-              key={account.dni}
+              key={`convenio-${account.dni}`}
               account={account}
               onEditCase={onEditCase}
               onFillCaseData={onFillCaseData}

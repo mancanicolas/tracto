@@ -34,7 +34,10 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
               disabled={state.phase === "checking" || state.phase === "downloading"}
               onClick={checkNow}
             >
-              <RefreshCw strokeWidth={1.75} />
+              <RefreshCw
+                strokeWidth={1.75}
+                className={state.phase === "checking" ? "animate-spin motion-reduce:animate-none" : undefined}
+              />
             </IconButton>
             <IconButton label="Cerrar sesión" onClick={() => void onSignOut()}>
               <LogOut strokeWidth={1.75} />
@@ -42,7 +45,7 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
           </>
         }
       />
-      <UpdateBanner state={state} onInstall={installUpdate} onCheck={checkNow} onDismiss={dismiss} />
+      <UpdateBanner state={state} onInstall={installUpdate} onDismiss={dismiss} />
       <main className="min-h-0 flex-1">
         <AgendaView operatorName={operatorName} />
       </main>

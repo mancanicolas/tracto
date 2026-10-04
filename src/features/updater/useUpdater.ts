@@ -7,7 +7,6 @@ export interface UpdateState {
   phase: UpdatePhase;
   version?: string;
   progress?: number;
-  failedStep?: "check" | "install";
 }
 
 const IDLE_STATE: UpdateState = { phase: "idle" };
@@ -28,7 +27,7 @@ export function useUpdater() {
       if (update) offerUpdate(update);
       else setState({ phase: "up_to_date" });
     } catch {
-      setState({ phase: "error", failedStep: "check" });
+      setState({ phase: "up_to_date" });
     }
   }, [offerUpdate]);
 
@@ -61,7 +60,7 @@ export function useUpdater() {
         }
       });
     } catch {
-      setState({ phase: "error", version: update.version, failedStep: "install" });
+      setState({ phase: "error", version: update.version });
     }
   }, []);
 

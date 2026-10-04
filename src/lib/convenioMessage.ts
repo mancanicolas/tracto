@@ -3,6 +3,7 @@ import type { ConvenioCase } from "./convenio";
 import { installmentLabel } from "./agreements";
 import { todayIso } from "./dates";
 import { formatArs } from "./format";
+import { getConvenioWording } from "./convenioWording";
 import { fail, ok, type Result } from "./result";
 import type { Agreement, Installment } from "./types";
 
@@ -74,17 +75,14 @@ function numberedBlocks(blocks: string[][]): string[] {
 
 export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement, today: string = todayIso()): string {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
-  const isTotal = agreement.tipo === "cuotas";
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
-  const planTitle = isTotal ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS";
+  const { planTitle, purpose } = getConvenioWording(account.entidad, agreement);
   const paymentBlocks = numberedBlocks([transferBlock(methods), cashBlock(methods), otherBlock(methods)]);
 
   return [
     `*Estimado/a ${account.nombre} - ${account.dni}:*`,
     "",
-    `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${
-      isTotal ? "cancelación total" : "regularización parcial"
-    } de sus obligaciones de ${account.cartera ?? ""}`,
+    `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${purpose} de sus obligaciones de ${account.cartera ?? ""}`,
     "",
     `*${planTitle} (${formatArs(total)})*`,
     ...agreement.cuotas.map(installmentLine),

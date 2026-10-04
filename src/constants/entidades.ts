@@ -104,6 +104,13 @@ export function findEntity(name: string | undefined): Entidad | undefined {
   return match ? ENTIDADES[match] : undefined;
 }
 
+const REGULARIZATION_ENTITY = "UALA";
+const REGULARIZATION_PRODUCT = "TC";
+
+export function usesRegularizationWording(entidad: string | undefined, producto: string | undefined): boolean {
+  return Boolean(entidad) && foldName(entidad ?? "") === REGULARIZATION_ENTITY && producto === REGULARIZATION_PRODUCT;
+}
+
 export function hasMultipleProducts(entidad: string | undefined): boolean {
   return (findEntity(entidad)?.productos.length ?? 0) > 1;
 }

@@ -7,6 +7,7 @@ import {
 } from "@/constants/entidades";
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
+import { getConvenioWording } from "./convenioWording";
 import { formatDni, formatMoney } from "./format";
 import { fail, type Result } from "./result";
 import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
@@ -78,10 +79,10 @@ function installmentCell(installment: Installment, totalInstallments: number): s
   return `${installment.numero}/${totalInstallments}`;
 }
 
-function installmentDescription(installment: Installment, isFinal: boolean): string {
+function installmentDescription(installment: Installment, isFinal: boolean, finalLabel: string): string {
   if (installment.tipo === "anticipo") return "Anticipo";
   if (installment.tipo === "parcial") return "Pago a cuenta";
-  return isFinal ? "Cuota Cancelatoria" : "Cuota Convenio";
+  return isFinal ? finalLabel : "Cuota Convenio";
 }
 
 function sectionBar(title: string): ContentTable {
@@ -122,7 +123,7 @@ function clauseTitle(title: string): Content {
   };
 }
 
-function buildPlanTable(agreement: Agreement): Content {
+function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
@@ -134,7 +135,7 @@ function buildPlanTable(agreement: Agreement): Content {
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
     { text: installmentCell(installment, regular.length) },
-    { text: installmentDescription(installment, installment.id === lastId) },
+    { text: installmentDescription(installment, installment.id === lastId, finalLabel) },
     { text: formatFullDate(installment.fecha) },
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
@@ -252,6 +253,7 @@ export function buildConvenioDefinition(
   today: string = todayIso(),
 ): TDocumentDefinitions {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
+  const wording = getConvenioWording(account.entidad, agreement);
   const debtorName = account.nombre;
 
   return {
@@ -289,8 +291,8 @@ export function buildConvenioDefinition(
           formatDni(account.dni),
         ],
       },
-      sectionBar(agreement.tipo === "cuotas" ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS"),
-      buildPlanTable(agreement),
+      sectionBar(wording.planTitle),
+      buildPlanTable(agreement, wording.finalInstallment),
       sectionBar("MEDIOS DE PAGO HABILITADOS"),
       paymentCard(methods),
       clauseTitle("LIBRE DE DEUDA"),

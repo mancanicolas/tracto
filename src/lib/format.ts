@@ -34,6 +34,10 @@ export function formatAmount(cents: Cents): string {
   return amount.format(centsToDecimalString(cents) as unknown as number);
 }
 
+export function formatArs(cents: Cents): string {
+  return `AR$ ${formatAmount(cents)}`;
+}
+
 function toTz(date: Date | string | number): TZDate {
   return new TZDate(new Date(date), TIME_ZONE);
 }

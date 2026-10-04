@@ -1,5 +1,10 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
-import { getPaymentMethods, hasMultipleProducts, type PaymentMethod } from "@/constants/entidades";
+import {
+  getPaymentMethods,
+  hasMultipleProducts,
+  paymentMethodSummary,
+  type PaymentMethod,
+} from "@/constants/entidades";
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
 import { formatDni, formatMoney } from "./format";
@@ -44,6 +49,8 @@ const LIBRE_DE_DEUDA_TEXT =
 const INCUMPLIMIENTO_TEXT =
   "Se deja expresa constancia que, en el supuesto de incumplimiento, el presente acuerdo quedará sin efecto, restableciéndose el saldo original de la deuda con más los intereses y gastos que correspondan.";
 
+export type ConvenioKind = "total" | "parcial";
+
 export type ConvenioField = "nombre" | "DNI" | "entidad" | "producto";
 
 export type ConvenioCase = Case & { nombre: string; entidad: string };
@@ -71,9 +78,9 @@ function installmentCell(installment: Installment, totalInstallments: number): s
   return installment.tipo === "anticipo" ? "Anticipo" : `${installment.numero}/${totalInstallments}`;
 }
 
-function installmentDescription(installment: Installment, isLast: boolean): string {
+function installmentDescription(installment: Installment, isFinal: boolean): string {
   if (installment.tipo === "anticipo") return "Anticipo";
-  return isLast ? "Cuota Cancelatoria" : "Cuota Convenio";
+  return isFinal ? "Cuota Cancelatoria" : "Cuota Convenio";
 }
 
 function sectionBar(title: string): ContentTable {
@@ -114,7 +121,7 @@ function clauseTitle(title: string): Content {
   };
 }
 
-function buildPlanTable(agreement: Agreement): Content {
+function buildPlanTable(agreement: Agreement, kind: ConvenioKind): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
@@ -126,7 +133,7 @@ function buildPlanTable(agreement: Agreement): Content {
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
     { text: installmentCell(installment, regular.length) },
-    { text: installmentDescription(installment, installment.id === lastId) },
+    { text: installmentDescription(installment, kind === "total" && installment.id === lastId) },
     { text: formatFullDate(installment.fecha) },
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
@@ -184,7 +191,7 @@ function labelValueTable(entries: [string, string][]): Content {
 function paymentCard(methods: PaymentMethod[]): Content {
   const entries: [string, string][] =
     methods.length > 0
-      ? methods.map((paymentMethod) => [paymentMethod.nombre, paymentMethod.detalle.join(" / ") || "Habilitado"])
+      ? methods.map((paymentMethod) => [paymentMethod.nombre, paymentMethodSummary(paymentMethod) || "Habilitado"])
       : [["Consultar", "Los medios de pago se informan por el Departamento de Cobranza"]];
   return {
     table: {
@@ -241,6 +248,7 @@ function buildFooter(): Content {
 export function buildConvenioDefinition(
   account: ConvenioCase,
   agreement: Agreement,
+  kind: ConvenioKind,
   today: string = todayIso(),
 ): TDocumentDefinitions {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
@@ -281,8 +289,8 @@ export function buildConvenioDefinition(
           formatDni(account.dni),
         ],
       },
-      sectionBar("PLAN DE CANCELACIÓN TOTAL"),
-      buildPlanTable(agreement),
+      sectionBar(kind === "total" ? "PLAN DE CANCELACIÓN TOTAL" : "PLAN DE PAGOS"),
+      buildPlanTable(agreement, kind),
       sectionBar("MEDIOS DE PAGO HABILITADOS"),
       paymentCard(methods),
       clauseTitle("LIBRE DE DEUDA"),
@@ -302,24 +310,28 @@ export function buildConvenioDefinition(
   };
 }
 
-export async function buildConvenioBytes(account: ConvenioCase, agreement: Agreement): Promise<Uint8Array> {
+export async function buildConvenioBytes(
+  account: ConvenioCase,
+  agreement: Agreement,
+  kind: ConvenioKind,
+): Promise<Uint8Array> {
   const [{ default: pdfMake }, { default: vfs }] = await Promise.all([
     import("pdfmake/build/pdfmake"),
     import("pdfmake/build/vfs_fonts"),
   ]);
   pdfMake.addVirtualFileSystem(vfs);
-  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement)).getBuffer();
+  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement, kind)).getBuffer();
   return new Uint8Array(buffer);
 }
 
-export async function downloadConvenio(account: Case): Promise<Result<SaveOutcome>> {
+export async function downloadConvenio(account: Case, kind: ConvenioKind): Promise<Result<SaveOutcome>> {
   const { acuerdo, nombre, entidad } = account;
   if (!acuerdo || !nombre?.trim() || !entidad?.trim()) {
     return fail("Faltan datos del caso para generar el convenio.");
   }
   let bytes: Uint8Array;
   try {
-    bytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo);
+    bytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo, kind);
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
   }

@@ -1,0 +1,88 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/Button";
+import { Kbd } from "@/components/ui/Kbd";
+import { SelectField } from "@/components/ui/SelectField";
+import { TextField } from "@/components/ui/TextField";
+import { DEFAULT_PORTFOLIO, ENTIDADES } from "@/constants/entidades";
+import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
+import { MOD_LABEL } from "@/lib/shortcuts";
+import type { Case } from "@/lib/types";
+import { convenioSchema, type ConvenioValues } from "../schemas";
+
+export type ConvenioMode = "copy" | "download";
+
+const CARTERAS_LIST_ID = "convenio-carteras";
+
+const KIND_OPTIONS = [
+  { value: "total", label: "Cancelación Total" },
+  { value: "parcial", label: "Pago Parcial / A cuenta" },
+];
+
+const CONFIRM_LABELS: Record<ConvenioMode, string> = {
+  copy: "Confirmar y copiar",
+  download: "Confirmar y descargar",
+};
+
+interface ConvenioFormProps {
+  mode: ConvenioMode;
+  account: Case;
+  onConfirm: (values: ConvenioValues) => void;
+  onCancel: () => void;
+}
+
+export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const carteras = ENTIDADES[account.entidad ?? ""]?.carteras ?? [DEFAULT_PORTFOLIO];
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ConvenioValues>({
+    resolver: zodResolver(convenioSchema),
+    defaultValues: {
+      nombre: account.nombre ?? "",
+      cartera: account.cartera ?? carteras[0] ?? "",
+      tipo: "total",
+    },
+  });
+
+  useSubmitShortcut(formRef);
+
+  const submit = handleSubmit(onConfirm);
+
+  return (
+    <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-3">
+      <TextField
+        label="Nombre y apellido / Titular"
+        autoComplete="off"
+        autoFocus
+        error={errors.nombre?.message}
+        {...register("nombre")}
+      />
+      <TextField
+        label="Cartera"
+        autoComplete="off"
+        list={CARTERAS_LIST_ID}
+        error={errors.cartera?.message}
+        {...register("cartera")}
+      />
+      <datalist id={CARTERAS_LIST_ID}>
+        {carteras.map((cartera) => (
+          <option key={cartera} value={cartera} />
+        ))}
+      </datalist>
+      <SelectField label="Tipo de acuerdo" options={KIND_OPTIONS} {...register("tipo")} />
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" variant="primary">
+          {CONFIRM_LABELS[mode]}
+          <Kbd tone="onAccent">{MOD_LABEL}+Enter</Kbd>
+        </Button>
+      </div>
+    </form>
+  );
+}

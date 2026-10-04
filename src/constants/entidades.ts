@@ -1,6 +1,15 @@
+export type PaymentKind = "transferencia" | "rapipago" | "pagoFacil" | "otro";
+
 export interface PaymentMethod {
   nombre: string;
-  detalle: string[];
+  tipo: PaymentKind;
+  banco?: string;
+  alias?: string;
+  cbu?: string;
+  titular?: string;
+  cuit?: string;
+  cuenta?: string;
+  detalle?: string;
 }
 
 export interface Entidad {
@@ -12,7 +21,14 @@ export interface Entidad {
 export const DEFAULT_PRODUCT = "General";
 export const DEFAULT_PORTFOLIO = "General";
 
-const method = (nombre: string, ...detalle: string[]): PaymentMethod => ({ nombre, detalle });
+const transfer = (fields: Omit<PaymentMethod, "nombre" | "tipo"> = {}): PaymentMethod => ({
+  nombre: "Transferencia",
+  tipo: "transferencia",
+  ...fields,
+});
+const rapipago = (detalle?: string): PaymentMethod => ({ nombre: "Rapipago", tipo: "rapipago", detalle });
+const pagoFacil = (detalle?: string): PaymentMethod => ({ nombre: "Pago Fácil", tipo: "pagoFacil", detalle });
+const other = (nombre: string): PaymentMethod => ({ nombre, tipo: "otro" });
 
 const generalEntity = (...metodos: PaymentMethod[]): Entidad => ({
   carteras: [DEFAULT_PORTFOLIO],
@@ -22,42 +38,35 @@ const generalEntity = (...metodos: PaymentMethod[]): Entidad => ({
 
 export const ENTIDADES: Record<string, Entidad> = {
   "BANCO MACRO": generalEntity(
-    method("Transferencia", "CBU 2850811-3-3009400374292-1", "Alias: solido.chueco.bigote"),
-    method("Pago Fácil", "Empresa 5 ONLINE"),
-    method("Pago Fácil Online"),
+    transfer({ cbu: "2850811-3-3009400374292-1", alias: "solido.chueco.bigote" }),
+    pagoFacil("Empresa 5 ONLINE"),
+    other("Pago Fácil Online"),
   ),
-  "BANCO COMAFI": generalEntity(
-    method("Transferencia"),
-    method("Pago Fácil", "Empresa 5 ONLINE"),
-    method("Pago Fácil Online"),
-  ),
+  "BANCO COMAFI": generalEntity(transfer(), pagoFacil("Empresa 5 ONLINE"), other("Pago Fácil Online")),
   "BIA GROUP": generalEntity(
-    method("Transferencia", "CBU 0170123020000000951906"),
-    method("Rapipago", "CGF COBRANZAS + ID"),
-    method("Pago Fácil", "CGF COBRANZAS + DNI"),
-    method("Mercado Pago"),
+    transfer({ cbu: "0170123020000000951906" }),
+    rapipago("CGF COBRANZAS + ID"),
+    pagoFacil("CGF COBRANZAS + DNI"),
+    other("Mercado Pago"),
   ),
-  CENCOSUD: generalEntity(method("Pago Fácil"), method("Pago Mis Cuentas"), method("App CencoPay")),
-  "CREDITO DIRECTO": generalEntity(method("Transferencia", "CBU 3380014930000000248447")),
+  CENCOSUD: generalEntity(pagoFacil(), other("Pago Mis Cuentas"), other("App CencoPay")),
+  "CREDITO DIRECTO": generalEntity(transfer({ cbu: "3380014930000000248447" })),
   UALA: {
     carteras: [DEFAULT_PORTFOLIO],
     productos: ["TC", "PYC"],
     metodosPago: {
-      TC: [method("Transferencia", "CBU 3840100200000000619567")],
-      PYC: [method("Transferencia", "CBU 3840100200000004686158")],
+      TC: [transfer({ cbu: "3840100200000000619567" })],
+      PYC: [transfer({ cbu: "3840100200000004686158" })],
     },
   },
-  "EXI GROUP": generalEntity(
-    method("Transferencia", "CBU 0070339820000018156535"),
-    method("Rapipago", "Empresa 3875"),
-  ),
-  PARETO: generalEntity(method("Transferencia", "CBU 3220001805007135800029")),
+  "EXI GROUP": generalEntity(transfer({ cbu: "0070339820000018156535" }), rapipago("Empresa 3875")),
+  PARETO: generalEntity(transfer({ cbu: "3220001805007135800029" })),
   "RECUPERO DE ACTIVOS": generalEntity(
-    method("Transferencia", "CBU 0070024520000004194671"),
-    method("Rapipago", "Empresa 3946"),
-    method("Pago Fácil", "Empresa 2913"),
+    transfer({ cbu: "0070024520000004194671" }),
+    rapipago("Empresa 3946"),
+    pagoFacil("Empresa 2913"),
   ),
-  "CREDITIA CENTAURUS": generalEntity(method("Transferencia", "CBU 0170099220000072077766")),
+  "CREDITIA CENTAURUS": generalEntity(transfer({ cbu: "0170099220000072077766" })),
 };
 
 export const ENTIDAD_NAMES = Object.keys(ENTIDADES);
@@ -72,8 +81,15 @@ export function getPaymentMethods(entidad: string, producto: string | undefined)
   return entity.metodosPago[producto ?? DEFAULT_PRODUCT] ?? [];
 }
 
-export function formatPaymentMethod(paymentMethod: PaymentMethod): string {
-  return paymentMethod.detalle.length > 0
-    ? `${paymentMethod.nombre} (${paymentMethod.detalle.join(" / ")})`
-    : paymentMethod.nombre;
+export function paymentMethodSummary(paymentMethod: PaymentMethod): string {
+  const parts = [
+    paymentMethod.banco,
+    paymentMethod.cbu ? `CBU ${paymentMethod.cbu}` : undefined,
+    paymentMethod.alias ? `Alias: ${paymentMethod.alias}` : undefined,
+    paymentMethod.titular ? `Titular: ${paymentMethod.titular}` : undefined,
+    paymentMethod.cuit ? `CUIT: ${paymentMethod.cuit}` : undefined,
+    paymentMethod.cuenta ? `Cuenta: ${paymentMethod.cuenta}` : undefined,
+    paymentMethod.detalle,
+  ];
+  return parts.filter((part): part is string => Boolean(part)).join(" / ");
 }

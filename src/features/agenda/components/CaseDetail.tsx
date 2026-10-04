@@ -35,6 +35,7 @@ interface CaseDetailProps {
   onTabChange: (tab: ManagementTab) => void;
   onBack: () => void;
   onEditCase: () => void;
+  onFillCaseData: (nombre: string, cartera: string) => void;
   onApplyLabel: (labelId: string) => void;
   onRemoveLabel: (labelId: string) => void;
   onCreateLabel: (nombre: string, color: LabelColor) => void;
@@ -54,6 +55,7 @@ export function CaseDetail({
   onTabChange,
   onBack,
   onEditCase,
+  onFillCaseData,
   onApplyLabel,
   onRemoveLabel,
   onCreateLabel,
@@ -144,7 +146,12 @@ export function CaseDetail({
             />
           ) : null}
           {status !== null && status !== "cancelado" ? (
-            <ConvenioAction key={account.dni} account={account} onEditCase={onEditCase} />
+            <ConvenioAction
+              key={account.dni}
+              account={account}
+              onEditCase={onEditCase}
+              onFillCaseData={onFillCaseData}
+            />
           ) : null}
         </div>
       ) : null}

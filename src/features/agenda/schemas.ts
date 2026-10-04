@@ -61,6 +61,12 @@ export const caseEditSchema = z.object({
     monto: optionalMoney,
 });
 
+export const convenioSchema = z.object({
+  nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
+  cartera: z.string().trim().min(1, "Ingresá o elegí la cartera.").max(60, "Máximo 60 caracteres."),
+  tipo: z.enum(["total", "parcial"]),
+});
+
 export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),
 });
@@ -132,6 +138,7 @@ export function labelSchema(existingNames: string[]) {
 
 export type CaseEditValues = z.infer<typeof caseEditSchema>;
 export type NewCaseValues = z.infer<ReturnType<typeof newCaseSchema>>;
+export type ConvenioValues = z.infer<typeof convenioSchema>;
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type PlanValues = z.infer<ReturnType<typeof planSchema>>;

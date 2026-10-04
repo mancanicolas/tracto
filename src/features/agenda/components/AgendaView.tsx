@@ -199,6 +199,16 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
               onTabChange={setTab}
               onBack={() => setIsDetailOpen(false)}
               onEditCase={() => setIsEditOpen(true)}
+              onFillCaseData={(nombre, cartera) =>
+                updateCase(selectedCase.dni, {
+                  nombre,
+                  cartera,
+                  telefono: selectedCase.telefono,
+                  entidad: selectedCase.entidad,
+                  mail: selectedCase.mail,
+                  monto: selectedCase.monto,
+                })
+              }
               onApplyLabel={(labelId) => applyLabel(selectedCase.dni, labelId)}
               onRemoveLabel={(labelId) => removeLabel(selectedCase.dni, labelId)}
               onCreateLabel={(nombre: string, color: LabelColor) => createLabelFor(selectedCase.dni, nombre, color)}

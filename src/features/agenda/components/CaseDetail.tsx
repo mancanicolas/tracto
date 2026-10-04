@@ -41,6 +41,7 @@ interface CaseDetailProps {
   onResolveSchedule: () => void;
   onSaveAgreement: (agreement: NewAgreement) => void;
   onToggleInstallment: (installmentId: string) => void;
+  onToggleInstallmentStats: (installmentId: string) => void;
   onDeleteAgreement: () => void;
 }
 
@@ -58,6 +59,7 @@ export function CaseDetail({
   onResolveSchedule,
   onSaveAgreement,
   onToggleInstallment,
+  onToggleInstallmentStats,
   onDeleteAgreement,
 }: CaseDetailProps) {
   const status = resolveCaseStatus(account);
@@ -125,6 +127,7 @@ export function CaseDetail({
               key={account.dni}
               agreement={account.acuerdo}
               onToggleInstallment={onToggleInstallment}
+              onToggleInstallmentStats={onToggleInstallmentStats}
               onDelete={onDeleteAgreement}
             />
           ) : null}

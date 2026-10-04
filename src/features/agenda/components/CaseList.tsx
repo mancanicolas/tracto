@@ -1,6 +1,7 @@
-import { Plus, Search } from "lucide-react";
+import { ChartColumn, Plus, Search } from "lucide-react";
 import type { KeyboardEvent, Ref, RefObject } from "react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/cn";
@@ -22,6 +23,7 @@ interface CaseListProps {
   onOpen: (dni: string) => void;
   onMove: (delta: number) => void;
   onNewCase: () => void;
+  onOpenStats: () => void;
 }
 
 export function CaseList({
@@ -37,6 +39,7 @@ export function CaseList({
   onOpen,
   onMove,
   onNewCase,
+  onOpenStats,
 }: CaseListProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     if (event.key === "ArrowDown") {
@@ -73,11 +76,16 @@ export function CaseList({
             <Kbd>/</Kbd>
           </span>
         </div>
-        <Button onClick={onNewCase} title="Nuevo caso (C)">
-          <Plus className="size-4" strokeWidth={1.75} aria-hidden />
-          Nuevo caso
-          <Kbd>C</Kbd>
-        </Button>
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={onNewCase} title="Nuevo caso (C)">
+            <Plus className="size-4" strokeWidth={1.75} aria-hidden />
+            Nuevo caso
+            <Kbd>C</Kbd>
+          </Button>
+          <IconButton label="Estadísticas (E)" onClick={onOpenStats} className="size-8 border border-line hover:border-line-strong">
+            <ChartColumn strokeWidth={1.75} />
+          </IconButton>
+        </div>
       </div>
 
       <div role="group" aria-label="Filtros" className="flex border-b border-line-subtle">

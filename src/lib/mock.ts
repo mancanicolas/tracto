@@ -16,6 +16,7 @@ export interface Installment {
   fecha: string;
   pagada: boolean;
   pagada_fecha?: string;
+  countedInStats: boolean;
 }
 
 export interface Agreement {
@@ -52,13 +53,18 @@ export function createMockLabels(): Label[] {
   ];
 }
 
-function agreementWithPayments(input: NewAgreement, payments: Record<number, string>): Agreement {
+function agreementWithPayments(
+  input: NewAgreement,
+  payments: Record<number, string>,
+  countedIndexes: number[] = [],
+): Agreement {
   const agreement = createAgreement(input);
   return {
     ...agreement,
     cuotas: agreement.cuotas.map((installment, index) => {
       const paidOn = payments[index];
-      return paidOn ? { ...installment, pagada: true, pagada_fecha: paidOn } : installment;
+      const counted = { ...installment, countedInStats: countedIndexes.includes(index) };
+      return paidOn ? { ...counted, pagada: true, pagada_fecha: paidOn } : counted;
     }),
   };
 }
@@ -101,6 +107,7 @@ export function createMockCases(today: string = todayIso()): Case[] {
           2: addDaysIso(lastMonthStart, 9),
           3: monthStart,
         },
+        [0, 3],
       ),
     },
     {
@@ -171,6 +178,7 @@ export function createMockCases(today: string = todayIso()): Case[] {
           1: addDaysIso(lastMonthStart, 8),
           2: addDaysIso(monthStart, 0),
         },
+        [2],
       ),
     },
     {

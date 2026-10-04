@@ -17,6 +17,7 @@ export function createAgreement({ cuotas, monto_cuota, primer_vencimiento, antic
       monto: anticipo.monto,
       fecha: anticipo.fecha,
       pagada: false,
+      countedInStats: false,
     });
   }
   for (let numero = 1; numero <= cuotas; numero += 1) {
@@ -27,6 +28,7 @@ export function createAgreement({ cuotas, monto_cuota, primer_vencimiento, antic
       monto: monto_cuota,
       fecha: addMonthsIso(primer_vencimiento, numero - 1),
       pagada: false,
+      countedInStats: false,
     });
   }
   return { id: crypto.randomUUID(), creado: new Date().toISOString(), cuotas: installments };

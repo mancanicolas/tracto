@@ -2,7 +2,7 @@ import { useMemo, useReducer } from "react";
 import { createAgreement, type NewAgreement } from "@/lib/agreements";
 import { todayIso } from "@/lib/dates";
 import type { Label, LabelColor } from "@/lib/labels";
-import type { Agreement, Case, Note } from "@/lib/mock";
+import type { Agreement, Case, Installment, Note } from "@/lib/mock";
 
 interface State {
   cases: Case[];
@@ -19,10 +19,32 @@ type Action =
   | { type: "schedule_resolve"; dni: string }
   | { type: "agreement_set"; dni: string; agreement: Agreement }
   | { type: "agreement_delete"; dni: string }
-  | { type: "installment_toggle"; dni: string; installmentId: string; today: string };
+  | { type: "installment_toggle"; dni: string; installmentId: string; today: string }
+  | { type: "installment_stats_toggle"; dni: string; installmentId: string };
 
 function update(cases: Case[], dni: string, change: (account: Case) => Case): Case[] {
   return cases.map((account) => (account.dni === dni ? change(account) : account));
+}
+
+function updateInstallment(
+  cases: Case[],
+  dni: string,
+  installmentId: string,
+  change: (installment: Installment) => Installment,
+): Case[] {
+  return update(cases, dni, (account) =>
+    account.acuerdo
+      ? {
+          ...account,
+          acuerdo: {
+            ...account.acuerdo,
+            cuotas: account.acuerdo.cuotas.map((installment) =>
+              installment.id === installmentId ? change(installment) : installment,
+            ),
+          },
+        }
+      : account,
+  );
 }
 
 function reducer(state: State, action: Action): State {
@@ -69,25 +91,18 @@ function reducer(state: State, action: Action): State {
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, acuerdo: undefined })));
     case "installment_toggle":
       return withCases(
-        update(state.cases, action.dni, (a) =>
-          a.acuerdo
-            ? {
-                ...a,
-                acuerdo: {
-                  ...a.acuerdo,
-                  cuotas: a.acuerdo.cuotas.map((installment) =>
-                    installment.id === action.installmentId
-                      ? {
-                          ...installment,
-                          pagada: !installment.pagada,
-                          pagada_fecha: installment.pagada ? undefined : action.today,
-                        }
-                      : installment,
-                  ),
-                },
-              }
-            : a,
-        ),
+        updateInstallment(state.cases, action.dni, action.installmentId, (installment) => ({
+          ...installment,
+          pagada: !installment.pagada,
+          pagada_fecha: installment.pagada ? undefined : action.today,
+        })),
+      );
+    case "installment_stats_toggle":
+      return withCases(
+        updateInstallment(state.cases, action.dni, action.installmentId, (installment) => ({
+          ...installment,
+          countedInStats: !installment.countedInStats,
+        })),
       );
   }
 }
@@ -119,6 +134,8 @@ export function useCases(initialCases: () => Case[], initialLabels: () => Label[
       setAgreement: (dni: string, input: NewAgreement) =>
         dispatch({ type: "agreement_set", dni, agreement: createAgreement(input) }),
       deleteAgreement: (dni: string) => dispatch({ type: "agreement_delete", dni }),
+      toggleInstallmentStats: (dni: string, installmentId: string) =>
+        dispatch({ type: "installment_stats_toggle", dni, installmentId }),
       toggleInstallment: (dni: string, installmentId: string) =>
         dispatch({ type: "installment_toggle", dni, installmentId, today: todayIso() }),
     }),

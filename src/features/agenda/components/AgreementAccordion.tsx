@@ -1,20 +1,25 @@
 import * as Accordion from "@radix-ui/react-accordion";
-import { ChevronDown, Circle, CircleCheck } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { installmentLabel, summarizeAgreement } from "@/lib/agreements";
-import { cn } from "@/lib/cn";
-import { formatIsoDate } from "@/lib/dates";
+import { summarizeAgreement } from "@/lib/agreements";
 import { formatMoney } from "@/lib/format";
 import type { Agreement } from "@/lib/mock";
+import { InstallmentRow } from "./InstallmentRow";
 
 interface AgreementAccordionProps {
   agreement: Agreement;
   onToggleInstallment: (installmentId: string) => void;
+  onToggleInstallmentStats: (installmentId: string) => void;
   onDelete: () => void;
 }
 
-export function AgreementAccordion({ agreement, onToggleInstallment, onDelete }: AgreementAccordionProps) {
+export function AgreementAccordion({
+  agreement,
+  onToggleInstallment,
+  onToggleInstallmentStats,
+  onDelete,
+}: AgreementAccordionProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { paidCount, totalCount, pendingAmount } = summarizeAgreement(agreement);
 
@@ -43,35 +48,12 @@ export function AgreementAccordion({ agreement, onToggleInstallment, onDelete }:
         <Accordion.Content className="border-t border-line-subtle">
           <ul aria-label="Cuotas del acuerdo" className="flex flex-col divide-y divide-line-subtle">
             {agreement.cuotas.map((installment) => (
-              <li key={installment.id}>
-                <button
-                  type="button"
-                  aria-pressed={installment.pagada}
-                  onClick={() => onToggleInstallment(installment.id)}
-                  className="flex h-8 w-full items-center gap-2 px-2.5 text-left text-[13px] transition-colors duration-100 hover:bg-row-hover motion-reduce:transition-none"
-                >
-                  <span className="min-w-0 flex-1 truncate text-fg-secondary">
-                    {installmentLabel(installment)}
-                  </span>
-                  <span className="font-mono text-xs tabular-nums text-fg-muted">
-                    Vence {formatIsoDate(installment.fecha)}
-                  </span>
-                  <span className="font-mono tabular-nums text-fg">{formatMoney(installment.monto)}</span>
-                  <span
-                    className={cn(
-                      "inline-flex w-20 items-center justify-end gap-1 text-xs font-medium",
-                      installment.pagada ? "text-success" : "text-fg-muted",
-                    )}
-                  >
-                    {installment.pagada ? (
-                      <CircleCheck className="size-3.5" strokeWidth={1.75} aria-hidden />
-                    ) : (
-                      <Circle className="size-3.5" strokeWidth={1.75} aria-hidden />
-                    )}
-                    {installment.pagada ? "Pagada" : "Pendiente"}
-                  </span>
-                </button>
-              </li>
+              <InstallmentRow
+                key={installment.id}
+                installment={installment}
+                onTogglePaid={() => onToggleInstallment(installment.id)}
+                onToggleStats={() => onToggleInstallmentStats(installment.id)}
+              />
             ))}
           </ul>
           <div className="flex items-center justify-end gap-2 border-t border-line-subtle p-2">

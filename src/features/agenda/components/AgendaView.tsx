@@ -4,12 +4,14 @@ import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
 import type { LabelColor } from "@/lib/labels";
 import { createMockCases, createMockLabels } from "@/lib/mock";
+import { computeStats } from "@/lib/stats";
 import { useShortcut } from "@/lib/shortcuts";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
 import { CaseList } from "./CaseList";
 import { NewCaseDialog } from "./NewCaseDialog";
+import { StatsDialog } from "./StatsDialog";
 
 export function AgendaView() {
   const {
@@ -25,6 +27,7 @@ export function AgendaView() {
     setAgreement,
     deleteAgreement,
     toggleInstallment,
+    toggleInstallmentStats,
   } = useCases(createMockCases, createMockLabels);
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [query, setQuery] = useState("");
@@ -32,6 +35,7 @@ export function AgendaView() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [tab, setTab] = useState<ManagementTab>("nota");
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -43,6 +47,7 @@ export function AgendaView() {
     [cases, filter, query, today],
   );
   const counts = useMemo(() => countByFilter(cases, today), [cases, today]);
+  const stats = useMemo(() => computeStats(cases, today), [cases, today]);
   const selectedCase = cases.find((account) => account.dni === selectedDni) ?? null;
   const showDetailPane = isWide || isDetailOpen;
   const showListPane = isWide || !isDetailOpen;
@@ -95,13 +100,14 @@ export function AgendaView() {
     setAnnouncement("Caso creado");
   };
 
-  const shortcutsEnabled = !isNewCaseOpen;
+  const shortcutsEnabled = !isNewCaseOpen && !isStatsOpen;
   const hasSelection = selectedCase !== null;
 
   useShortcut("j", () => moveSelection(1), { enabled: shortcutsEnabled });
   useShortcut("k", () => moveSelection(-1), { enabled: shortcutsEnabled });
   useShortcut("/", () => searchRef.current?.focus(), { enabled: shortcutsEnabled });
   useShortcut("c", () => setIsNewCaseOpen(true), { enabled: shortcutsEnabled });
+  useShortcut("e", () => setIsStatsOpen(true), { enabled: shortcutsEnabled });
   useShortcut("n", () => focusManagementTab("nota"), { enabled: shortcutsEnabled && hasSelection });
   useShortcut("s", () => focusManagementTab("agendar"), { enabled: shortcutsEnabled && hasSelection });
   useShortcut("p", () => focusManagementTab("acuerdos"), { enabled: shortcutsEnabled && hasSelection });
@@ -136,6 +142,7 @@ export function AgendaView() {
             onOpen={openCase}
             onMove={moveSelection}
             onNewCase={() => setIsNewCaseOpen(true)}
+            onOpenStats={() => setIsStatsOpen(true)}
           />
         </section>
       ) : null}
@@ -169,6 +176,10 @@ export function AgendaView() {
                 toggleInstallment(selectedCase.dni, installmentId);
                 setAnnouncement("Cuota actualizada");
               }}
+              onToggleInstallmentStats={(installmentId) => {
+                toggleInstallmentStats(selectedCase.dni, installmentId);
+                setAnnouncement("Métricas actualizadas");
+              }}
               onDeleteAgreement={() => {
                 deleteAgreement(selectedCase.dni);
                 setAnnouncement("Acuerdo eliminado");
@@ -186,6 +197,7 @@ export function AgendaView() {
         onOpenChange={setIsNewCaseOpen}
         onCreate={createCase}
       />
+      <StatsDialog open={isStatsOpen} stats={stats} onOpenChange={setIsStatsOpen} />
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>

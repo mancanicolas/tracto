@@ -1,14 +1,25 @@
-import type { Content, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
+import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
+import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
+import { formatDni, formatMoney } from "./format";
+import { getPaymentMethods, type Agreement, type Case, type Installment, type PaymentMethods } from "./mock";
 import { fail, type Result } from "./result";
 import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
-import { formatDni, formatMoney } from "./format";
-import { getPaymentMethods, type Agreement, type Case, type Installment } from "./mock";
 
 const COMPANY_LINE = "Carlos Pellegrini 1163, Piso 13 CABA | Tel: (011) 60918325 | info@5ol.com.ar";
-const BRAND_COLOR = "#111F3D";
-const MUTED_COLOR = "#555555";
-const TABLE_HEADER_FILL = "#EDEDED";
+const FOOTER_TEXT = "Documento generado electrónicamente - Válido sin firma ológrafa";
+
+const PAGE_WIDTH = 595.28;
+const PAGE_MARGIN = 44;
+const LOGO_WIDTH = 90;
+
+const NAVY = "#24377A";
+const NAVY_SOFT = "#DCE6F2";
+const TINT = "#F3F6FA";
+const RULE = "#D5DDE8";
+const WHITE = "#FFFFFF";
+const MUTED = "#6B7280";
+
 const MONTHS = [
   "enero",
   "febrero",
@@ -61,6 +72,39 @@ function installmentDescription(installment: Installment, isLast: boolean): stri
   return isLast ? "Cuota Cancelatoria" : "Cuota Convenio";
 }
 
+function sectionBar(title: string): ContentTable {
+  return {
+    table: {
+      widths: ["*"],
+      body: [[{ text: title, bold: true, color: WHITE, fontSize: 10, margin: [8, 3, 8, 3] }]],
+    },
+    layout: { hLineWidth: () => 0, vLineWidth: () => 0, fillColor: () => NAVY },
+    margin: [0, 12, 0, 6],
+  };
+}
+
+function clauseTitle(title: string): Content {
+  return {
+    stack: [
+      { text: title, bold: true, fontSize: 9, color: NAVY },
+      {
+        canvas: [
+          {
+            type: "line",
+            x1: 0,
+            y1: 2,
+            x2: PAGE_WIDTH - PAGE_MARGIN * 2,
+            y2: 2,
+            lineWidth: 0.6,
+            lineColor: NAVY,
+          },
+        ],
+      },
+    ],
+    margin: [0, 8, 0, 3],
+  };
+}
+
 function buildPlanTable(agreement: Agreement): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
@@ -68,7 +112,7 @@ function buildPlanTable(agreement: Agreement): Content {
   const headerCells: TableCell[] = ["CUOTA", "DESCRIPCION", "VENCIMIENTO", "IMPORTE"].map((text, index) => ({
     text,
     bold: true,
-    fillColor: TABLE_HEADER_FILL,
+    color: WHITE,
     alignment: index === 3 ? "right" : "left",
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
@@ -78,11 +122,12 @@ function buildPlanTable(agreement: Agreement): Content {
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
   const totalRow: TableCell[] = [
-    { text: "TOTAL", colSpan: 3, bold: true, alignment: "right" },
+    { text: "TOTAL", colSpan: 3, bold: true, fontSize: 10.5, color: NAVY, alignment: "right" },
     {},
     {},
-    { text: formatMoney(total), bold: true, alignment: "right" },
+    { text: formatMoney(total), bold: true, fontSize: 10.5, color: NAVY, alignment: "right" },
   ];
+  const lastRowIndex = rows.length + 1;
 
   return {
     table: {
@@ -90,11 +135,84 @@ function buildPlanTable(agreement: Agreement): Content {
       widths: [60, "*", 90, 100],
       body: [headerCells, ...rows, totalRow],
     },
-    layout: "lightHorizontalLines",
-    margin: [0, 4, 0, 10],
+    layout: {
+      hLineWidth: (index, node) => (index === node.table.body.length - 1 ? 1.2 : 0.4),
+      hLineColor: (index, node) => (index === node.table.body.length - 1 ? NAVY : RULE),
+      vLineWidth: () => 0,
+      paddingTop: () => 4,
+      paddingBottom: () => 4,
+      paddingLeft: () => 8,
+      paddingRight: () => 8,
+      fillColor: (rowIndex) => {
+        if (rowIndex === 0) return NAVY;
+        if (rowIndex === lastRowIndex) return NAVY_SOFT;
+        return rowIndex % 2 === 0 ? TINT : null;
+      },
+    },
   };
 }
 
+function labelValueTable(entries: [string, string][]): Content {
+  return {
+    table: {
+      widths: [56, "*"],
+      body: entries.map(([label, value]) => [
+        { text: label, color: MUTED, border: [false, false, false, false] },
+        { text: value, bold: true, border: [false, false, false, false] },
+      ]),
+    },
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: () => 0,
+      paddingTop: () => 1.5,
+      paddingBottom: () => 1.5,
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+    },
+  };
+}
+
+function paymentCard(methods: PaymentMethods): Content {
+  const { transferencia, efectivo } = methods;
+  return {
+    table: {
+      widths: ["*", 175],
+      body: [
+        [
+          {
+            stack: [
+              { text: "Transferencia bancaria", bold: true, color: NAVY, margin: [0, 0, 0, 3] },
+              labelValueTable([
+                ["Titular", transferencia.titular],
+                ["CBU", transferencia.cbu],
+                ["Alias", transferencia.alias],
+                ["Banco", transferencia.banco],
+              ]),
+            ],
+            margin: [8, 6, 8, 6],
+          },
+          {
+            stack: [
+              { text: "Pago en efectivo", bold: true, color: NAVY, margin: [0, 0, 0, 3] },
+              labelValueTable([
+                ["Rapipago", efectivo.rapipago],
+                ["Pago Fácil", efectivo.pagoFacil],
+              ]),
+            ],
+            margin: [8, 6, 8, 6],
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 0.6,
+      vLineWidth: () => 0.6,
+      hLineColor: () => RULE,
+      vLineColor: () => RULE,
+      fillColor: () => TINT,
+    },
+  };
+}
 function signatureBlock(lines: string[]): Content {
   const block = {
     width: "*",
@@ -111,6 +229,28 @@ function signatureBlock(lines: string[]): Content {
   return block as Content;
 }
 
+function buildFooter(): Content {
+  return {
+    stack: [
+      {
+        canvas: [
+          {
+            type: "line",
+            x1: PAGE_MARGIN,
+            y1: 0,
+            x2: PAGE_WIDTH - PAGE_MARGIN,
+            y2: 0,
+            lineWidth: 0.5,
+            lineColor: RULE,
+          },
+        ],
+      },
+      { text: FOOTER_TEXT, alignment: "center", fontSize: 8, color: MUTED, margin: [0, 5, 0, 0] },
+    ],
+    margin: [0, 14, 0, 0],
+  };
+}
+
 export function buildConvenioDefinition(
   account: ConvenioCase,
   agreement: Agreement,
@@ -121,36 +261,31 @@ export function buildConvenioDefinition(
 
   return {
     pageSize: "A4",
-    pageMargins: [44, 32, 44, 48],
+    pageMargins: [PAGE_MARGIN, 32, PAGE_MARGIN, 52],
     defaultStyle: { font: "Roboto", fontSize: 9.5, lineHeight: 1.15 },
-    footer: () => ({
-      text: "Documento generado electrónicamente - Válido sin firma ológrafa",
-      alignment: "center",
-      fontSize: 8,
-      color: MUTED_COLOR,
-      margin: [0, 16, 0, 0],
-    }),
+    footer: () => buildFooter(),
     content: [
       {
         columns: [
-          { text: "5L", width: 70, fontSize: 40, bold: true, color: BRAND_COLOR },
+          { svg: logoSvg, width: LOGO_WIDTH },
           {
             width: "*",
             stack: [
-              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18 },
+              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: NAVY },
               { text: account.entidad, alignment: "center", bold: true, fontSize: 13, margin: [0, 2, 0, 4] },
-              { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED_COLOR },
+              { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED },
             ],
+            margin: [0, 8, 0, 0],
           },
-          { text: "", width: 70 },
+          { text: "", width: LOGO_WIDTH },
         ],
-        margin: [0, 0, 0, 10],
-      },
-      { text: `Buenos Aires, ${formatLongDate(today)}`, alignment: "right", margin: [0, 0, 0, 10] },
-      {
-        text: `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${account.entidad}, se hace constar que:`,
         margin: [0, 0, 0, 8],
       },
+      { text: `Buenos Aires, ${formatLongDate(today)}`, alignment: "right", margin: [0, 0, 0, 8] },
+      {
+        text: `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${account.entidad}, se hace constar que:`,
+      },
+      sectionBar("DATOS DEL DEUDOR"),
       {
         text: [
           { text: "Apellido y Nombre: ", bold: true },
@@ -158,25 +293,14 @@ export function buildConvenioDefinition(
           { text: "D.N.I.: ", bold: true },
           formatDni(account.dni),
         ],
-        margin: [0, 0, 0, 10],
       },
-      { text: "PLAN DE CANCELACION TOTAL", bold: true, fontSize: 12 },
+      sectionBar("PLAN DE CANCELACIÓN TOTAL"),
       buildPlanTable(agreement),
-      { text: "MEDIOS DE PAGO HABILITADOS", bold: true, fontSize: 12, margin: [0, 0, 0, 4] },
-      { text: "Transferencia bancaria", bold: true, margin: [0, 2, 0, 2] },
-      {
-        ul: [
-          `Titular: ${methods.transferencia.titular}`,
-          `CBU: ${methods.transferencia.cbu}`,
-          `Alias: ${methods.transferencia.alias}`,
-          `Banco: ${methods.transferencia.banco}`,
-        ],
-      },
-      { text: "Efectivo", bold: true, margin: [0, 6, 0, 2] },
-      { ul: [`Rapipago: ${methods.efectivo.rapipago}`, `Pago Fácil: ${methods.efectivo.pagoFacil}`] },
-      { text: "LIBRE DE DEUDA", bold: true, fontSize: 9, margin: [0, 10, 0, 2] },
+      sectionBar("MEDIOS DE PAGO HABILITADOS"),
+      paymentCard(methods),
+      clauseTitle("LIBRE DE DEUDA"),
       { text: LIBRE_DE_DEUDA_TEXT, fontSize: 8, alignment: "justify" },
-      { text: "CLAUSULA DE INCUMPLIMIENTO", bold: true, fontSize: 9, margin: [0, 8, 0, 2] },
+      clauseTitle("CLAUSULA DE INCUMPLIMIENTO"),
       { text: INCUMPLIMIENTO_TEXT, fontSize: 8, alignment: "justify" },
       {
         columns: [
@@ -184,7 +308,7 @@ export function buildConvenioDefinition(
           signatureBlock(["CLIENTE/DEUDOR", `${debtorName} - DNI ${account.dni}`]),
         ],
         columnGap: 40,
-        margin: [0, 44, 0, 0],
+        margin: [0, 34, 0, 0],
         unbreakable: true,
       },
     ],

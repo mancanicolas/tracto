@@ -6,17 +6,21 @@ import { cn } from "@/lib/cn";
 
 interface WindowBarProps {
   leading?: ReactNode;
+  center?: ReactNode;
   actions?: ReactNode;
   bordered?: boolean;
 }
 
-export function WindowBar({ leading, actions, bordered = false }: WindowBarProps) {
+export function WindowBar({ leading, center, actions, bordered = false }: WindowBarProps) {
   return (
     <header
       data-tauri-drag-region
-      className={cn("flex h-11 shrink-0 items-center gap-2 px-3", bordered && "border-b border-line-subtle")}
+      className={cn("relative flex h-11 shrink-0 items-center gap-2 px-3", bordered && "border-b border-line-subtle")}
     >
       <div className="pointer-events-none flex min-w-0 flex-1 items-center gap-2">{leading}</div>
+      {center ? (
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center">{center}</div>
+      ) : null}
       <div className="flex items-center gap-0.5">
         {actions}
         <IconButton label="Minimizar" onClick={() => void getCurrentWindow().minimize()}>

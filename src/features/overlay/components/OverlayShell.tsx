@@ -20,13 +20,11 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
       <WindowBar
         bordered
         leading={
-          <>
-            <Logo className="h-4 w-auto shrink-0 text-brand-white" role="img" aria-label="Tracto" />
-            <span className="truncate text-xs text-fg-muted" title={email}>
-              {operatorName}
-            </span>
-          </>
+          <span className="truncate text-xs text-fg-muted" title={email}>
+            {operatorName}
+          </span>
         }
+        center={<Logo className="h-6 w-auto shrink-0 text-brand-white" role="img" aria-label="Tracto" />}
         actions={
           <>
             <IconButton

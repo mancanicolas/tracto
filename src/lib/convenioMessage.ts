@@ -9,10 +9,11 @@ import type { Agreement, Installment } from "./types";
 
 const COPY_ERROR_MESSAGE = "No se pudo copiar el convenio. Probá de nuevo.";
 
-const IMPORTANT_LINES = [
-  "Acreditado el pago total, podrá solicitar el certificado de Libre de Deuda dentro de los 15 días hábiles a través de su asesor o vía email a info@5ol.com.ar",
-  "En caso de incumplimiento, el presente acuerdo quedará sin efecto de forma automática, perdiéndose los beneficios y bonificaciones otorgados",
-];
+const LIBRE_DE_DEUDA_LINE =
+  "Acreditado el pago total, podrá solicitar el certificado de Libre de Deuda dentro de los 15 días hábiles a través de su asesor o vía email a info@5ol.com.ar";
+
+const INCUMPLIMIENTO_LINE =
+  "En caso de incumplimiento, el presente acuerdo quedará sin efecto de forma automática, perdiéndose los beneficios y bonificaciones otorgados";
 
 function formatFullDate(iso: string): string {
   const [year = "", month = "", day = ""] = iso.split("-");
@@ -32,6 +33,8 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const { planTitle, purpose } = getConvenioWording(account.entidad, agreement);
+  const importantLines =
+    agreement.tipo === "parcial" ? [INCUMPLIMIENTO_LINE] : [LIBRE_DE_DEUDA_LINE, INCUMPLIMIENTO_LINE];
 
   return [
     `*Estimado/a ${account.nombre} - ${account.dni}:*`,
@@ -46,7 +49,7 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
     ...paymentLines(methods),
     "",
     "*IMPORTANTE:*",
-    ...IMPORTANT_LINES.map((line) => `• ${line}`),
+    ...importantLines.map((line) => `• ${line}`),
     "",
     `*Dpto. de Cobranzas - 5oL / ${account.entidad}*`,
   ].join("\n");

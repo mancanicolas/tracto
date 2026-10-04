@@ -290,8 +290,9 @@ export function buildConvenioDefinition(
       buildPlanTable(agreement, wording.finalInstallment),
       sectionBar("MEDIOS DE PAGO HABILITADOS"),
       paymentCard(methods),
-      clauseTitle("LIBRE DE DEUDA"),
-      { text: LIBRE_DE_DEUDA_TEXT, fontSize: 8, alignment: "justify" },
+      ...(agreement.tipo === "parcial"
+        ? []
+        : [clauseTitle("LIBRE DE DEUDA"), { text: LIBRE_DE_DEUDA_TEXT, fontSize: 8, alignment: "justify" } as Content]),
       clauseTitle("CLAUSULA DE INCUMPLIMIENTO"),
       { text: INCUMPLIMIENTO_TEXT, fontSize: 8, alignment: "justify" },
       {

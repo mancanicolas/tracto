@@ -188,19 +188,20 @@ Definir **siempre** como variables CSS y consumirlas vía Tailwind. Nunca usar h
 
 Un solo componente (`<StatusBadge status="..." />`) resuelve color, ícono y texto. **Nunca** comunicar un estado sólo con color: siempre ícono + texto.
 
-| Estado de dominio | Token | Ícono Lucide | Texto UI |
-|---|---|---|---|
-| `paid` — pago recibido | `success` | `CircleCheck` | Pagado |
-| `partial` — pago parcial | `success` | `CircleDashed` | Pago parcial |
-| `promise_due` — promesa por vencer (≤ 48 h) | `warning` | `Clock` | Promesa vence {fecha} |
-| `promise_broken` — promesa incumplida | `danger` | `CalendarX` | Promesa incumplida |
-| `high_delinquency` — mora alta | `danger` | `TriangleAlert` | Mora {n} días |
-| `call_failed` — llamada fallida | `danger` | `PhoneMissed` | No contesta |
-| `follow_up` — seguimiento agendado | `info` | `CalendarClock` | Seguimiento {fecha} |
-| `no_action` — sin gestión | `neutral` | `Circle` | Sin gestión |
+Los estados son **automáticos**: se calculan desde el acuerdo del caso con `resolveCaseStatus()` en `lib/status.ts` (fuente única). Nunca se asignan a mano. Un caso tiene como máximo un estado; sin acuerdo no hay badge.
 
-Por qué `info` es violeta y no azul: el celeste está reservado para interacción (foco, selección). Si "seguimiento" fuera celeste, el operador confundiría un estado con una fila seleccionada.
+| Estado de dominio | Condición | Token | Ícono Lucide | Texto UI |
+|---|---|---|---|---|
+| `pago` | Pagó una cuota en el mes en curso | `success` | `CircleCheck` | Pago |
+| `acuerdo` | Acuerdo activo, ninguna cuota pagada | `info` | `Handshake` | Acuerdo |
+| `acuerdo colchon` | Acuerdo activo, pagó cuotas en meses anteriores y ninguna en el mes en curso | `warning` | `Clock` | Acuerdo colchón |
+| `cancelado` | Todas las cuotas del acuerdo pagadas | `neutral` | `CheckCheck` | Cancelado |
 
+El estado se recalcula en tiempo real al marcar cuotas como pagadas o pendientes, y al cambiar de mes un caso en `pago` pasa a `acuerdo colchon`. Se muestra sólo en la lista y en el encabezado del detalle.
+
+Por qué `info` es violeta y no azul: el celeste está reservado para interacción (foco, selección). Si "acuerdo" fuera celeste, el operador confundiría un estado con una fila seleccionada.
+
+**Etiquetas**: son manuales, acumulables y sólo se ven dentro del detalle del caso. Viven en una lista global (con nombre y color) y se aplican a cada caso. Los colores salen de una paleta cerrada de tokens (`lib/labels.ts`): fucsia, turquesa, naranja, lima, índigo y gris. Nunca se mezclan con los estados en la lista.
 Receta del badge:
 ```tsx
 // bg-{token}-subtle text-{token} border border-{token}-border rounded-xs h-5 px-1.5 text-[11px] font-medium gap-1

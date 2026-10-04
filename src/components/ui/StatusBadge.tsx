@@ -1,14 +1,12 @@
-import { STATUS, TONE_CLASSES, statusLabel, type AccountStatus } from "@/lib/status";
 import { cn } from "@/lib/cn";
+import { STATUS, TONE_CLASSES, type AccountStatus } from "@/lib/status";
 
 interface StatusBadgeProps {
   status: AccountStatus;
-  param?: string | number;
 }
 
-export function StatusBadge({ status, param }: StatusBadgeProps) {
-  const { tone, icon: Icon } = STATUS[status];
-  const label = statusLabel(status, param);
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const { tone, icon: Icon, label } = STATUS[status];
   return (
     <span
       className={cn(

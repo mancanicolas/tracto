@@ -61,6 +61,19 @@
   --neutral:          #7D8FB0;
   --neutral-subtle:   rgb(125 143 176 / 0.12);
 
+  --label-teal:           #4FD1C5;
+  --label-teal-subtle:    rgb(79 209 197 / 0.12);
+  --label-teal-border:    rgb(79 209 197 / 0.35);
+  --label-orange:         #F59E6C;
+  --label-orange-subtle:  rgb(245 158 108 / 0.12);
+  --label-orange-border:  rgb(245 158 108 / 0.35);
+  --label-lime:           #B5E05A;
+  --label-lime-subtle:    rgb(181 224 90 / 0.12);
+  --label-lime-border:    rgb(181 224 90 / 0.35);
+  --label-indigo:         #8C9EFF;
+  --label-indigo-subtle:  rgb(140 158 255 / 0.12);
+  --label-indigo-border:  rgb(140 158 255 / 0.35);
+
   --logo-eye:         var(--brand-sky);
   color-scheme: dark;
 }
@@ -97,6 +110,18 @@
   --danger:           #C9283A;
   --info:             #6B4FD8;
   --neutral:          #5D6F8F;
+  --label-teal:           #0E7C72;
+  --label-teal-subtle:    rgb(14 124 114 / 0.08);
+  --label-teal-border:    rgb(14 124 114 / 0.30);
+  --label-orange:         #B4531A;
+  --label-orange-subtle:  rgb(180 83 26 / 0.08);
+  --label-orange-border:  rgb(180 83 26 / 0.30);
+  --label-lime:           #5C7F0C;
+  --label-lime-subtle:    rgb(92 127 12 / 0.08);
+  --label-lime-border:    rgb(92 127 12 / 0.30);
+  --label-indigo:         #4F5FD1;
+  --label-indigo-subtle:  rgb(79 95 209 / 0.08);
+  --label-indigo-border:  rgb(79 95 209 / 0.30);
   --logo-eye:         var(--brand-navy);
   color-scheme: light;
 }
@@ -142,6 +167,19 @@
   --color-danger:  var(--danger);   --color-danger-subtle:  var(--danger-subtle);   --color-danger-border:  var(--danger-border);
   --color-info:    var(--info);     --color-info-subtle:    var(--info-subtle);     --color-info-border:    var(--info-border);
   --color-neutral: var(--neutral);  --color-neutral-subtle: var(--neutral-subtle);
+
+  --color-label-teal:          var(--label-teal);
+  --color-label-teal-subtle:   var(--label-teal-subtle);
+  --color-label-teal-border:   var(--label-teal-border);
+  --color-label-orange:        var(--label-orange);
+  --color-label-orange-subtle: var(--label-orange-subtle);
+  --color-label-orange-border: var(--label-orange-border);
+  --color-label-lime:          var(--label-lime);
+  --color-label-lime-subtle:   var(--label-lime-subtle);
+  --color-label-lime-border:   var(--label-lime-border);
+  --color-label-indigo:        var(--label-indigo);
+  --color-label-indigo-subtle: var(--label-indigo-subtle);
+  --color-label-indigo-border: var(--label-indigo-border);
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;

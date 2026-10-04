@@ -1,9 +1,6 @@
 import { createAgreement, type NewAgreement } from "./agreements";
 import { addDaysIso, addMonthsIso, startOfMonthIso, todayIso } from "./dates";
-
-export const ETIQUETAS = ["acuerdo", "pago", "acuerdo colchon", "cancelado"] as const;
-
-export type Etiqueta = (typeof ETIQUETAS)[number];
+import type { Label } from "./labels";
 
 export interface Note {
   id: string;
@@ -16,8 +13,9 @@ export interface Installment {
   tipo: "anticipo" | "cuota";
   numero?: number;
   monto: number;
-  fecha?: string;
+  fecha: string;
   pagada: boolean;
+  pagada_fecha?: string;
 }
 
 export interface Agreement {
@@ -34,7 +32,7 @@ export interface Case {
   entidad?: string;
   monto?: number;
   mail?: string;
-  etiquetas: Etiqueta[];
+  etiquetas: string[];
   ultimo_pago_fecha?: string;
   agendado_para?: string;
   agendado_motivo?: string;
@@ -43,17 +41,31 @@ export interface Case {
   acuerdo?: Agreement;
 }
 
-function agreementWithPaid(input: NewAgreement, paidCount: number): Agreement {
+export function createMockLabels(): Label[] {
+  return [
+    { id: "label-whatsapp", nombre: "Prefiere WhatsApp", color: "turquesa" },
+    { id: "label-tarde", nombre: "Llamar de tarde", color: "fucsia" },
+    { id: "label-reclamo", nombre: "Reclamo", color: "naranja" },
+    { id: "label-prioritario", nombre: "Prioritario", color: "indigo" },
+    { id: "label-judicial", nombre: "Judicial", color: "gris" },
+  ];
+}
+
+function agreementWithPayments(input: NewAgreement, payments: Record<number, string>): Agreement {
   const agreement = createAgreement(input);
   return {
     ...agreement,
-    cuotas: agreement.cuotas.map((installment, index) => ({ ...installment, pagada: index < paidCount })),
+    cuotas: agreement.cuotas.map((installment, index) => {
+      const paidOn = payments[index];
+      return paidOn ? { ...installment, pagada: true, pagada_fecha: paidOn } : installment;
+    }),
   };
 }
 
 export function createMockCases(today: string = todayIso()): Case[] {
   const monthStart = startOfMonthIso(today);
-  const lastMonth = addMonthsIso(today, -1);
+  const lastMonthStart = addMonthsIso(monthStart, -1);
+  const twoMonthsAgoStart = addMonthsIso(monthStart, -2);
   const timestamp = (iso: string) => `${iso}T13:00:00.000Z`;
 
   return [
@@ -65,20 +77,29 @@ export function createMockCases(today: string = todayIso()): Case[] {
       entidad: "Banco Nación",
       monto: 18_450_000,
       mail: "marcela.gimenez@correo.com",
-      etiquetas: ["acuerdo", "pago"],
-      ultimo_pago_fecha: monthStart,
+      etiquetas: ["label-whatsapp", "label-prioritario"],
       agendado_para: today,
       agendado_motivo: "Consultar por confirmación de la transferencia",
       notas: [
         {
           id: "n-1",
-          texto: "Confirma que transfiere el anticipo esta semana. Pidió el CBU por mail.",
+          texto: "Confirma que transfiere la cuota de este mes. Pidió el CBU por mail.",
           creada: timestamp(addDaysIso(today, -3)),
         },
       ],
-      acuerdo: agreementWithPaid(
-        { cuotas: 6, monto_cuota: 2_500_000, anticipo: { fecha: addDaysIso(today, -3), monto: 3_000_000 } },
-        3,
+      acuerdo: agreementWithPayments(
+        {
+          cuotas: 6,
+          monto_cuota: 2_500_000,
+          primer_vencimiento: addDaysIso(twoMonthsAgoStart, 9),
+          anticipo: { fecha: addDaysIso(twoMonthsAgoStart, 2), monto: 3_000_000 },
+        },
+        {
+          0: addDaysIso(twoMonthsAgoStart, 2),
+          1: addDaysIso(twoMonthsAgoStart, 10),
+          2: addDaysIso(lastMonthStart, 9),
+          3: monthStart,
+        },
       ),
     },
     {
@@ -88,19 +109,29 @@ export function createMockCases(today: string = todayIso()): Case[] {
       cartera: "Tarjetas",
       entidad: "Banco Galicia",
       monto: 6_230_050,
-      etiquetas: ["acuerdo colchon"],
+      etiquetas: ["label-reclamo"],
       agendado_para: addDaysIso(today, -2),
-      agendado_motivo: "Llamar por la primera cuota",
+      agendado_motivo: "Llamar por la cuota de este mes",
       notas: [],
-      acuerdo: agreementWithPaid({ cuotas: 3, monto_cuota: 2_076_683 }, 0),
+      acuerdo: agreementWithPayments(
+        { cuotas: 4, monto_cuota: 1_557_513, primer_vencimiento: addDaysIso(lastMonthStart, 9) },
+        { 0: addDaysIso(lastMonthStart, 11) },
+      ),
     },
     {
       dni: "34876501",
       nombre: "Lucía Ferreyra",
       monto: 12_980_000,
-      etiquetas: ["pago"],
-      ultimo_pago_fecha: monthStart,
+      etiquetas: ["label-tarde"],
       notas: [],
+      acuerdo: agreementWithPayments(
+        {
+          cuotas: 4,
+          monto_cuota: 3_245_000,
+          primer_vencimiento: addDaysIso(today, 5),
+        },
+        {},
+      ),
     },
     {
       dni: "22987654",
@@ -114,8 +145,8 @@ export function createMockCases(today: string = todayIso()): Case[] {
       cartera: "Consumo",
       entidad: "Naranja X",
       monto: 92_000_000,
-      etiquetas: ["pago"],
-      ultimo_pago_fecha: lastMonth,
+      etiquetas: ["label-judicial"],
+      ultimo_pago_fecha: lastMonthStart,
       agendado_para: addDaysIso(today, 1),
       agendado_motivo: "Retomar contacto después del feriado",
       notas: [],
@@ -127,20 +158,26 @@ export function createMockCases(today: string = todayIso()): Case[] {
       entidad: "Banco Provincia",
       monto: 45_075_000,
       mail: "c.ibarra@correo.com",
-      etiquetas: ["acuerdo", "cancelado"],
-      ultimo_pago_fecha: lastMonth,
+      etiquetas: ["label-whatsapp"],
       agendado_para: addDaysIso(today, -5),
       agendado_motivo: "Verificar pago de la cuota 2",
       agendado_resuelto: true,
       notas: [],
-      acuerdo: agreementWithPaid({ cuotas: 3, monto_cuota: 15_025_000 }, 3),
+      acuerdo: agreementWithPayments(
+        { cuotas: 3, monto_cuota: 15_025_000, primer_vencimiento: addDaysIso(twoMonthsAgoStart, 9) },
+        {
+          0: addDaysIso(twoMonthsAgoStart, 9),
+          1: addDaysIso(lastMonthStart, 8),
+          2: addDaysIso(monthStart, 0),
+        },
+      ),
     },
     {
       dni: "25600318",
       nombre: "Héctor Molina",
       telefono: "2214871203",
       entidad: "Banco Ciudad",
-      etiquetas: ["pago", "cancelado"],
+      etiquetas: [],
       ultimo_pago_fecha: monthStart,
       notas: [],
     },

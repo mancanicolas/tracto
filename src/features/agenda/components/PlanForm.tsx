@@ -32,6 +32,7 @@ export function PlanForm({ onSave }: PlanFormProps) {
     defaultValues: {
       cuotas: "",
       monto_cuota: "",
+      primer_vencimiento: addDaysIso(todayIso(), 30),
       tiene_anticipo: false,
       anticipo_fecha: addDaysIso(todayIso(), 1),
       anticipo_monto: "",
@@ -59,6 +60,7 @@ export function PlanForm({ onSave }: PlanFormProps) {
     onSave({
       cuotas: Number(values.cuotas),
       monto_cuota: montoCuotaCents,
+      primer_vencimiento: values.primer_vencimiento,
       anticipo:
         values.tiene_anticipo && anticipoCents !== null
           ? { fecha: values.anticipo_fecha, monto: anticipoCents }
@@ -88,6 +90,14 @@ export function PlanForm({ onSave }: PlanFormProps) {
           className={MONEY_INPUT_CLASS}
           error={errors.monto_cuota?.message}
           {...register("monto_cuota")}
+        />
+        <TextField
+          label="Primer vencimiento"
+          type="date"
+          min={todayIso()}
+          className="font-mono tabular-nums"
+          error={errors.primer_vencimiento?.message}
+          {...register("primer_vencimiento")}
         />
       </div>
       <CheckboxField label="Anticipo" {...register("tiene_anticipo")} />

@@ -1,6 +1,8 @@
 import { isInCurrentMonth, todayIso } from "@/lib/dates";
+import { lastPaymentDate } from "@/lib/agreements";
 import { normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/mock";
+import { resolveCaseStatus } from "@/lib/status";
 
 export const FILTERS = [
   { key: "todos", label: "Todos" },
@@ -15,14 +17,24 @@ export function hasPendingAgenda(account: Case, today: string = todayIso()): boo
   return Boolean(account.agendado_para && !account.agendado_resuelto && account.agendado_para <= today);
 }
 
+function hasActiveAgreement(account: Case, today: string): boolean {
+  const status = resolveCaseStatus(account, today);
+  return status !== null && status !== "cancelado";
+}
+
+function paidThisMonth(account: Case): boolean {
+  const date = lastPaymentDate(account);
+  return date !== undefined && isInCurrentMonth(date);
+}
+
 export function matchesFilter(account: Case, filter: FilterKey, today: string = todayIso()): boolean {
   switch (filter) {
     case "todos":
       return true;
     case "acuerdo":
-      return account.etiquetas.includes("acuerdo") || account.etiquetas.includes("acuerdo colchon");
+      return hasActiveAgreement(account, today);
     case "pagos":
-      return Boolean(account.ultimo_pago_fecha && isInCurrentMonth(account.ultimo_pago_fecha));
+      return paidThisMonth(account);
     case "agenda":
       return hasPendingAgenda(account, today);
   }

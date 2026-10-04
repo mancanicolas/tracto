@@ -1,12 +1,16 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { ArrowLeft } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Kbd } from "@/components/ui/Kbd";
 import { cn } from "@/lib/cn";
 import type { NewAgreement } from "@/lib/agreements";
 import { formatIsoDate } from "@/lib/dates";
+import { lastPaymentDate } from "@/lib/agreements";
 import { formatDni, formatMoney, formatPhone } from "@/lib/format";
-import type { Case, Etiqueta } from "@/lib/mock";
+import type { Label, LabelColor } from "@/lib/labels";
+import type { Case } from "@/lib/mock";
+import { resolveCaseStatus } from "@/lib/status";
 import { AgreementPanel } from "./AgreementPanel";
 import { InfoValue } from "./InfoValue";
 import { NoteForm } from "./NoteForm";
@@ -23,11 +27,13 @@ const TABS: { key: ManagementTab; label: string; shortcut: string }[] = [
 
 interface CaseDetailProps {
   account: Case;
+  labels: Label[];
   tab: ManagementTab;
   onTabChange: (tab: ManagementTab) => void;
   onBack: () => void;
-  onAddTag: (tag: Etiqueta) => void;
-  onRemoveTag: (tag: Etiqueta) => void;
+  onApplyLabel: (labelId: string) => void;
+  onRemoveLabel: (labelId: string) => void;
+  onCreateLabel: (nombre: string, color: LabelColor) => void;
   onSaveNote: (texto: string) => void;
   onSchedule: (fecha: string, motivo: string) => void;
   onResolveSchedule: () => void;
@@ -38,11 +44,13 @@ interface CaseDetailProps {
 
 export function CaseDetail({
   account,
+  labels,
   tab,
   onTabChange,
   onBack,
-  onAddTag,
-  onRemoveTag,
+  onApplyLabel,
+  onRemoveLabel,
+  onCreateLabel,
   onSaveNote,
   onSchedule,
   onResolveSchedule,
@@ -50,6 +58,8 @@ export function CaseDetail({
   onToggleInstallment,
   onDeleteAgreement,
 }: CaseDetailProps) {
+  const status = resolveCaseStatus(account);
+  const lastPayment = lastPaymentDate(account);
 
   return (
     <article className="flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="Detalle del caso">
@@ -65,6 +75,11 @@ export function CaseDetail({
             >
               {account.nombre ?? "Sin info"}
             </h2>
+            {status ? (
+              <div>
+                <StatusBadge status={status} />
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-col items-end">
             <span className="text-xs leading-4 text-fg-muted">Monto</span>
@@ -86,12 +101,18 @@ export function CaseDetail({
           <InfoValue label="Mail" value={account.mail} title={account.mail} />
           <InfoValue
             label="Último pago"
-            value={account.ultimo_pago_fecha ? formatIsoDate(account.ultimo_pago_fecha) : undefined}
+            value={lastPayment ? formatIsoDate(lastPayment) : undefined}
             mono
           />
         </dl>
 
-        <TagsEditor tags={account.etiquetas} onAdd={onAddTag} onRemove={onRemoveTag} />
+        <TagsEditor
+          labels={labels}
+          appliedIds={account.etiquetas}
+          onApply={onApplyLabel}
+          onRemove={onRemoveLabel}
+          onCreate={onCreateLabel}
+        />
       </header>
 
       <Tabs.Root

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
-import { createMockCases, type Etiqueta } from "@/lib/mock";
+import type { LabelColor } from "@/lib/labels";
+import { createMockCases, createMockLabels } from "@/lib/mock";
 import { useShortcut } from "@/lib/shortcuts";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
 import { useCases } from "../useCases";
@@ -11,9 +12,20 @@ import { CaseList } from "./CaseList";
 import { NewCaseDialog } from "./NewCaseDialog";
 
 export function AgendaView() {
-  const { cases, addCase, addTag, removeTag, addNote, schedule, resolveSchedule, setAgreement, deleteAgreement, toggleInstallment } = useCases(() =>
-    createMockCases(),
-  );
+  const {
+    cases,
+    labels,
+    addCase,
+    applyLabel,
+    removeLabel,
+    createLabelFor,
+    addNote,
+    schedule,
+    resolveSchedule,
+    setAgreement,
+    deleteAgreement,
+    toggleInstallment,
+  } = useCases(createMockCases, createMockLabels);
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [query, setQuery] = useState("");
   const [selectedDni, setSelectedDni] = useState<string | null>(() => cases[0]?.dni ?? null);
@@ -133,11 +145,13 @@ export function AgendaView() {
           {selectedCase ? (
             <CaseDetail
               account={selectedCase}
+              labels={labels}
               tab={tab}
               onTabChange={setTab}
               onBack={() => setIsDetailOpen(false)}
-              onAddTag={(tag: Etiqueta) => addTag(selectedCase.dni, tag)}
-              onRemoveTag={(tag: Etiqueta) => removeTag(selectedCase.dni, tag)}
+              onApplyLabel={(labelId) => applyLabel(selectedCase.dni, labelId)}
+              onRemoveLabel={(labelId) => removeLabel(selectedCase.dni, labelId)}
+              onCreateLabel={(nombre: string, color: LabelColor) => createLabelFor(selectedCase.dni, nombre, color)}
               onSaveNote={(texto) => {
                 addNote(selectedCase.dni, texto);
                 finishManagement("Nota guardada");

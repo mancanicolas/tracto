@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { todayIso } from "@/lib/dates";
 import { normalizeDni, parseMoneyToCents } from "@/lib/format";
+import { LABEL_COLORS } from "@/lib/labels";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -44,6 +45,7 @@ export const planSchema = z
       .regex(/^\d+$/, "Ingresá un número entero.")
       .refine((value) => Number(value) >= 1 && Number(value) <= 60, "Entre 1 y 60 cuotas."),
     monto_cuota: positiveMoney,
+    primer_vencimiento: requiredFutureDate,
     tiene_anticipo: z.boolean(),
     anticipo_fecha: z.string(),
     anticipo_monto: z.string(),
@@ -58,6 +60,22 @@ export const planSchema = z
     }
   });
 
+export function labelSchema(existingNames: string[]) {
+  return z.object({
+    nombre: z
+      .string()
+      .trim()
+      .min(1, "Ingresá un nombre.")
+      .max(24, "Máximo 24 caracteres.")
+      .refine(
+        (value) => !existingNames.some((name) => name.toLowerCase() === value.toLowerCase()),
+        "Ya existe una etiqueta con ese nombre.",
+      ),
+    color: z.enum(LABEL_COLORS),
+  });
+}
+
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type PlanValues = z.infer<typeof planSchema>;
+export type LabelValues = z.infer<ReturnType<typeof labelSchema>>;

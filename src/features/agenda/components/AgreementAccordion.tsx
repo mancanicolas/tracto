@@ -52,11 +52,9 @@ export function AgreementAccordion({ agreement, onToggleInstallment, onDelete }:
                 >
                   <span className="min-w-0 flex-1 truncate text-fg-secondary">
                     {installmentLabel(installment)}
-                    {installment.fecha ? (
-                      <span className="ml-2 font-mono text-xs tabular-nums text-fg-muted">
-                        {formatIsoDate(installment.fecha)}
-                      </span>
-                    ) : null}
+                  </span>
+                  <span className="font-mono text-xs tabular-nums text-fg-muted">
+                    Vence {formatIsoDate(installment.fecha)}
                   </span>
                   <span className="font-mono tabular-nums text-fg">{formatMoney(installment.monto)}</span>
                   <span

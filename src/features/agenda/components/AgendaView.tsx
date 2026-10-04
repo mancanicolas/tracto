@@ -93,18 +93,6 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     window.setTimeout(() => document.querySelector<HTMLElement>("[data-first-field]")?.focus(), 0);
   }, []);
 
-  const finishManagement = useCallback(
-    (message: string) => {
-      setAnnouncement(message);
-      const currentIndex = visibleCases.findIndex((account) => account.dni === selectedDni);
-      const next = visibleCases[currentIndex + 1];
-      if (next) setSelectedDni(next.dni);
-      setIsDetailOpen(false);
-      window.setTimeout(() => listRef.current?.focus(), 0);
-    },
-    [visibleCases, selectedDni],
-  );
-
   const createCase = (dni: string, details: CaseDetails) => {
     addCase(dni, details);
     setFilter("todos");
@@ -148,7 +136,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
 
   const saveAgreement = (dni: string, agreement: NewAgreement) => {
     setAgreement(dni, agreement);
-    finishManagement("Acuerdo registrado");
+    setAnnouncement("Acuerdo registrado");
   };
 
   if (status !== "ready") return <AgendaStatus status={status} onRetry={retry} />;
@@ -214,11 +202,11 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
               onCreateLabel={(nombre: string, color: LabelColor) => createLabelFor(selectedCase.dni, nombre, color)}
               onSaveNote={(texto) => {
                 addNote(selectedCase.dni, texto);
-                finishManagement("Nota guardada");
+                setAnnouncement("Nota guardada");
               }}
               onSchedule={(fecha, motivo) => {
                 schedule(selectedCase.dni, fecha, motivo);
-                finishManagement("Seguimiento agendado");
+                setAnnouncement("Seguimiento agendado");
               }}
               onResolveSchedule={() => {
                 resolveSchedule(selectedCase.dni);

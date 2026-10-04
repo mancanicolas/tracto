@@ -1,11 +1,12 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { IconButton } from "@/components/ui/IconButton";
 import { formatMoney } from "@/lib/format";
 import type { Case } from "@/lib/mock";
-import { computeStats } from "@/lib/stats";
+import { downloadReport } from "@/lib/exportReport";
+import { collectedRows, computeStats, projectedRows } from "@/lib/stats";
 
 interface StatsDialogProps {
   open: boolean;
@@ -17,14 +18,22 @@ interface StatCardProps {
   label: string;
   value: string;
   caption: string;
+  download?: { label: string; disabled: boolean; onDownload: () => void };
   children?: ReactNode;
 }
 
-function StatCard({ label, value, caption, children }: StatCardProps) {
+function StatCard({ label, value, caption, download, children }: StatCardProps) {
   return (
     <div className="flex flex-col gap-0.5 rounded-md border border-line bg-raised p-3 shadow-[var(--shadow-inset)]">
       <dt className="text-xs leading-4 font-medium text-fg-secondary">{label}</dt>
-      <dd className="font-mono text-2xl leading-8 font-medium tabular-nums text-fg">{value}</dd>
+      <dd className="flex items-center justify-between gap-2">
+        <span className="font-mono text-2xl leading-8 font-medium tabular-nums text-fg">{value}</span>
+        {download ? (
+          <IconButton label={download.label} disabled={download.disabled} onClick={download.onDownload}>
+            <Download strokeWidth={1.75} />
+          </IconButton>
+        ) : null}
+      </dd>
       <dd className="text-xs leading-4 text-fg-muted">{caption}</dd>
       {children ? <dd className="mt-1.5">{children}</dd> : null}
     </div>
@@ -62,10 +71,20 @@ export function StatsDialog({ open, cases, onOpenChange }: StatsDialogProps) {
               label="Cobrado este mes"
               value={formatMoney(stats.collected)}
               caption={plural(stats.countedInstallments, "pago sumado", "pagos sumados")}
+              download={{
+                label: "Descargar pagos del mes",
+                disabled: stats.countedInstallments === 0,
+                onDownload: () => void downloadReport("pagos", collectedRows(cases)),
+              }}
             />
             <StatCard
               label="Proyectado del mes"
               value={formatMoney(stats.projected)}
+              download={{
+                label: "Descargar proyección del mes",
+                disabled: stats.projectedCases === 0,
+                onDownload: () => void downloadReport("proyeccion", projectedRows(cases, includeColchon)),
+              }}
               caption={`Cuota de este mes de ${plural(stats.projectedCases, "caso", "casos")} en ${
                 includeColchon ? "acuerdo y acuerdo colchón" : "acuerdo"
               }`}

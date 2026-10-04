@@ -2,6 +2,13 @@ import { todayIso } from "./dates";
 import type { Case } from "./mock";
 import { resolveCaseStatus } from "./status";
 
+export interface InstallmentRow {
+  dni: string;
+  entidad?: string;
+  monto: number;
+  fecha: string;
+}
+
 export interface MonthStats {
   collected: number;
   countedInstallments: number;
@@ -10,36 +17,57 @@ export interface MonthStats {
   pendingCases: number;
 }
 
-export function computeStats(cases: Case[], includeColchon: boolean, today: string = todayIso()): MonthStats {
+export function collectedRows(cases: Case[]): InstallmentRow[] {
+  return cases.flatMap((account) =>
+    (account.acuerdo?.cuotas ?? [])
+      .filter((installment) => installment.countedInStats)
+      .map((installment) => ({
+        dni: account.dni,
+        entidad: account.entidad,
+        monto: installment.monto,
+        fecha: installment.fecha,
+      })),
+  );
+}
+
+export function projectedRows(
+  cases: Case[],
+  includeColchon: boolean,
+  today: string = todayIso(),
+): InstallmentRow[] {
   const currentMonth = today.slice(0, 7);
-  const stats: MonthStats = {
-    collected: 0,
-    countedInstallments: 0,
-    projected: 0,
-    projectedCases: 0,
-    pendingCases: 0,
-  };
-
-  for (const account of cases) {
-    const installments = account.acuerdo?.cuotas ?? [];
-    for (const installment of installments) {
-      if (installment.countedInStats) {
-        stats.collected += installment.monto;
-        stats.countedInstallments += 1;
-      }
-    }
-
+  return cases.flatMap((account) => {
     const status = resolveCaseStatus(account, today);
-    if (status !== "acuerdo" && status !== "acuerdo colchon") continue;
-    stats.pendingCases += 1;
-    if (status === "acuerdo colchon" && !includeColchon) continue;
-
-    const dueThisMonth = installments
+    const isIncluded = status === "acuerdo" || (includeColchon && status === "acuerdo colchon");
+    if (!isIncluded) return [];
+    return (account.acuerdo?.cuotas ?? [])
       .filter((installment) => !installment.pagada && installment.fecha.slice(0, 7) === currentMonth)
-      .reduce((sum, installment) => sum + installment.monto, 0);
-    stats.projected += dueThisMonth;
-    if (dueThisMonth > 0) stats.projectedCases += 1;
-  }
+      .map((installment) => ({
+        dni: account.dni,
+        entidad: account.entidad,
+        monto: installment.monto,
+        fecha: installment.fecha,
+      }));
+  });
+}
 
-  return stats;
+function sumAmounts(rows: InstallmentRow[]): number {
+  return rows.reduce((sum, row) => sum + row.monto, 0);
+}
+
+export function computeStats(cases: Case[], includeColchon: boolean, today: string = todayIso()): MonthStats {
+  const collected = collectedRows(cases);
+  const projected = projectedRows(cases, includeColchon, today);
+  const pendingCases = cases.filter((account) => {
+    const status = resolveCaseStatus(account, today);
+    return status === "acuerdo" || status === "acuerdo colchon";
+  }).length;
+
+  return {
+    collected: sumAmounts(collected),
+    countedInstallments: collected.length,
+    projected: sumAmounts(projected),
+    projectedCases: new Set(projected.map((row) => row.dni)).size,
+    pendingCases,
+  };
 }

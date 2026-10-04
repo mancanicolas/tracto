@@ -14,8 +14,8 @@
       {
         "label": "main",
         "title": "Tracto",
-        "width": 520,
-        "height": 720,
+        "width": 920,
+        "height": 640,
         "minWidth": 360,
         "minHeight": 420,
         "decorations": false,

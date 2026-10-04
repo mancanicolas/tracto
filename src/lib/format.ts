@@ -77,3 +77,33 @@ export function formatCuit(raw: string): string {
   if (digits.length !== 11) return raw;
   return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
 }
+
+export function normalizeDni(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
+
+export function parseMoneyToCents(input: string): number | null {
+  const cleaned = input.replace(/[\s$]/g, "");
+  if (!/^\d[\d.,]*$/.test(cleaned)) return null;
+
+  let integerPart: string;
+  let fraction = "";
+  const lastComma = cleaned.lastIndexOf(",");
+  if (lastComma !== -1) {
+    integerPart = cleaned.slice(0, lastComma).replace(/\./g, "");
+    fraction = cleaned.slice(lastComma + 1);
+  } else {
+    const lastDot = cleaned.lastIndexOf(".");
+    const afterDot = lastDot === -1 ? "" : cleaned.slice(lastDot + 1);
+    if (lastDot !== -1 && afterDot.length !== 3) {
+      integerPart = cleaned.slice(0, lastDot).replace(/\./g, "");
+      fraction = afterDot;
+    } else {
+      integerPart = cleaned.replace(/\./g, "");
+    }
+  }
+
+  if (!/^\d+$/.test(integerPart) || !/^\d{0,2}$/.test(fraction)) return null;
+  const cents = Number(integerPart) * 100 + Number(fraction.padEnd(2, "0"));
+  return Number.isSafeInteger(cents) ? cents : null;
+}

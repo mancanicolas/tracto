@@ -101,3 +101,5 @@ export function useShortcut(
     };
   }, [keys, allowInInput, enabled]);
 }
+
+export const MOD_LABEL = isMac ? "⌘" : "Ctrl";

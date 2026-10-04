@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import Logo from "@/assets/logo.svg?react";
 import { WindowBar } from "@/components/layout/WindowBar";
 import { IconButton } from "@/components/ui/IconButton";
+import { AgendaView } from "@/features/agenda/components/AgendaView";
 
 interface OverlayShellProps {
   email: string;
@@ -27,7 +28,9 @@ export function OverlayShell({ email, onSignOut }: OverlayShellProps) {
           </IconButton>
         }
       />
-      <main className="flex-1" aria-label="Contenido" />
+      <main className="min-h-0 flex-1">
+        <AgendaView />
+      </main>
     </div>
   );
 }

@@ -1,12 +1,9 @@
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile } from "@tauri-apps/plugin-fs";
 import { todayIso } from "./dates";
-import { fail, ok, type Result } from "./result";
+import { fail, type Result } from "./result";
+import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
 import type { InstallmentRow } from "./stats";
 
 export type ReportKind = "pagos" | "proyeccion";
-
-export type SaveOutcome = "saved" | "cancelled";
 
 const HEADERS = ["DNI", "CARTERA", "MONTO", "FECHA DE PAGO", "OPERADOR"];
 const OPERATOR = "44bis5";
@@ -49,16 +46,16 @@ export async function buildReportBytes(kind: ReportKind, rows: InstallmentRow[])
 }
 
 export async function downloadReport(kind: ReportKind, rows: InstallmentRow[]): Promise<Result<SaveOutcome>> {
+  let bytes: Uint8Array;
   try {
-    const bytes = await buildReportBytes(kind, rows);
-    const path = await save({
-      defaultPath: reportFileName(kind),
-      filters: [{ name: "Excel", extensions: ["xlsx"] }],
-    });
-    if (path === null) return ok<SaveOutcome>("cancelled");
-    await writeFile(path, bytes);
-    return ok<SaveOutcome>("saved");
+    bytes = await buildReportBytes(kind, rows);
   } catch {
-    return fail("No se pudo guardar el archivo. Probá de nuevo.");
+    return fail(SAVE_ERROR_MESSAGE);
   }
+  return saveBytesWithDialog({
+    defaultName: reportFileName(kind),
+    filterName: "Excel",
+    extension: "xlsx",
+    bytes,
+  });
 }

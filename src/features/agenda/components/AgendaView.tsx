@@ -5,11 +5,13 @@ import type { NewAgreement } from "@/lib/agreements";
 import type { LabelColor } from "@/lib/labels";
 import { createMockCases, createMockLabels } from "@/lib/mock";
 import { useShortcut } from "@/lib/shortcuts";
+import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
+import type { CaseEditValues } from "../schemas";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
 import { CaseList } from "./CaseList";
-import { NewCaseDialog } from "./NewCaseDialog";
+import { CaseDialog } from "./CaseDialog";
 import { StatsDialog } from "./StatsDialog";
 
 export function AgendaView() {
@@ -17,6 +19,7 @@ export function AgendaView() {
     cases,
     labels,
     addCase,
+    updateCase,
     applyLabel,
     removeLabel,
     createLabelFor,
@@ -34,6 +37,7 @@ export function AgendaView() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [tab, setTab] = useState<ManagementTab>("nota");
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
@@ -99,7 +103,27 @@ export function AgendaView() {
     setAnnouncement("Caso creado");
   };
 
-  const shortcutsEnabled = !isNewCaseOpen && !isStatsOpen;
+  const closeCaseDialog = (open: boolean) => {
+    if (open) return;
+    setIsNewCaseOpen(false);
+    setIsEditOpen(false);
+  };
+
+  const saveCaseDetails = (values: CaseEditValues) => {
+    if (!selectedCase) return;
+    updateCase(selectedCase.dni, {
+      nombre: values.nombre || undefined,
+      telefono: values.telefono ? normalizeDni(values.telefono) : undefined,
+      entidad: values.entidad || undefined,
+      cartera: values.cartera || undefined,
+      mail: values.mail || undefined,
+      monto: values.monto ? (parseMoneyToCents(values.monto) ?? undefined) : undefined,
+    });
+    setIsEditOpen(false);
+    setAnnouncement("Caso actualizado");
+  };
+
+  const shortcutsEnabled = !isNewCaseOpen && !isEditOpen && !isStatsOpen;
   const hasSelection = selectedCase !== null;
 
   useShortcut("j", () => moveSelection(1), { enabled: shortcutsEnabled });
@@ -107,6 +131,7 @@ export function AgendaView() {
   useShortcut("/", () => searchRef.current?.focus(), { enabled: shortcutsEnabled });
   useShortcut("c", () => setIsNewCaseOpen(true), { enabled: shortcutsEnabled });
   useShortcut("e", () => setIsStatsOpen(true), { enabled: shortcutsEnabled });
+  useShortcut("m", () => setIsEditOpen(true), { enabled: shortcutsEnabled && hasSelection });
   useShortcut("n", () => focusManagementTab("nota"), { enabled: shortcutsEnabled && hasSelection });
   useShortcut("s", () => focusManagementTab("agendar"), { enabled: shortcutsEnabled && hasSelection });
   useShortcut("p", () => focusManagementTab("acuerdos"), { enabled: shortcutsEnabled && hasSelection });
@@ -155,6 +180,7 @@ export function AgendaView() {
               tab={tab}
               onTabChange={setTab}
               onBack={() => setIsDetailOpen(false)}
+              onEditCase={() => setIsEditOpen(true)}
               onApplyLabel={(labelId) => applyLabel(selectedCase.dni, labelId)}
               onRemoveLabel={(labelId) => removeLabel(selectedCase.dni, labelId)}
               onCreateLabel={(nombre: string, color: LabelColor) => createLabelFor(selectedCase.dni, nombre, color)}
@@ -190,11 +216,13 @@ export function AgendaView() {
         </section>
       ) : null}
 
-      <NewCaseDialog
-        open={isNewCaseOpen}
+      <CaseDialog
+        open={isNewCaseOpen || isEditOpen}
+        account={isEditOpen && selectedCase ? selectedCase : undefined}
         existingDnis={cases.map((account) => account.dni)}
-        onOpenChange={setIsNewCaseOpen}
+        onOpenChange={closeCaseDialog}
         onCreate={createCase}
+        onUpdate={saveCaseDetails}
       />
       <StatsDialog open={isStatsOpen} cases={cases} onOpenChange={setIsStatsOpen} />
       <p className="sr-only" role="status" aria-live="polite">

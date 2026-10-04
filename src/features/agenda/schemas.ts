@@ -28,6 +28,27 @@ export function newCaseSchema(existingDnis: string[]) {
   });
 }
 
+export const caseEditSchema = z.object({
+  nombre: z.string().trim().max(80, "Máximo 80 caracteres."),
+  telefono: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === "" || /^\d{8,13}$/.test(value.replace(/[\s()+-]/g, "")),
+      "Ingresá un teléfono válido, con código de área.",
+    ),
+  entidad: z.string().trim().max(60, "Máximo 60 caracteres."),
+  cartera: z.string().trim().max(60, "Máximo 60 caracteres."),
+  mail: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || z.email().safeParse(value).success, "Ingresá un email válido."),
+  monto: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || parseMoneyToCents(value) !== null, "Ingresá un monto válido, por ejemplo 1.500,00."),
+});
+
 export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),
 });
@@ -84,6 +105,7 @@ export function labelSchema(existingNames: string[]) {
   });
 }
 
+export type CaseEditValues = z.infer<typeof caseEditSchema>;
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type PlanValues = z.infer<typeof planSchema>;

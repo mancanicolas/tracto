@@ -4,6 +4,8 @@ import { todayIso } from "@/lib/dates";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Agreement, Case, Installment, Note } from "@/lib/mock";
 
+export type CaseDetails = Pick<Case, "nombre" | "telefono" | "entidad" | "cartera" | "mail" | "monto">;
+
 interface State {
   cases: Case[];
   labels: Label[];
@@ -11,6 +13,7 @@ interface State {
 
 type Action =
   | { type: "add"; account: Case }
+  | { type: "case_update"; dni: string; values: CaseDetails }
   | { type: "label_create"; label: Label }
   | { type: "label_apply"; dni: string; labelId: string }
   | { type: "label_remove"; dni: string; labelId: string }
@@ -53,6 +56,8 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "add":
       return withCases([action.account, ...state.cases]);
+    case "case_update":
+      return withCases(update(state.cases, action.dni, (a) => ({ ...a, ...action.values })));
     case "label_create":
       return { ...state, labels: [...state.labels, action.label] };
     case "label_apply":
@@ -116,6 +121,7 @@ export function useCases(initialCases: () => Case[], initialLabels: () => Label[
   const actions = useMemo(
     () => ({
       addCase: (dni: string) => dispatch({ type: "add", account: { dni, etiquetas: [], notas: [] } }),
+      updateCase: (dni: string, values: CaseDetails) => dispatch({ type: "case_update", dni, values }),
       applyLabel: (dni: string, labelId: string) => dispatch({ type: "label_apply", dni, labelId }),
       removeLabel: (dni: string, labelId: string) => dispatch({ type: "label_remove", dni, labelId }),
       createLabelFor: (dni: string, nombre: string, color: LabelColor) => {

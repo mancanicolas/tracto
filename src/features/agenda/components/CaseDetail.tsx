@@ -1,5 +1,5 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Kbd } from "@/components/ui/Kbd";
@@ -13,6 +13,7 @@ import type { Case } from "@/lib/mock";
 import { resolveCaseStatus } from "@/lib/status";
 import { AgendaSummary } from "./AgendaSummary";
 import { AgreementAccordion } from "./AgreementAccordion";
+import { ConvenioAction } from "./ConvenioAction";
 import { AgreementPanel } from "./AgreementPanel";
 import { InfoValue } from "./InfoValue";
 import { NoteForm } from "./NoteForm";
@@ -33,6 +34,7 @@ interface CaseDetailProps {
   tab: ManagementTab;
   onTabChange: (tab: ManagementTab) => void;
   onBack: () => void;
+  onEditCase: () => void;
   onApplyLabel: (labelId: string) => void;
   onRemoveLabel: (labelId: string) => void;
   onCreateLabel: (nombre: string, color: LabelColor) => void;
@@ -51,6 +53,7 @@ export function CaseDetail({
   tab,
   onTabChange,
   onBack,
+  onEditCase,
   onApplyLabel,
   onRemoveLabel,
   onCreateLabel,
@@ -73,12 +76,20 @@ export function CaseDetail({
             <ArrowLeft strokeWidth={1.75} />
           </IconButton>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h2
-              className={cn("truncate text-[15px] leading-6 font-semibold", account.nombre ? "text-fg" : "text-fg-muted")}
-              title={account.nombre}
-            >
-              {account.nombre ?? "Sin info"}
-            </h2>
+            <div className="flex min-w-0 items-center gap-1">
+              <h2
+                className={cn(
+                  "truncate text-[15px] leading-6 font-semibold",
+                  account.nombre ? "text-fg" : "text-fg-muted",
+                )}
+                title={account.nombre}
+              >
+                {account.nombre ?? "Sin info"}
+              </h2>
+              <IconButton label="Editar caso (M)" onClick={onEditCase} className="size-6 shrink-0">
+                <Pencil className="size-3.5" strokeWidth={1.75} />
+              </IconButton>
+            </div>
             {status ? (
               <div>
                 <StatusBadge status={status} />
@@ -130,6 +141,9 @@ export function CaseDetail({
               onToggleInstallmentStats={onToggleInstallmentStats}
               onDelete={onDeleteAgreement}
             />
+          ) : null}
+          {status !== null && status !== "cancelado" ? (
+            <ConvenioAction key={account.dni} account={account} onEditCase={onEditCase} />
           ) : null}
         </div>
       ) : null}

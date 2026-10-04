@@ -78,6 +78,11 @@ export function formatCuit(raw: string): string {
   return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
 }
 
+export function formatCentsInput(cents: number): string {
+  const digits = String(Math.abs(cents)).padStart(3, "0");
+  return `${cents < 0 ? "-" : ""}${digits.slice(0, -2)},${digits.slice(-2)}`;
+}
+
 export function normalizeDni(raw: string): string {
   return raw.replace(/\D/g, "");
 }

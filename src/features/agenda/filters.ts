@@ -1,6 +1,6 @@
 import { todayIso } from "@/lib/dates";
 import { normalizeDni } from "@/lib/format";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
 
 export const FILTERS = [

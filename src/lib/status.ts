@@ -1,6 +1,6 @@
 import { CheckCheck, CircleCheck, Handshake, type LucideIcon } from "lucide-react";
 import { todayIso } from "./dates";
-import type { Case } from "./mock";
+import type { Case } from "./types";
 
 export type AccountStatus = "pago" | "acuerdo" | "acuerdo colchon" | "cancelado";
 

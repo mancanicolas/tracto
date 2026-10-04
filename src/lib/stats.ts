@@ -1,5 +1,5 @@
 import { todayIso } from "./dates";
-import type { Case } from "./mock";
+import type { Case } from "./types";
 import { resolveCaseStatus } from "./status";
 
 export interface InstallmentRow {

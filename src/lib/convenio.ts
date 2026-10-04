@@ -2,9 +2,10 @@ import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdf
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
 import { formatDni, formatMoney } from "./format";
-import { getPaymentMethods, type Agreement, type Case, type Installment, type PaymentMethods } from "./mock";
+import { getPaymentMethods, type PaymentMethods } from "./paymentMethods";
 import { fail, type Result } from "./result";
 import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
+import type { Agreement, Case, Installment } from "./types";
 
 const COMPANY_LINE = "Carlos Pellegrini 1163, Piso 13 CABA | Tel: (011) 60918325 | info@5ol.com.ar";
 const FOOTER_TEXT = "Documento generado electrónicamente - Válido sin firma ológrafa";

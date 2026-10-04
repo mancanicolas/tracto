@@ -1,5 +1,5 @@
 import type { NewAgreement } from "@/lib/agreements";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { PlanForm } from "./PlanForm";
 
 interface AgreementPanelProps {

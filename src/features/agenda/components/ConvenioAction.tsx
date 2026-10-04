@@ -2,7 +2,7 @@ import { FileText, Pencil, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { downloadConvenio, missingConvenioFields } from "@/lib/convenio";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 
 interface ConvenioActionProps {
   account: Case;

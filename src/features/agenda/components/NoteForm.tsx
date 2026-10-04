@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { TextAreaField } from "@/components/ui/TextAreaField";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import { formatDate, formatTime } from "@/lib/format";
-import type { Note } from "@/lib/mock";
+import type { Note } from "@/lib/types";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { noteSchema, type NoteValues } from "../schemas";
 

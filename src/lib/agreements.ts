@@ -1,5 +1,5 @@
 import { addMonthsIso } from "./dates";
-import type { Agreement, Case, Installment } from "./mock";
+import type { Agreement, Case, Installment } from "./types";
 
 export interface NewAgreement {
   cuotas: number;

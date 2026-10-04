@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { TextField } from "@/components/ui/TextField";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import { formatCentsInput, formatDni } from "@/lib/format";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { caseEditSchema, type CaseEditValues } from "../schemas";
 

@@ -1,17 +1,24 @@
-import { useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createAgreement, type NewAgreement } from "@/lib/agreements";
 import { todayIso } from "@/lib/dates";
 import type { Label, LabelColor } from "@/lib/labels";
-import type { Agreement, Case, Installment, Note } from "@/lib/mock";
+import type { Result } from "@/lib/result";
+import type { Agreement, Case, CaseDetails, Installment, Note } from "@/lib/types";
+import * as writes from "./actions";
+import { fetchAgendaData } from "./queries";
 
-export type CaseDetails = Pick<Case, "nombre" | "telefono" | "entidad" | "cartera" | "mail" | "monto">;
+type LoadStatus = "loading" | "ready" | "error";
 
 interface State {
+  status: LoadStatus;
   cases: Case[];
   labels: Label[];
 }
 
 type Action =
+  | { type: "load_started" }
+  | { type: "loaded"; cases: Case[]; labels: Label[] }
+  | { type: "load_failed" }
   | { type: "add"; account: Case }
   | { type: "case_update"; dni: string; values: CaseDetails }
   | { type: "label_create"; label: Label }
@@ -24,6 +31,12 @@ type Action =
   | { type: "agreement_delete"; dni: string }
   | { type: "installment_toggle"; dni: string; installmentId: string; today: string }
   | { type: "installment_stats_toggle"; dni: string; installmentId: string };
+
+const INITIAL_STATE: State = { status: "loading", cases: [], labels: [] };
+
+function hasPaidInstallment(account: Case): boolean {
+  return account.acuerdo?.cuotas.some((installment) => installment.pagada) ?? false;
+}
 
 function update(cases: Case[], dni: string, change: (account: Case) => Case): Case[] {
   return cases.map((account) => (account.dni === dni ? change(account) : account));
@@ -54,6 +67,12 @@ function reducer(state: State, action: Action): State {
   const withCases = (cases: Case[]): State => ({ ...state, cases });
 
   switch (action.type) {
+    case "load_started":
+      return { ...state, status: "loading" };
+    case "loaded":
+      return { status: "ready", cases: action.cases, labels: action.labels };
+    case "load_failed":
+      return state.status === "ready" ? state : { ...state, status: "error" };
     case "add":
       return withCases([action.account, ...state.cases]);
     case "case_update":
@@ -87,11 +106,13 @@ function reducer(state: State, action: Action): State {
     case "schedule_resolve":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, agendado_resuelto: true })));
     case "agreement_set":
-      return withCases(update(state.cases, action.dni, (a) => ({
+      return withCases(
+        update(state.cases, action.dni, (a) => ({
           ...a,
           acuerdo: action.agreement,
-          pagos_previos: a.pagos_previos || (a.acuerdo?.cuotas.some((installment) => installment.pagada) ?? false),
-        })));
+          pagos_previos: a.pagos_previos || hasPaidInstallment(a),
+        })),
+      );
     case "agreement_delete":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, acuerdo: undefined })));
     case "installment_toggle":
@@ -112,41 +133,136 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useCases(initialCases: () => Case[], initialLabels: () => Label[]) {
-  const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    cases: initialCases(),
-    labels: initialLabels(),
-  }));
+export function useCases() {
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const stateRef = useRef(state);
 
-  const actions = useMemo(
-    () => ({
-      addCase: (dni: string) => dispatch({ type: "add", account: { dni, etiquetas: [], notas: [] } }),
-      updateCase: (dni: string, values: CaseDetails) => dispatch({ type: "case_update", dni, values }),
-      applyLabel: (dni: string, labelId: string) => dispatch({ type: "label_apply", dni, labelId }),
-      removeLabel: (dni: string, labelId: string) => dispatch({ type: "label_remove", dni, labelId }),
-      createLabelFor: (dni: string, nombre: string, color: LabelColor) => {
-        const label: Label = { id: crypto.randomUUID(), nombre, color };
-        dispatch({ type: "label_create", label });
-        dispatch({ type: "label_apply", dni, labelId: label.id });
-      },
-      addNote: (dni: string, texto: string) =>
-        dispatch({
-          type: "note_add",
-          dni,
-          note: { id: crypto.randomUUID(), texto, creada: new Date().toISOString() },
-        }),
-      schedule: (dni: string, fecha: string, motivo: string) => dispatch({ type: "schedule", dni, fecha, motivo }),
-      resolveSchedule: (dni: string) => dispatch({ type: "schedule_resolve", dni }),
-      setAgreement: (dni: string, input: NewAgreement) =>
-        dispatch({ type: "agreement_set", dni, agreement: createAgreement(input) }),
-      deleteAgreement: (dni: string) => dispatch({ type: "agreement_delete", dni }),
-      toggleInstallmentStats: (dni: string, installmentId: string) =>
-        dispatch({ type: "installment_stats_toggle", dni, installmentId }),
-      toggleInstallment: (dni: string, installmentId: string) =>
-        dispatch({ type: "installment_toggle", dni, installmentId, today: todayIso() }),
-    }),
+  useEffect(() => {
+    stateRef.current = state;
+  });
+
+  const load = useCallback(async () => {
+    const result = await fetchAgendaData();
+    if (result.ok) dispatch({ type: "loaded", ...result.data });
+    else dispatch({ type: "load_failed" });
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const retry = useCallback(() => {
+    dispatch({ type: "load_started" });
+    void load();
+  }, [load]);
+
+  const commit = useCallback(
+    async (action: Action, write: () => Promise<Result>) => {
+      setMutationError(null);
+      dispatch(action);
+      const result = await write();
+      if (!result.ok) {
+        setMutationError(result.error);
+        await load();
+      }
+    },
+    [load],
+  );
+
+  const findCase = useCallback(
+    (dni: string): Case | undefined => stateRef.current.cases.find((account) => account.dni === dni),
     [],
   );
 
-  return { cases: state.cases, labels: state.labels, ...actions };
+  const actions = useMemo(
+    () => ({
+      addCase: (dni: string) => {
+        const id = crypto.randomUUID();
+        void commit({ type: "add", account: { id, dni, etiquetas: [], notas: [] } }, () => writes.insertCase(id, dni));
+      },
+      updateCase: (dni: string, values: CaseDetails) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "case_update", dni, values }, () => writes.updateCaseDetails(account.id, values));
+      },
+      applyLabel: (dni: string, labelId: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "label_apply", dni, labelId }, () => writes.linkLabel(account.id, labelId));
+      },
+      removeLabel: (dni: string, labelId: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "label_remove", dni, labelId }, () => writes.unlinkLabel(account.id, labelId));
+      },
+      createLabelFor: (dni: string, nombre: string, color: LabelColor) => {
+        const account = findCase(dni);
+        if (!account) return;
+        const label: Label = { id: crypto.randomUUID(), nombre, color };
+        dispatch({ type: "label_create", label });
+        void commit({ type: "label_apply", dni, labelId: label.id }, async () => {
+          const created = await writes.insertLabel(label);
+          return created.ok ? writes.linkLabel(account.id, label.id) : created;
+        });
+      },
+      addNote: (dni: string, texto: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        const note: Note = { id: crypto.randomUUID(), texto, creada: new Date().toISOString() };
+        void commit({ type: "note_add", dni, note }, () => writes.insertNote(account.id, note));
+      },
+      schedule: (dni: string, fecha: string, motivo: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "schedule", dni, fecha, motivo }, () => writes.upsertAgenda(account.id, fecha, motivo));
+      },
+      resolveSchedule: (dni: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "schedule_resolve", dni }, () => writes.resolveAgenda(account.id));
+      },
+      setAgreement: (dni: string, input: NewAgreement) => {
+        const account = findCase(dni);
+        if (!account) return;
+        const agreement = createAgreement(input);
+        const hadPreviousPayments = Boolean(account.pagos_previos) || hasPaidInstallment(account);
+        void commit({ type: "agreement_set", dni, agreement }, () =>
+          writes.replaceAgreement(account.id, agreement, hadPreviousPayments),
+        );
+      },
+      deleteAgreement: (dni: string) => {
+        const account = findCase(dni);
+        if (!account) return;
+        void commit({ type: "agreement_delete", dni }, () => writes.deleteAgreement(account.id));
+      },
+      toggleInstallment: (dni: string, installmentId: string) => {
+        const installment = findCase(dni)?.acuerdo?.cuotas.find((item) => item.id === installmentId);
+        if (!installment) return;
+        const today = todayIso();
+        const willBePaid = !installment.pagada;
+        void commit({ type: "installment_toggle", dni, installmentId, today }, () =>
+          writes.updateInstallmentPayment(installmentId, willBePaid, willBePaid ? today : null),
+        );
+      },
+      toggleInstallmentStats: (dni: string, installmentId: string) => {
+        const installment = findCase(dni)?.acuerdo?.cuotas.find((item) => item.id === installmentId);
+        if (!installment) return;
+        void commit({ type: "installment_stats_toggle", dni, installmentId }, () =>
+          writes.updateInstallmentStats(installmentId, !installment.countedInStats),
+        );
+      },
+    }),
+    [commit, findCase],
+  );
+
+  return {
+    status: state.status,
+    cases: state.cases,
+    labels: state.labels,
+    mutationError,
+    clearMutationError: () => setMutationError(null),
+    retry,
+    ...actions,
+  };
 }

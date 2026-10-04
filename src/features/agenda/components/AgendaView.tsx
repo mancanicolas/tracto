@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
 import type { LabelColor } from "@/lib/labels";
-import { createMockCases, createMockLabels } from "@/lib/mock";
+
 import { useShortcut } from "@/lib/shortcuts";
 import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
@@ -11,13 +12,18 @@ import type { CaseEditValues } from "../schemas";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
 import { CaseList } from "./CaseList";
+import { AgendaStatus } from "./AgendaStatus";
 import { CaseDialog } from "./CaseDialog";
 import { StatsDialog } from "./StatsDialog";
 
 export function AgendaView() {
   const {
+    status,
     cases,
     labels,
+    mutationError,
+    clearMutationError,
+    retry,
     addCase,
     updateCase,
     applyLabel,
@@ -30,10 +36,10 @@ export function AgendaView() {
     deleteAgreement,
     toggleInstallment,
     toggleInstallmentStats,
-  } = useCases(createMockCases, createMockLabels);
+  } = useCases();
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [query, setQuery] = useState("");
-  const [selectedDni, setSelectedDni] = useState<string | null>(() => cases[0]?.dni ?? null);
+  const [pickedDni, setSelectedDni] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [tab, setTab] = useState<ManagementTab>("nota");
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
@@ -51,6 +57,7 @@ export function AgendaView() {
   );
   const counts = useMemo(() => countByFilter(cases, today), [cases, today]);
 
+  const selectedDni = pickedDni ?? cases[0]?.dni ?? null;
   const selectedCase = cases.find((account) => account.dni === selectedDni) ?? null;
   const showDetailPane = isWide || isDetailOpen;
   const showListPane = isWide || !isDetailOpen;
@@ -146,8 +153,21 @@ export function AgendaView() {
     finishManagement("Acuerdo registrado");
   };
 
+  if (status !== "ready") return <AgendaStatus status={status} onRetry={retry} />;
+
   return (
-    <div className="flex h-full min-h-0">
+    <div className="relative flex h-full min-h-0">
+      {mutationError ? (
+        <div
+          role="alert"
+          className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-3 border-b border-danger-border bg-overlay px-3 py-2 text-[13px] text-danger"
+        >
+          <span>{mutationError}</span>
+          <Button size="small" onClick={clearMutationError}>
+            Cerrar aviso
+          </Button>
+        </div>
+      ) : null}
       {showListPane ? (
         <section
           aria-label="Casos"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { summarizeAgreement } from "@/lib/agreements";
 import { formatMoney } from "@/lib/format";
-import type { Agreement } from "@/lib/mock";
+import type { Agreement } from "@/lib/types";
 import { InstallmentRow } from "./InstallmentRow";
 
 interface AgreementAccordionProps {

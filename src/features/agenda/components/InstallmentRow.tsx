@@ -3,7 +3,7 @@ import { installmentLabel } from "@/lib/agreements";
 import { cn } from "@/lib/cn";
 import { formatIsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
-import type { Installment } from "@/lib/mock";
+import type { Installment } from "@/lib/types";
 
 interface InstallmentRowProps {
   installment: Installment;

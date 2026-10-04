@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { IconButton } from "@/components/ui/IconButton";
 import { formatMoney } from "@/lib/format";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { downloadReport, type ReportKind } from "@/lib/exportReport";
 import { collectedRows, computeStats, projectedRows, type InstallmentRow } from "@/lib/stats";

@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { formatIsoDate, formatIsoRelativeDay } from "@/lib/dates";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 
 interface AgendaSummaryProps {
   account: Case;

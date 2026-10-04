@@ -2,7 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { cn } from "@/lib/cn";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import type { CaseEditValues } from "../schemas";
 import { EditCaseForm } from "./EditCaseForm";
 import { NewCaseForm } from "./NewCaseForm";

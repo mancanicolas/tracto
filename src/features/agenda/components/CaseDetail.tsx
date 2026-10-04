@@ -9,7 +9,7 @@ import { formatIsoDate } from "@/lib/dates";
 import { lastPaymentDate } from "@/lib/agreements";
 import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
 import { AgendaSummary } from "./AgendaSummary";
 import { AgreementAccordion } from "./AgreementAccordion";

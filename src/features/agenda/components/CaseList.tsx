@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/cn";
 import { formatDni, formatMoney } from "@/lib/format";
-import type { Case } from "@/lib/mock";
+import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
 import { FILTERS, type FilterKey } from "../filters";
 

@@ -1,4 +1,4 @@
-import { getPaymentMethods, type PaymentMethod } from "@/constants/entidades";
+import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
 import type { ConvenioCase } from "./convenio";
 import { installmentLabel } from "./agreements";
 import { todayIso } from "./dates";
@@ -24,60 +24,14 @@ function installmentLine(installment: Installment): string {
   return `• ${label}: ${formatArs(installment.monto)} (Vencimiento: ${formatFullDate(installment.fecha)})`;
 }
 
-function labeled(label: string, value: string | undefined): string[] {
-  return value ? [`• *${label}:* ${value}`] : [];
-}
-
-function transferBlock(methods: PaymentMethod[]): string[] {
-  const transfer = methods.find((paymentMethod) => paymentMethod.tipo === "transferencia");
-  if (!transfer) return [];
-  return [
-    "*Transferencia / Depósito Bancario*",
-    ...labeled("Banco", transfer.banco),
-    ...labeled("Alias", transfer.alias),
-    ...labeled("CBU", transfer.cbu),
-    ...labeled("Titular", transfer.titular),
-    ...labeled("CUIT", transfer.cuit),
-    ...labeled("Cuenta", transfer.cuenta),
-  ];
-}
-
-function cashBlock(methods: PaymentMethod[]): string[] {
-  const cash = methods.filter((paymentMethod) => paymentMethod.tipo === "rapipago" || paymentMethod.tipo === "pagoFacil");
-  if (cash.length === 0) return [];
-  return [
-    "*Pago en Efectivo*",
-    ...cash.map((paymentMethod) =>
-      paymentMethod.detalle ? `• *${paymentMethod.nombre}:* ${paymentMethod.detalle}` : `• *${paymentMethod.nombre}*`,
-    ),
-  ];
-}
-
-function otherBlock(methods: PaymentMethod[]): string[] {
-  const others = methods.filter((paymentMethod) => paymentMethod.tipo === "otro");
-  if (others.length === 0) return [];
-  return [
-    "*Otros medios de pago*",
-    ...others.map((paymentMethod) =>
-      paymentMethod.detalle ? `• *${paymentMethod.nombre}:* ${paymentMethod.detalle}` : `• *${paymentMethod.nombre}*`,
-    ),
-  ];
-}
-
-function numberedBlocks(blocks: string[][]): string[] {
-  const present = blocks.filter((block) => block.length > 0);
-  return present.flatMap((block, index) => {
-    const [title = "", ...lines] = block;
-    const numbered = `${title.slice(0, 1)}${index + 1}. ${title.slice(1)}`;
-    return [...(index > 0 ? [""] : []), numbered, ...lines];
-  });
+function paymentLines(methods: MetodoPago[]): string[] {
+  return methods.map(({ etiqueta, valor }) => `• *${etiqueta}:* ${valor}`);
 }
 
 export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement, today: string = todayIso()): string {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const { planTitle, purpose } = getConvenioWording(account.entidad, agreement);
-  const paymentBlocks = numberedBlocks([transferBlock(methods), cashBlock(methods), otherBlock(methods)]);
 
   return [
     `*Estimado/a ${account.nombre} - ${account.dni}:*`,
@@ -89,7 +43,7 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
     "",
     "*MEDIOS DE PAGO HABILITADOS*",
     "",
-    ...paymentBlocks,
+    ...paymentLines(methods),
     "",
     "*IMPORTANTE:*",
     ...IMPORTANT_LINES.map((line) => `• ${line}`),

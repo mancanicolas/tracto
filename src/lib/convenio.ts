@@ -1,10 +1,5 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
-import {
-  getPaymentMethods,
-  hasMultipleProducts,
-  paymentMethodSummary,
-  type PaymentMethod,
-} from "@/constants/entidades";
+import { getPaymentMethods, hasMultipleProducts, type MetodoPago } from "@/constants/entidades";
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
 import { getConvenioWording } from "./convenioWording";
@@ -173,7 +168,7 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
 function labelValueTable(entries: [string, string][]): Content {
   return {
     table: {
-      widths: [110, "*"],
+      widths: [120, "*"],
       body: entries.map(([label, value]) => [
         { text: label, color: MUTED, border: [false, false, false, false] },
         { text: value, bold: true, border: [false, false, false, false] },
@@ -190,10 +185,10 @@ function labelValueTable(entries: [string, string][]): Content {
   };
 }
 
-function paymentCard(methods: PaymentMethod[]): Content {
+function paymentCard(methods: MetodoPago[]): Content {
   const entries: [string, string][] =
     methods.length > 0
-      ? methods.map((paymentMethod) => [paymentMethod.nombre, paymentMethodSummary(paymentMethod) || "Habilitado"])
+      ? methods.map(({ etiqueta, valor }) => [etiqueta, valor])
       : [["Consultar", "Los medios de pago se informan por el Departamento de Cobranza"]];
   return {
     table: {

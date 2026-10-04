@@ -1,88 +1,105 @@
-export type PaymentKind = "transferencia" | "rapipago" | "pagoFacil" | "otro";
-
-export interface PaymentMethod {
-  nombre: string;
-  tipo: PaymentKind;
-  banco?: string;
-  alias?: string;
-  cbu?: string;
-  titular?: string;
-  cuit?: string;
-  cuenta?: string;
-  detalle?: string;
+export interface MetodoPago {
+  etiqueta: string;
+  valor: string;
 }
 
 export interface Entidad {
   carteras: string[];
   productos: string[];
-  metodosPago: Record<string, PaymentMethod[]>;
+  metodosPago: Record<string, MetodoPago[]>;
 }
 
 export const DEFAULT_PRODUCT = "General";
 export const DEFAULT_PORTFOLIO = "General";
 
-const transfer = (fields: Omit<PaymentMethod, "nombre" | "tipo">): PaymentMethod => ({
-  nombre: "Transferencia",
-  tipo: "transferencia",
-  ...fields,
-});
-const rapipago = (detalle: string): PaymentMethod => ({ nombre: "Rapipago", tipo: "rapipago", detalle });
-const pagoFacil = (detalle: string): PaymentMethod => ({ nombre: "Pago Fácil", tipo: "pagoFacil", detalle });
-const other = (nombre: string, detalle: string): PaymentMethod => ({ nombre, tipo: "otro", detalle });
-
-const generalEntity = (...metodos: PaymentMethod[]): Entidad => ({
+const generalEntity = (...metodos: MetodoPago[]): Entidad => ({
   carteras: [DEFAULT_PORTFOLIO],
   productos: [DEFAULT_PRODUCT],
   metodosPago: { [DEFAULT_PRODUCT]: metodos },
 });
 
-const cencosudMethods = [
-  pagoFacil("N° de Tarjeta (Línea de cajas)"),
-  other("Pago Mis Cuentas", "N° de Tarjeta"),
-  other("Pago Digital", "App CencoPay"),
+const cencosudMethods: MetodoPago[] = [
+  {
+    etiqueta: "Línea de cajas",
+    valor: "Indicando nro. de tarjeta cencosud e importe a pagar (Easy, Disco, Jumbo y Vea)",
+  },
+  {
+    etiqueta: "Mercado pago",
+    valor: "Sección pago mis cuentas, indicando nro. de tarjeta cencosud e importe a pagar",
+  },
 ];
 
 export const ENTIDADES: Record<string, Entidad> = {
   "BANCO MACRO": generalEntity(
-    transfer({
-      cbu: "2850811-3-3009400374292-1",
-      alias: "solido.chueco.bigote",
-      cuenta: "381109400374292 (Convenio 30788)",
-    }),
+    { etiqueta: "CUIT", valor: "30500010084" },
+    { etiqueta: "CBU", valor: "2850811-3-3009400374292-1" },
+    { etiqueta: "Alias", valor: "solido.chueco.bigote" },
+    { etiqueta: "Cuenta", valor: "381109400374292 (Convenio 30788)" },
   ),
   "BANCO COMAFI": generalEntity(
-    pagoFacil("Empresa 5 Online + DNI"),
-    other("Pago Online", "pagosenlinea.pagofacil.com.ar"),
+    { etiqueta: "Pago Fácil", valor: "DNI + Importe a pagar" },
+    { etiqueta: "Pago Online", valor: "pagosenlinea.pagofacil.com.ar" },
+    { etiqueta: "Transferencia/depósito", valor: "Consultar con asesor" },
   ),
   "BIA GROUP": generalEntity(
-    transfer({ cbu: "0170123020000000951906", alias: "GRUPOBIA.BBVA" }),
-    rapipago("CGF COBRANZAS + ID"),
-    pagoFacil("CGF COBRANZAS + DNI"),
-    other("Mercado Pago", "Habilitado"),
+    { etiqueta: "Cta. Cte.", valor: "$ 123-009519/0" },
+    { etiqueta: "CBU", valor: "0170123020000000951906" },
+    { etiqueta: "Alias", valor: "GRUPOBIA.BBVA" },
+    { etiqueta: "Rapipago", valor: "CGF COBRANZAS + ID" },
+    { etiqueta: "Pago Fácil", valor: "CGF COBRANZAS + DNI" },
   ),
-  "CENCOSUD LIGA 1": generalEntity(...cencosudMethods),
-  "CENCOSUD LIGA 2": generalEntity(...cencosudMethods),
-  "CENCOSUD EXTRA 1": generalEntity(...cencosudMethods),
-  "CRÉDITO DIRECTO": generalEntity(transfer({ cbu: "3380014930000000248447" })),
-  UALÁ: {
+  "CENCOSUD EXTRA": generalEntity(...cencosudMethods),
+  "CENCOSUD LIGA": generalEntity(...cencosudMethods),
+  "CREDITO DIRECTO": generalEntity(
+    { etiqueta: "Titular cuenta", valor: "CREDITIO DIRECTO S.A." },
+    { etiqueta: "CUIT", valor: "30-71210113-6" },
+    { etiqueta: "CBU", valor: "3380014930000000248447" },
+  ),
+  UALA: {
     carteras: [DEFAULT_PORTFOLIO],
     productos: ["TC", "PYC"],
     metodosPago: {
-      TC: [transfer({ cbu: "3840100200000000619567" })],
-      PYC: [transfer({ cbu: "3840100200000004686158" })],
+      TC: [
+        { etiqueta: "Banco", valor: "WILOBANK SAU" },
+        { etiqueta: "Titular cuenta", valor: "WILOBANK S.A.U." },
+        { etiqueta: "CUIT", valor: "30715654632" },
+        { etiqueta: "CBU", valor: "3840100200000000619567" },
+      ],
+      PYC: [
+        { etiqueta: "Banco", valor: "WILOBANK" },
+        { etiqueta: "Titular cuenta", valor: "ALAU TECNOLOGIA S.A.U." },
+        { etiqueta: "CUIT", valor: "30-71542170-0" },
+        { etiqueta: "CBU", valor: "3840100200000004686158 (Solo préstamos y cuotificación)" },
+      ],
     },
   },
   "EXI GROUP": generalEntity(
-    transfer({ cbu: "0070339820000018156535", alias: "EXISACOB" }),
-    rapipago("Empresa 3875 (EXI SA)"),
+    { etiqueta: "Cta. Cte.", valor: "$ 18156-5 339-3" },
+    { etiqueta: "CBU", valor: "0070339820000018156535" },
+    { etiqueta: "Alias", valor: "EXISACOB" },
+    { etiqueta: "Rapipago", valor: "Código de Empresa 3875 (EXI SA)" },
   ),
-  PARETO: generalEntity(transfer({ cbu: "3220001805007135800029", alias: "cuotapareto" })),
+  PARETO: generalEntity(
+    { etiqueta: "Banco", valor: "Banco Bind (Cuenta corriente)" },
+    { etiqueta: "Titular cuenta", valor: "Espacio Digital S.A" },
+    { etiqueta: "CUIT", valor: "30-71550240-9" },
+    { etiqueta: "CBU", valor: "3220001805007135800029" },
+    { etiqueta: "Alias", valor: "cuotapareto" },
+  ),
   "RECUPERO DE ACTIVOS": generalEntity(
-    transfer({ cbu: "0070024520000004194671" }),
-    rapipago("Empresa 3946"),
-    pagoFacil("Empresa 2913"),
+    { etiqueta: "Titular cuenta", valor: "RECUPERO DE ACTIVOS FIDEICOMISO FINANCIERO" },
+    { etiqueta: "Cuenta", valor: "00004194-6 024-7" },
+    { etiqueta: "CBU", valor: "0070024520000004194671" },
+    { etiqueta: "Rapipago", valor: "Código de Empresa 3946 (RECUPERO DE ACTIVOS)" },
+    { etiqueta: "Pago Fácil", valor: "Código de Empresa 2913 (RECUPERO DE ACTIVOS)" },
   ),
-  "CREDITIA CENTAURUS": generalEntity(transfer({ cbu: "0170099220000072077766" })),
+  "CREDITIA CENTAURUS": generalEntity(
+    { etiqueta: "Banco", valor: "BBVA Banco Francés S.A." },
+    { etiqueta: "Titular cuenta", valor: "FIDE PRIV ADM CENTAURUS" },
+    { etiqueta: "CUIT", valor: "30-71789342-1" },
+    { etiqueta: "Cta. Cte.", valor: "099-720777/6" },
+    { etiqueta: "CBU", valor: "0170099220000072077766" },
+  ),
 };
 
 export const ENTIDAD_NAMES = Object.keys(ENTIDADES);
@@ -115,21 +132,8 @@ export function hasMultipleProducts(entidad: string | undefined): boolean {
   return (findEntity(entidad)?.productos.length ?? 0) > 1;
 }
 
-export function getPaymentMethods(entidad: string, producto: string | undefined): PaymentMethod[] {
+export function getPaymentMethods(entidad: string, producto: string | undefined): MetodoPago[] {
   const entity = findEntity(entidad);
   if (!entity) return [];
   return entity.metodosPago[producto ?? DEFAULT_PRODUCT] ?? [];
-}
-
-export function paymentMethodSummary(paymentMethod: PaymentMethod): string {
-  const parts = [
-    paymentMethod.banco,
-    paymentMethod.cbu ? `CBU ${paymentMethod.cbu}` : undefined,
-    paymentMethod.alias ? `Alias: ${paymentMethod.alias}` : undefined,
-    paymentMethod.titular ? `Titular: ${paymentMethod.titular}` : undefined,
-    paymentMethod.cuit ? `CUIT: ${paymentMethod.cuit}` : undefined,
-    paymentMethod.cuenta ? `Cuenta: ${paymentMethod.cuenta}` : undefined,
-    paymentMethod.detalle,
-  ];
-  return parts.filter((part): part is string => Boolean(part)).join(" / ");
 }

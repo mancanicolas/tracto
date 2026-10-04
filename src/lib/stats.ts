@@ -6,16 +6,17 @@ export interface MonthStats {
   collected: number;
   countedInstallments: number;
   projected: number;
-  activeAgreements: number;
+  projectedCases: number;
   pendingCases: number;
 }
 
-export function computeStats(cases: Case[], today: string = todayIso()): MonthStats {
+export function computeStats(cases: Case[], includeColchon: boolean, today: string = todayIso()): MonthStats {
+  const currentMonth = today.slice(0, 7);
   const stats: MonthStats = {
     collected: 0,
     countedInstallments: 0,
     projected: 0,
-    activeAgreements: 0,
+    projectedCases: 0,
     pendingCases: 0,
   };
 
@@ -29,12 +30,15 @@ export function computeStats(cases: Case[], today: string = todayIso()): MonthSt
     }
 
     const status = resolveCaseStatus(account, today);
-    if (status === null || status === "cancelado") continue;
-    stats.activeAgreements += 1;
-    stats.projected += installments
-      .filter((installment) => !installment.pagada)
+    if (status !== "acuerdo" && status !== "acuerdo colchon") continue;
+    stats.pendingCases += 1;
+    if (status === "acuerdo colchon" && !includeColchon) continue;
+
+    const dueThisMonth = installments
+      .filter((installment) => !installment.pagada && installment.fecha.slice(0, 7) === currentMonth)
       .reduce((sum, installment) => sum + installment.monto, 0);
-    if (status === "acuerdo" || status === "acuerdo colchon") stats.pendingCases += 1;
+    stats.projected += dueThisMonth;
+    if (dueThisMonth > 0) stats.projectedCases += 1;
   }
 
   return stats;

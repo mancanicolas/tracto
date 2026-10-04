@@ -4,7 +4,6 @@ import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
 import type { LabelColor } from "@/lib/labels";
 import { createMockCases, createMockLabels } from "@/lib/mock";
-import { computeStats } from "@/lib/stats";
 import { useShortcut } from "@/lib/shortcuts";
 import { FILTERS, countByFilter, selectVisibleCases, type FilterKey } from "../filters";
 import { useCases } from "../useCases";
@@ -47,7 +46,7 @@ export function AgendaView() {
     [cases, filter, query, today],
   );
   const counts = useMemo(() => countByFilter(cases, today), [cases, today]);
-  const stats = useMemo(() => computeStats(cases, today), [cases, today]);
+
   const selectedCase = cases.find((account) => account.dni === selectedDni) ?? null;
   const showDetailPane = isWide || isDetailOpen;
   const showListPane = isWide || !isDetailOpen;
@@ -197,7 +196,7 @@ export function AgendaView() {
         onOpenChange={setIsNewCaseOpen}
         onCreate={createCase}
       />
-      <StatsDialog open={isStatsOpen} stats={stats} onOpenChange={setIsStatsOpen} />
+      <StatsDialog open={isStatsOpen} cases={cases} onOpenChange={setIsStatsOpen} />
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>

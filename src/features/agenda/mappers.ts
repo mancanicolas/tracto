@@ -11,6 +11,8 @@ export interface CuotaRow {
   pagada: boolean;
   pagada_fecha: string | null;
   sumada_metricas: boolean;
+  recordatorio_hecho: boolean;
+  reclamo_hecho: boolean;
 }
 
 export interface AcuerdoRow {
@@ -72,6 +74,8 @@ function toInstallment(row: CuotaRow): Installment {
     pagada: row.pagada,
     pagada_fecha: row.pagada_fecha ?? undefined,
     countedInStats: row.sumada_metricas,
+    reminderDone: row.recordatorio_hecho,
+    claimDone: row.reclamo_hecho,
   };
 }
 

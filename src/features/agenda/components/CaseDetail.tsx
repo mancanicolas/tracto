@@ -11,7 +11,7 @@ import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
-import { hasOverdueInstallment, resolveInstallmentAlert } from "@/lib/installmentAlert";
+import { hasOverdueInstallment, resolveInstallmentAlert, type InstallmentAlertKind } from "@/lib/installmentAlert";
 import { AgendaSummary } from "./AgendaSummary";
 import { InstallmentAlertBanner } from "./InstallmentAlertBanner";
 import { AgreementAccordion } from "./AgreementAccordion";
@@ -47,6 +47,7 @@ interface CaseDetailProps {
   onSaveAgreement: (agreement: NewAgreement) => void;
   onToggleInstallment: (installmentId: string) => void;
   onToggleInstallmentStats: (installmentId: string) => void;
+  onMarkAlertDone: (installmentId: string, kind: InstallmentAlertKind) => void;
   onDeleteAgreement: () => void;
 }
 
@@ -67,6 +68,7 @@ export function CaseDetail({
   onSaveAgreement,
   onToggleInstallment,
   onToggleInstallmentStats,
+  onMarkAlertDone,
   onDeleteAgreement,
 }: CaseDetailProps) {
   const status = resolveCaseStatus(account);
@@ -138,7 +140,12 @@ export function CaseDetail({
 
       {account.agendado_para || account.acuerdo ? (
         <div className="flex flex-col gap-3 border-b border-line-subtle p-3">
-          {installmentAlert ? <InstallmentAlertBanner alert={installmentAlert} /> : null}
+          {installmentAlert ? (
+            <InstallmentAlertBanner
+              alert={installmentAlert}
+              onDone={() => onMarkAlertDone(installmentAlert.installment.id, installmentAlert.kind)}
+            />
+          ) : null}
           <AgendaSummary account={account} onResolve={onResolveSchedule} />
           {account.acuerdo ? (
             <AgreementAccordion

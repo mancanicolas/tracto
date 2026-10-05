@@ -105,8 +105,13 @@ create table if not exists public.cuotas (
   fecha date not null,
   pagada boolean not null default false,
   pagada_fecha date,
-  sumada_metricas boolean not null default false
+  sumada_metricas boolean not null default false,
+  recordatorio_hecho boolean not null default false,
+  reclamo_hecho boolean not null default false
 );
+
+alter table public.cuotas add column if not exists recordatorio_hecho boolean not null default false;
+alter table public.cuotas add column if not exists reclamo_hecho boolean not null default false;
 
 alter table public.cuotas drop constraint if exists cuotas_tipo_check;
 alter table public.cuotas

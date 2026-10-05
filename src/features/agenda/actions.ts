@@ -1,4 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { InstallmentAlertKind } from "@/lib/installmentAlert";
 import type { Label } from "@/lib/labels";
 import { fail, ok, type Result } from "@/lib/result";
 import { supabase } from "@/lib/supabase";
@@ -125,5 +126,11 @@ export async function updateInstallmentPayment(
 
 export async function updateInstallmentStats(installmentId: string, isCounted: boolean): Promise<Result> {
   const { error } = await supabase.from("cuotas").update({ sumada_metricas: isCounted }).eq("id", installmentId);
+  return toResult(error);
+}
+
+export async function markInstallmentAlertDone(installmentId: string, kind: InstallmentAlertKind): Promise<Result> {
+  const column = kind === "recordatorio" ? "recordatorio_hecho" : "reclamo_hecho";
+  const { error } = await supabase.from("cuotas").update({ [column]: true }).eq("id", installmentId);
   return toResult(error);
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createAgreement, type NewAgreement } from "@/lib/agreements";
 import { todayIso } from "@/lib/dates";
+import type { InstallmentAlertKind } from "@/lib/installmentAlert";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Result } from "@/lib/result";
 import type { Agreement, Case, CaseDetails, Installment, Note } from "@/lib/types";
@@ -32,7 +33,8 @@ type Action =
   | { type: "agreement_set"; dni: string; agreement: Agreement }
   | { type: "agreement_delete"; dni: string }
   | { type: "installment_toggle"; dni: string; installmentId: string; today: string }
-  | { type: "installment_stats_toggle"; dni: string; installmentId: string };
+  | { type: "installment_stats_toggle"; dni: string; installmentId: string }
+  | { type: "installment_alert_done"; dni: string; installmentId: string; kind: InstallmentAlertKind };
 
 const INITIAL_STATE: State = { status: "loading", cases: [], labels: [] };
 
@@ -128,6 +130,12 @@ function reducer(state: State, action: Action): State {
           pagada: !installment.pagada,
           pagada_fecha: installment.pagada ? undefined : action.today,
         })),
+      );
+    case "installment_alert_done":
+      return withCases(
+        updateInstallment(state.cases, action.dni, action.installmentId, (installment) =>
+          action.kind === "recordatorio" ? { ...installment, reminderDone: true } : { ...installment, claimDone: true },
+        ),
       );
     case "installment_stats_toggle":
       return withCases(
@@ -261,6 +269,11 @@ export function useCases() {
         const willBePaid = !installment.pagada;
         void commit({ type: "installment_toggle", dni, installmentId, today }, () =>
           writes.updateInstallmentPayment(installmentId, willBePaid, willBePaid ? today : null),
+        );
+      },
+      markAlertDone: (dni: string, installmentId: string, kind: InstallmentAlertKind) => {
+        void commit({ type: "installment_alert_done", dni, installmentId, kind }, () =>
+          writes.markInstallmentAlertDone(installmentId, kind),
         );
       },
       toggleInstallmentStats: (dni: string, installmentId: string) => {

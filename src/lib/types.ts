@@ -13,6 +13,8 @@ export interface Installment {
   pagada: boolean;
   pagada_fecha?: string;
   countedInStats: boolean;
+  reminderDone?: boolean;
+  claimDone?: boolean;
 }
 
 export type AgreementKind = "cuotas" | "parcial";

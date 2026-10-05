@@ -43,6 +43,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     removeCase,
     toggleInstallment,
     toggleInstallmentStats,
+    markAlertDone,
   } = useCases();
   const [filter, setFilter] = useState<ListView>("todos");
   const [query, setQuery] = useState("");
@@ -242,6 +243,10 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
               onToggleInstallmentStats={(installmentId) => {
                 toggleInstallmentStats(selectedCase.dni, installmentId);
                 setAnnouncement("Métricas actualizadas");
+              }}
+              onMarkAlertDone={(installmentId, kind) => {
+                markAlertDone(selectedCase.dni, installmentId, kind);
+                setAnnouncement(kind === "recordatorio" ? "Recordatorio hecho" : "Pedido de pago hecho");
               }}
               onDeleteAgreement={() => {
                 deleteAgreement(selectedCase.dni);

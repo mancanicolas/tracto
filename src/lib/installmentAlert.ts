@@ -25,9 +25,11 @@ export function resolveInstallmentAlert(
   today: string = todayIso(),
 ): InstallmentAlert | null {
   const unpaid = unpaidInstallments(account);
-  const overdue = unpaid.find((installment) => installment.fecha < today);
+  const overdue = unpaid.find((installment) => installment.fecha < today && !installment.claimDone);
   if (overdue) return { kind: "reclamo", installment: overdue };
   const tomorrow = addDaysIso(today, 1);
-  const upcoming = unpaid.find((installment) => installment.fecha <= tomorrow);
+  const upcoming = unpaid.find(
+    (installment) => installment.fecha >= today && installment.fecha <= tomorrow && !installment.reminderDone,
+  );
   return upcoming ? { kind: "recordatorio", installment: upcoming } : null;
 }

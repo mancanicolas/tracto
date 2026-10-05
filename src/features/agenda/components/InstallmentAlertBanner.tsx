@@ -1,5 +1,6 @@
-import { BellRing, Siren, type LucideIcon } from "lucide-react";
+import { BellRing, Check, Siren, type LucideIcon } from "lucide-react";
 import { installmentLabel } from "@/lib/agreements";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { formatIsoDate, formatIsoRelativeDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
@@ -26,9 +27,10 @@ const ALERT_META: Record<InstallmentAlertKind, AlertMeta> = {
 
 interface InstallmentAlertBannerProps {
   alert: InstallmentAlert;
+  onDone: () => void;
 }
 
-export function InstallmentAlertBanner({ alert }: InstallmentAlertBannerProps) {
+export function InstallmentAlertBanner({ alert, onDone }: InstallmentAlertBannerProps) {
   const { label, icon: Icon, classes } = ALERT_META[alert.kind];
   const { installment } = alert;
   return (
@@ -36,15 +38,22 @@ export function InstallmentAlertBanner({ alert }: InstallmentAlertBannerProps) {
       aria-label={label}
       className={cn("flex items-center justify-between gap-3 rounded-sm border px-2.5 py-2", classes)}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-        <span className="text-[13px] leading-5 font-semibold">{label}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+          <span className="text-[13px] leading-5 font-semibold">{label}</span>
+        </div>
+        <p className="min-w-0 truncate text-xs leading-4 text-fg-secondary">
+          {installmentLabel(installment)} ·{" "}
+          <span className="font-mono tabular-nums">{formatMoney(installment.monto)}</span> · vence{" "}
+          <span className="font-mono tabular-nums">{formatIsoDate(installment.fecha)}</span> (
+          {formatIsoRelativeDay(installment.fecha)})
+        </p>
       </div>
-      <p className="min-w-0 truncate text-right text-xs leading-4 text-fg-secondary">
-        {installmentLabel(installment)} · <span className="font-mono tabular-nums">{formatMoney(installment.monto)}</span>{" "}
-        · vence <span className="font-mono tabular-nums">{formatIsoDate(installment.fecha)}</span> (
-        {formatIsoRelativeDay(installment.fecha)})
-      </p>
+      <Button size="small" className="shrink-0" onClick={onDone}>
+        <Check className="size-3.5" strokeWidth={1.75} aria-hidden />
+        Marcar como hecho
+      </Button>
     </section>
   );
 }

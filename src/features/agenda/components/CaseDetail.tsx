@@ -11,7 +11,9 @@ import { formatDni, formatMoney, formatPhone } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
+import { hasOverdueInstallment, resolveInstallmentAlert } from "@/lib/installmentAlert";
 import { AgendaSummary } from "./AgendaSummary";
+import { InstallmentAlertBanner } from "./InstallmentAlertBanner";
 import { AgreementAccordion } from "./AgreementAccordion";
 import { ConvenioAction } from "./ConvenioAction";
 import { AgreementPanel } from "./AgreementPanel";
@@ -68,6 +70,7 @@ export function CaseDetail({
   onDeleteAgreement,
 }: CaseDetailProps) {
   const status = resolveCaseStatus(account);
+  const installmentAlert = resolveInstallmentAlert(account);
   const lastPayment = lastPaymentDate(account);
 
   return (
@@ -94,7 +97,7 @@ export function CaseDetail({
             </div>
             {status ? (
               <div>
-                <StatusBadge status={status} />
+                <StatusBadge status={status} overdue={hasOverdueInstallment(account)} />
               </div>
             ) : null}
           </div>
@@ -135,6 +138,7 @@ export function CaseDetail({
 
       {account.agendado_para || account.acuerdo ? (
         <div className="flex flex-col gap-3 border-b border-line-subtle p-3">
+          {installmentAlert ? <InstallmentAlertBanner alert={installmentAlert} /> : null}
           <AgendaSummary account={account} onResolve={onResolveSchedule} />
           {account.acuerdo ? (
             <AgreementAccordion

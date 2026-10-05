@@ -4,7 +4,7 @@ import type { Case } from "./types";
 
 export type AccountStatus = "pago" | "acuerdo" | "acuerdo colchon" | "cancelado";
 
-export type StatusTone = "success" | "info" | "neutral";
+export type StatusTone = "success" | "info" | "neutral" | "warning";
 
 export interface StatusMeta {
   tone: StatusTone;
@@ -23,6 +23,7 @@ export const TONE_CLASSES: Record<StatusTone, string> = {
   success: "bg-success-subtle text-success border border-success-border",
   info: "bg-info-subtle text-info border border-info-border",
   neutral: "bg-neutral-subtle text-neutral border border-neutral/30",
+  warning: "bg-warning-subtle text-warning border border-warning-border",
 };
 
 export function resolveCaseStatus(account: Pick<Case, "acuerdo" | "pagos_previos">, today: string = todayIso()): AccountStatus | null {

@@ -1,6 +1,7 @@
 import { todayIso } from "@/lib/dates";
 import { normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
+import { resolveInstallmentAlert } from "@/lib/installmentAlert";
 import { resolveCaseStatus } from "@/lib/status";
 
 export const FILTERS = [
@@ -20,6 +21,12 @@ export function hasPendingAgenda(account: Case, today: string = todayIso()): boo
   return Boolean(account.agendado_para && !account.agendado_resuelto && account.agendado_para <= today);
 }
 
+function agendaSortKey(account: Case, today: string): string {
+  const alert = resolveInstallmentAlert(account, today);
+  const scheduled = hasPendingAgenda(account, today) ? account.agendado_para : undefined;
+  return [scheduled, alert?.installment.fecha].filter((value): value is string => Boolean(value)).sort()[0] ?? "";
+}
+
 export function matchesFilter(account: Case, filter: ListView, today: string = todayIso()): boolean {
   if (filter === ARCHIVED_VIEW) return Boolean(account.archivado);
   if (account.archivado) return false;
@@ -32,7 +39,7 @@ export function matchesFilter(account: Case, filter: ListView, today: string = t
     case "pagos":
       return status === "pago";
     case "agenda":
-      return hasPendingAgenda(account, today);
+      return hasPendingAgenda(account, today) || resolveInstallmentAlert(account, today) !== null;
   }
 }
 
@@ -69,5 +76,5 @@ export function countByFilter(cases: Case[], today: string = todayIso()): Record
 export function selectVisibleCases(cases: Case[], filter: ListView, query: string, today: string = todayIso()): Case[] {
   const visible = cases.filter((c) => matchesFilter(c, filter, today) && matchesQuery(c, query));
   if (filter !== "agenda") return visible;
-  return [...visible].sort((a, b) => (a.agendado_para ?? "").localeCompare(b.agendado_para ?? ""));
+  return [...visible].sort((a, b) => agendaSortKey(a, today).localeCompare(agendaSortKey(b, today)));
 }

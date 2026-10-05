@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { todayIso } from "@/lib/dates";
-import { formatMoney, normalizeDni, parseMoneyToCents } from "@/lib/format";
+import { normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { LABEL_COLORS } from "@/lib/labels";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -104,7 +104,7 @@ function addIssues<T extends string>(
   }
 }
 
-export function agreementSchema(requiresProduct: boolean, balance: number | undefined) {
+export function agreementSchema(requiresProduct: boolean) {
   return z
     .object({
       tipo: z.enum(["cuotas", "parcial"]),
@@ -123,7 +123,7 @@ export function agreementSchema(requiresProduct: boolean, balance: number | unde
         ctx.addIssue({ code: "custom", path: ["producto"], message: "Elegí el producto." });
       }
       if (values.tipo === "parcial") {
-        validatePartialPayment(values, balance, ctx);
+        validatePartialPayment(values, ctx);
         return;
       }
       addIssues(
@@ -139,7 +139,7 @@ export function agreementSchema(requiresProduct: boolean, balance: number | unde
     });
 }
 
-function validatePartialPayment(values: AgreementFormValues, balance: number | undefined, ctx: z.RefinementCtx): void {
+function validatePartialPayment(values: AgreementFormValues, ctx: z.RefinementCtx): void {
   addIssues(
     ctx,
     [
@@ -148,14 +148,6 @@ function validatePartialPayment(values: AgreementFormValues, balance: number | u
     ],
     values,
   );
-  const cents = parseMoneyToCents(values.monto_parcial);
-  if (balance !== undefined && cents !== null && cents >= balance) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["monto_parcial"],
-      message: `Tiene que ser menor a la deuda total de ${formatMoney(balance)}.`,
-    });
-  }
 }
 
 function validateDownPayment(values: AgreementFormValues, ctx: z.RefinementCtx): void {

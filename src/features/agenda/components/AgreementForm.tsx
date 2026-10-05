@@ -32,7 +32,7 @@ const KINDS: { key: AgreementKind; label: string }[] = [
 export function AgreementForm({ entidad, balance, onSave }: AgreementFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const requiresProduct = hasMultipleProducts(entidad);
-  const schema = useMemo(() => agreementSchema(requiresProduct, balance), [requiresProduct, balance]);
+  const schema = useMemo(() => agreementSchema(requiresProduct), [requiresProduct]);
   const {
     register,
     handleSubmit,

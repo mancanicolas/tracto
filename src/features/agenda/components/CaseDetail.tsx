@@ -42,7 +42,7 @@ interface CaseDetailProps {
   onRemoveLabel: (labelId: string) => void;
   onCreateLabel: (nombre: string, color: LabelColor) => void;
   onSaveNote: (texto: string) => void;
-  onSchedule: (fecha: string, motivo: string) => void;
+  onSchedule: (fecha: string, motivo: string, hora?: string) => void;
   onResolveSchedule: () => void;
   onSaveAgreement: (agreement: NewAgreement) => void;
   onToggleInstallment: (installmentId: string) => void;

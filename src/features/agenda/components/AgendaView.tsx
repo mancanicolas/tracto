@@ -19,10 +19,12 @@ import {
   type SortKey,
 } from "../filters";
 import type { CaseEditValues } from "../schemas";
+import { useAlarms } from "../useAlarms";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
 import { CaseList } from "./CaseList";
 import { AgendaStatus } from "./AgendaStatus";
+import { AlarmToasts } from "./AlarmToasts";
 import { CaseDialog } from "./CaseDialog";
 import { StatsDialog } from "./StatsDialog";
 
@@ -54,6 +56,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     toggleInstallmentStats,
     markAlertDone,
   } = useCases();
+  const { ringing, dismissAlarm } = useAlarms(cases);
   const [filter, setFilter] = useState<ListView>("todos");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("default");
@@ -245,8 +248,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
                 addNote(selectedCase.dni, texto);
                 setAnnouncement("Nota guardada");
               }}
-              onSchedule={(fecha, motivo) => {
-                schedule(selectedCase.dni, fecha, motivo);
+              onSchedule={(fecha, motivo, hora) => {
+                schedule(selectedCase.dni, fecha, motivo, hora);
                 setAnnouncement("Seguimiento agendado");
               }}
               onResolveSchedule={() => {
@@ -286,6 +289,14 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
         onUpdate={saveCaseDetails}
       />
       <StatsDialog open={isStatsOpen} cases={cases} operator={operatorName} onOpenChange={setIsStatsOpen} />
+      <AlarmToasts
+        alarms={ringing}
+        onOpen={(alarm) => {
+          openCase(alarm.dni);
+          dismissAlarm(alarm.key);
+        }}
+        onDismiss={dismissAlarm}
+      />
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>

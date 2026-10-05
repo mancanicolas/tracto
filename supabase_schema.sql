@@ -140,8 +140,13 @@ create table if not exists public.agenda (
   caso_id uuid not null unique references public.casos (id) on delete cascade,
   fecha date not null,
   motivo text not null check (char_length(btrim(motivo)) > 0),
-  resuelto boolean not null default false
+  resuelto boolean not null default false,
+  hora text
 );
+
+alter table public.agenda add column if not exists hora text;
+alter table public.agenda drop constraint if exists agenda_hora_check;
+alter table public.agenda add constraint agenda_hora_check check (hora is null or hora ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
 
 alter table public.etiquetas enable row level security;
 alter table public.casos enable row level security;

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { BellRing, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { formatIsoDate, formatIsoRelativeDay } from "@/lib/dates";
 import type { Case } from "@/lib/types";
@@ -9,7 +9,7 @@ interface AgendaSummaryProps {
 }
 
 export function AgendaSummary({ account, onResolve }: AgendaSummaryProps) {
-  const { agendado_para: date, agendado_motivo: reason, agendado_resuelto: isResolved } = account;
+  const { agendado_para: date, agendado_motivo: reason, agendado_hora: time, agendado_resuelto: isResolved } = account;
   if (!date) return null;
 
   return (
@@ -22,6 +22,13 @@ export function AgendaSummary({ account, onResolve }: AgendaSummaryProps) {
         <dd className="text-fg">
           <span className="font-mono tabular-nums">{formatIsoDate(date)}</span>
           <span className="text-fg-muted"> · {formatIsoRelativeDay(date)}</span>
+          {time ? (
+            <span className="ml-2 inline-flex items-center gap-1 font-mono text-fg tabular-nums">
+              <BellRing className="size-3.5 text-warning" strokeWidth={1.75} aria-hidden />
+              {time}
+              <span className="sr-only">con alarma</span>
+            </span>
+          ) : null}
         </dd>
         <dt className="text-fg-muted">Motivo</dt>
         <dd className="min-w-0 text-fg">{reason || "Sin info"}</dd>

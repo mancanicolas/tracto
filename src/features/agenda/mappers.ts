@@ -34,6 +34,7 @@ export interface AgendaRow {
   fecha: string;
   motivo: string;
   resuelto: boolean;
+  hora: string | null;
 }
 
 export interface CasoRow {
@@ -110,6 +111,7 @@ export function toCase(row: CasoRow): Case {
     ultimo_pago_fecha: row.ultimo_pago_fecha ?? undefined,
     agendado_para: agenda?.fecha,
     agendado_motivo: agenda?.motivo,
+    agendado_hora: agenda?.hora ?? undefined,
     agendado_resuelto: agenda?.resuelto,
     notas: [...row.notas].sort((a, b) => b.creada.localeCompare(a.creada)).map(toNote),
     acuerdo: acuerdo ? toAgreement(acuerdo) : undefined,

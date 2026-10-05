@@ -79,10 +79,10 @@ export async function insertNote(caseId: string, note: Note): Promise<Result> {
   return toResult(error);
 }
 
-export async function upsertAgenda(caseId: string, fecha: string, motivo: string): Promise<Result> {
+export async function upsertAgenda(caseId: string, fecha: string, motivo: string, hora?: string): Promise<Result> {
   const { error } = await supabase
     .from("agenda")
-    .upsert({ caso_id: caseId, fecha, motivo, resuelto: false }, { onConflict: "caso_id" });
+    .upsert({ caso_id: caseId, fecha, motivo, hora: hora ?? null, resuelto: false }, { onConflict: "caso_id" });
   return toResult(error);
 }
 

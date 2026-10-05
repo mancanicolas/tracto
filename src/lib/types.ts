@@ -43,6 +43,7 @@ export interface Case {
   ultimo_pago_fecha?: string;
   agendado_para?: string;
   agendado_motivo?: string;
+  agendado_hora?: string;
   agendado_resuelto?: boolean;
   notas: Note[];
   acuerdo?: Agreement;

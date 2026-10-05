@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { todayIso } from "@/lib/dates";
-import { normalizeDni, parseMoneyToCents } from "@/lib/format";
+import { formatTime, normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { LABEL_COLORS } from "@/lib/labels";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -70,10 +70,23 @@ export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),
 });
 
-export const scheduleSchema = z.object({
-  fecha: requiredFutureDate,
-  motivo: z.string().trim().min(1, "Indicá el motivo.").max(120, "Máximo 120 caracteres."),
-});
+const TIME_OF_DAY = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const scheduleSchema = z
+  .object({
+    fecha: requiredFutureDate,
+    motivo: z.string().trim().min(1, "Indicá el motivo.").max(120, "Máximo 120 caracteres."),
+    con_alarma: z.boolean(),
+    hora: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    if (!values.con_alarma) return;
+    if (!TIME_OF_DAY.test(values.hora)) {
+      ctx.addIssue({ code: "custom", path: ["hora"], message: "Elegí un horario." });
+    } else if (values.fecha === todayIso() && values.hora <= formatTime(new Date())) {
+      ctx.addIssue({ code: "custom", path: ["hora"], message: "Elegí un horario posterior a la hora actual." });
+    }
+  });
 
 const installmentCount = z
   .string()

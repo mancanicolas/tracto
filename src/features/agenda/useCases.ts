@@ -28,7 +28,7 @@ type Action =
   | { type: "label_apply"; dni: string; labelId: string }
   | { type: "label_remove"; dni: string; labelId: string }
   | { type: "note_add"; dni: string; note: Note }
-  | { type: "schedule"; dni: string; fecha: string; motivo: string }
+  | { type: "schedule"; dni: string; fecha: string; motivo: string; hora?: string }
   | { type: "schedule_resolve"; dni: string; note: Note }
   | { type: "agreement_set"; dni: string; agreement: Agreement }
   | { type: "agreement_delete"; dni: string }
@@ -108,6 +108,7 @@ function reducer(state: State, action: Action): State {
           ...a,
           agendado_para: action.fecha,
           agendado_motivo: action.motivo,
+          agendado_hora: action.hora,
           agendado_resuelto: false,
         })),
       );
@@ -240,10 +241,12 @@ export function useCases() {
         const note: Note = { id: crypto.randomUUID(), texto, creada: new Date().toISOString() };
         void commit({ type: "note_add", dni, note }, () => writes.insertNote(account.id, note));
       },
-      schedule: (dni: string, fecha: string, motivo: string) => {
+      schedule: (dni: string, fecha: string, motivo: string, hora?: string) => {
         const account = findCase(dni);
         if (!account) return;
-        void commit({ type: "schedule", dni, fecha, motivo }, () => writes.upsertAgenda(account.id, fecha, motivo));
+        void commit({ type: "schedule", dni, fecha, motivo, hora }, () =>
+          writes.upsertAgenda(account.id, fecha, motivo, hora),
+        );
       },
       resolveSchedule: (dni: string) => {
         const account = findCase(dni);

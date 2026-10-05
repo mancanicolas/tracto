@@ -22,11 +22,11 @@ function formatFullDate(iso: string): string {
 
 function installmentLine(installment: Installment): string {
   const label = installment.tipo === "cuota" ? `Cuota #${installment.numero}` : installmentLabel(installment);
-  return `• ${label}: ${formatArs(installment.monto)} (Vencimiento: ${formatFullDate(installment.fecha)})`;
+  return `* ${label}: ${formatArs(installment.monto)} (Vencimiento: ${formatFullDate(installment.fecha)})`;
 }
 
 function paymentLines(methods: MetodoPago[]): string[] {
-  return methods.map(({ etiqueta, valor }) => `• *${etiqueta}:* ${valor}`);
+  return methods.map(({ etiqueta, valor }) => `* ${etiqueta}: ${valor}`);
 }
 
 export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement, today: string = todayIso()): string {
@@ -37,21 +37,21 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
     agreement.tipo === "parcial" ? [INCUMPLIMIENTO_LINE] : [LIBRE_DE_DEUDA_LINE, INCUMPLIMIENTO_LINE];
 
   return [
-    `*Estimado/a ${account.nombre} - ${account.dni}:*`,
+    `Estimado/a ${account.nombre} - ${account.dni}:`,
     "",
     `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${purpose} de sus obligaciones de ${account.cartera ?? ""}`,
     "",
-    `*${planTitle} (${formatArs(total)})*`,
+    `${planTitle} (${formatArs(total)})`,
     ...agreement.cuotas.map(installmentLine),
     "",
-    "*MEDIOS DE PAGO HABILITADOS*",
+    "MEDIOS DE PAGO HABILITADOS",
     "",
     ...paymentLines(methods),
     "",
-    "*IMPORTANTE:*",
-    ...importantLines.map((line) => `• ${line}`),
+    "IMPORTANTE:",
+    ...importantLines.map((line) => `> ${line}`),
     "",
-    `*Dpto. de Cobranzas - 5oL / ${account.entidad}*`,
+    `Dpto. de Cobranzas - 5oL / ${account.entidad}`,
   ].join("\n");
 }
 

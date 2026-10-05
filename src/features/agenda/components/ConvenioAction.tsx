@@ -1,9 +1,9 @@
-import { Copy, FileText, Pencil, TriangleAlert } from "lucide-react";
+import { Copy, FileText, Image, Pencil, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
-import { downloadConvenio, missingConvenioFields } from "@/lib/convenio";
+import { downloadConvenio, downloadConvenioImage, missingConvenioFields } from "@/lib/convenio";
 import { copyConvenioMessage } from "@/lib/convenioMessage";
 import type { Case } from "@/lib/types";
 import type { ConvenioValues } from "../schemas";
@@ -75,7 +75,7 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
     }
 
     setIsGenerating(true);
-    const result = await downloadConvenio(merged);
+    const result = mode === "image" ? await downloadConvenioImage(merged) : await downloadConvenio(merged);
     setIsGenerating(false);
     if (!result.ok) setFeedback({ text: result.error, tone: "error", offersEdit: false });
     else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success", offersEdit: false });
@@ -87,6 +87,10 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
         <Button loading={isGenerating} onClick={() => openDialog("download")}>
           <FileText className="size-4" strokeWidth={1.75} aria-hidden />
           {isGenerating ? "Generando convenio" : "Descargar convenio"}
+        </Button>
+        <Button disabled={isGenerating} onClick={() => openDialog("image")}>
+          <Image className="size-4" strokeWidth={1.75} aria-hidden />
+          Descargar imagen
         </Button>
         <Button onClick={() => openDialog("copy")}>
           <Copy className="size-4" strokeWidth={1.75} aria-hidden />

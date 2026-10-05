@@ -10,13 +10,14 @@ import { MOD_LABEL } from "@/lib/shortcuts";
 import type { Case } from "@/lib/types";
 import { convenioSchema, type ConvenioValues } from "../schemas";
 
-export type ConvenioMode = "copy" | "download";
+export type ConvenioMode = "copy" | "download" | "image";
 
 const CARTERAS_LIST_ID = "convenio-carteras";
 
 const CONFIRM_LABELS: Record<ConvenioMode, string> = {
   copy: "Confirmar y copiar",
   download: "Confirmar y descargar",
+  image: "Confirmar y descargar imagen",
 };
 
 interface ConvenioFormProps {

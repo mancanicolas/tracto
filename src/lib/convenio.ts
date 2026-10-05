@@ -318,21 +318,34 @@ export async function buildConvenioBytes(account: ConvenioCase, agreement: Agree
   return new Uint8Array(buffer);
 }
 
-export async function downloadConvenio(account: Case): Promise<Result<SaveOutcome>> {
+type ConvenioFormat = "pdf" | "png";
+
+const FORMAT_FILTERS: Record<ConvenioFormat, string> = { pdf: "PDF", png: "Imagen PNG" };
+
+async function saveConvenio(account: Case, format: ConvenioFormat): Promise<Result<SaveOutcome>> {
   const { acuerdo, nombre, entidad } = account;
   if (!acuerdo || !nombre?.trim() || !entidad?.trim()) {
     return fail("Faltan datos del caso para generar el convenio.");
   }
   let bytes: Uint8Array;
   try {
-    bytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo);
+    const pdfBytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo);
+    bytes = format === "png" ? await (await import("./pdfToPng")).renderPdfToPng(pdfBytes) : pdfBytes;
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
   }
   return saveBytesWithDialog({
-    defaultName: `convenio_${account.dni}.pdf`,
-    filterName: "PDF",
-    extension: "pdf",
+    defaultName: `convenio_${account.dni}.${format}`,
+    filterName: FORMAT_FILTERS[format],
+    extension: format,
     bytes,
   });
+}
+
+export function downloadConvenio(account: Case): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "pdf");
+}
+
+export function downloadConvenioImage(account: Case): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "png");
 }

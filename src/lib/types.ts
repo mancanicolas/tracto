@@ -2,6 +2,7 @@ export interface Note {
   id: string;
   texto: string;
   creada: string;
+  origen?: "agenda";
 }
 
 export interface Installment {

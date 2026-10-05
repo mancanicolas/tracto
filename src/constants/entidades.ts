@@ -104,7 +104,7 @@ export const ENTIDADES: Record<string, Entidad> = {
 
 export const ENTIDAD_NAMES = Object.keys(ENTIDADES);
 
-function foldName(name: string): string {
+export function foldName(name: string): string {
   return name
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")

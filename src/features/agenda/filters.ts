@@ -1,4 +1,5 @@
 import { todayIso } from "@/lib/dates";
+import { ENTIDAD_NAMES, findEntity, foldName } from "@/constants/entidades";
 import { normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { resolveInstallmentAlert } from "@/lib/installmentAlert";
@@ -12,6 +13,18 @@ export const FILTERS = [
 ] as const;
 
 export type FilterKey = (typeof FILTERS)[number]["key"];
+
+export const SORTS = [
+  { key: "default", label: "Orden por defecto" },
+  { key: "note_newest", label: "Última nota: más reciente" },
+  { key: "note_oldest", label: "Última nota: más antigua" },
+  { key: "tag", label: "Por tag" },
+] as const;
+
+export type SortKey = (typeof SORTS)[number]["key"];
+
+export const ALL_ENTITIES = "todas";
+export const NO_ENTITY = "sin_entidad";
 
 export const ARCHIVED_VIEW = "archivados";
 
@@ -73,8 +86,60 @@ export function countByFilter(cases: Case[], today: string = todayIso()): Record
   };
 }
 
-export function selectVisibleCases(cases: Case[], filter: ListView, query: string, today: string = todayIso()): Case[] {
+export function matchesEntity(account: Case, entity: string): boolean {
+  if (entity === ALL_ENTITIES) return true;
+  const name = account.entidad?.trim();
+  if (entity === NO_ENTITY) return !name;
+  return Boolean(name) && foldName(name ?? "") === foldName(entity);
+}
+
+export function listEntityOptions(cases: Case[]): string[] {
+  const unknown = cases
+    .map((account) => account.entidad?.trim())
+    .filter((name): name is string => Boolean(name) && !findEntity(name));
+  return [...ENTIDAD_NAMES, ...new Set(unknown)];
+}
+
+function lastNoteTime(account: Case): number {
+  return account.notas.reduce((latest, note) => Math.max(latest, Date.parse(note.creada)), 0);
+}
+
+function tagRank(account: Case, today: string): number {
+  switch (resolveCaseStatus(account, today)) {
+    case null:
+      return 0;
+    case "acuerdo":
+    case "acuerdo colchon":
+      return 1;
+    case "pago":
+      return 2;
+    case "cancelado":
+      return 3;
+  }
+}
+
+function sortCases(cases: Case[], sort: SortKey, today: string): Case[] {
+  switch (sort) {
+    case "note_newest":
+      return [...cases].sort((a, b) => lastNoteTime(b) - lastNoteTime(a));
+    case "note_oldest":
+      return [...cases].sort((a, b) => lastNoteTime(a) - lastNoteTime(b));
+    case "tag":
+      return [...cases].sort((a, b) => tagRank(a, today) - tagRank(b, today));
+    case "default":
+      return cases;
+  }
+}
+
+export function selectVisibleCases(
+  cases: Case[],
+  filter: ListView,
+  query: string,
+  today: string = todayIso(),
+  sort: SortKey = "default",
+): Case[] {
   const visible = cases.filter((c) => matchesFilter(c, filter, today) && matchesQuery(c, query));
+  if (sort !== "default") return sortCases(visible, sort, today);
   if (filter !== "agenda") return visible;
   return [...visible].sort((a, b) => agendaSortKey(a, today).localeCompare(agendaSortKey(b, today)));
 }

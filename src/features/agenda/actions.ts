@@ -75,7 +75,7 @@ export async function unlinkLabel(caseId: string, labelId: string): Promise<Resu
 export async function insertNote(caseId: string, note: Note): Promise<Result> {
   const { error } = await supabase
     .from("notas")
-    .insert({ id: note.id, caso_id: caseId, texto: note.texto, creada: note.creada });
+    .insert({ id: note.id, caso_id: caseId, texto: note.texto, creada: note.creada, origen: note.origen ?? null });
   return toResult(error);
 }
 

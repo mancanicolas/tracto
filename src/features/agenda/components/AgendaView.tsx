@@ -8,7 +8,16 @@ import type { LabelColor } from "@/lib/labels";
 import { useShortcut } from "@/lib/shortcuts";
 import type { CaseDetails } from "@/lib/types";
 import { toCaseDetails } from "../caseDetails";
-import { FILTERS, countByFilter, selectVisibleCases, type ListView } from "../filters";
+import {
+  ALL_ENTITIES,
+  FILTERS,
+  countByFilter,
+  listEntityOptions,
+  matchesEntity,
+  selectVisibleCases,
+  type ListView,
+  type SortKey,
+} from "../filters";
 import type { CaseEditValues } from "../schemas";
 import { useCases } from "../useCases";
 import { CaseDetail, type ManagementTab } from "./CaseDetail";
@@ -47,6 +56,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   } = useCases();
   const [filter, setFilter] = useState<ListView>("todos");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortKey>("default");
+  const [entity, setEntity] = useState(ALL_ENTITIES);
   const [pickedDni, setSelectedDni] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [tab, setTab] = useState<ManagementTab>("nota");
@@ -59,11 +70,13 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   const isWide = useMediaQuery("(min-width: 768px)");
 
   const today = todayIso();
+  const entityCases = useMemo(() => cases.filter((account) => matchesEntity(account, entity)), [cases, entity]);
+  const entityOptions = useMemo(() => listEntityOptions(cases), [cases]);
   const visibleCases = useMemo(
-    () => selectVisibleCases(cases, filter, query, today),
-    [cases, filter, query, today],
+    () => selectVisibleCases(entityCases, filter, query, today, sort),
+    [entityCases, filter, query, today, sort],
   );
-  const counts = useMemo(() => countByFilter(cases, today), [cases, today]);
+  const counts = useMemo(() => countByFilter(entityCases, today), [entityCases, today]);
 
   const selectedDni = pickedDni ?? cases.find((account) => !account.archivado)?.dni ?? null;
   const selectedCase = cases.find((account) => account.dni === selectedDni) ?? null;
@@ -190,6 +203,11 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
             searchRef={searchRef}
             onFilterChange={setFilter}
             onQueryChange={setQuery}
+            sort={sort}
+            onSortChange={setSort}
+            entity={entity}
+            entityOptions={entityOptions}
+            onEntityChange={setEntity}
             onOpen={openCase}
             onMove={moveSelection}
             onNewCase={() => setIsNewCaseOpen(true)}

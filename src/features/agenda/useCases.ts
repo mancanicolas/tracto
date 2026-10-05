@@ -29,7 +29,7 @@ type Action =
   | { type: "label_remove"; dni: string; labelId: string }
   | { type: "note_add"; dni: string; note: Note }
   | { type: "schedule"; dni: string; fecha: string; motivo: string }
-  | { type: "schedule_resolve"; dni: string }
+  | { type: "schedule_resolve"; dni: string; note: Note }
   | { type: "agreement_set"; dni: string; agreement: Agreement }
   | { type: "agreement_delete"; dni: string }
   | { type: "installment_toggle"; dni: string; installmentId: string; today: string }
@@ -112,7 +112,9 @@ function reducer(state: State, action: Action): State {
         })),
       );
     case "schedule_resolve":
-      return withCases(update(state.cases, action.dni, (a) => ({ ...a, agendado_resuelto: true })));
+      return withCases(
+        update(state.cases, action.dni, (a) => ({ ...a, agendado_resuelto: true, notas: [action.note, ...a.notas] })),
+      );
     case "agreement_set":
       return withCases(
         update(state.cases, action.dni, (a) => ({
@@ -246,7 +248,16 @@ export function useCases() {
       resolveSchedule: (dni: string) => {
         const account = findCase(dni);
         if (!account) return;
-        void commit({ type: "schedule_resolve", dni }, () => writes.resolveAgenda(account.id));
+        const note: Note = {
+          id: crypto.randomUUID(),
+          texto: account.agendado_motivo?.trim() || "Sin motivo",
+          creada: new Date().toISOString(),
+          origen: "agenda",
+        };
+        void commit({ type: "schedule_resolve", dni, note }, async () => {
+          const resolved = await writes.resolveAgenda(account.id);
+          return resolved.ok ? writes.insertNote(account.id, note) : resolved;
+        });
       },
       setAgreement: (dni: string, input: NewAgreement) => {
         const account = findCase(dni);

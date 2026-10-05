@@ -10,9 +10,12 @@ import { formatDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { hasOverdueInstallment } from "@/lib/installmentAlert";
 import { resolveCaseStatus } from "@/lib/status";
-import { ARCHIVED_VIEW, FILTERS, type ListView } from "../filters";
+import { ALL_ENTITIES, ARCHIVED_VIEW, FILTERS, NO_ENTITY, SORTS, type ListView, type SortKey } from "../filters";
 import { CaseContextMenu, type ContextMenuTarget } from "./CaseContextMenu";
 import { DeleteCaseDialog } from "./DeleteCaseDialog";
+
+const SELECT_CLASS =
+  "h-7 min-w-0 rounded-sm border border-line bg-input px-1.5 text-xs text-fg-secondary transition-colors duration-100 hover:border-line-strong motion-reduce:transition-none";
 
 interface CaseListProps {
   cases: Case[];
@@ -24,6 +27,11 @@ interface CaseListProps {
   searchRef: Ref<HTMLInputElement>;
   onFilterChange: (filter: ListView) => void;
   onQueryChange: (query: string) => void;
+  sort: SortKey;
+  onSortChange: (sort: SortKey) => void;
+  entity: string;
+  entityOptions: string[];
+  onEntityChange: (entity: string) => void;
   onOpen: (dni: string) => void;
   onMove: (delta: number) => void;
   onNewCase: () => void;
@@ -42,6 +50,11 @@ export function CaseList({
   searchRef,
   onFilterChange,
   onQueryChange,
+  sort,
+  onSortChange,
+  entity,
+  entityOptions,
+  onEntityChange,
   onOpen,
   onMove,
   onNewCase,
@@ -93,6 +106,34 @@ export function CaseList({
             <Kbd>/</Kbd>
           </span>
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value as SortKey)}
+            aria-label="Ordenar casos"
+            className={cn(SELECT_CLASS, sort !== "default" && "border-accent-border text-fg")}
+          >
+            {SORTS.map(({ key, label }) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={entity}
+            onChange={(event) => onEntityChange(event.target.value)}
+            aria-label="Filtrar por entidad"
+            className={cn(SELECT_CLASS, entity !== ALL_ENTITIES && "border-accent-border text-fg")}
+          >
+            <option value={ALL_ENTITIES}>Todas las entidades</option>
+            {entityOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+            <option value={NO_ENTITY}>Sin entidad</option>
+          </select>
+        </div>
         <div className="flex gap-2">
           <Button className="flex-1" onClick={onNewCase} title="Nuevo caso (C)">
             <Plus className="size-4" strokeWidth={1.75} aria-hidden />
@@ -127,7 +168,7 @@ export function CaseList({
       </div>
 
       {cases.length === 0 ? (
-        <EmptyList filter={filter} hasQuery={query.trim() !== ""} onShowAll={() => onFilterChange("todos")} />
+        <EmptyList filter={filter} hasQuery={query.trim() !== "" || entity !== ALL_ENTITIES} onShowAll={() => onFilterChange("todos")} />
       ) : (
         <ul
           ref={listRef}
@@ -251,7 +292,7 @@ function EmptyList({ filter, hasQuery, onShowAll }: EmptyListProps) {
   return (
     <div className="flex flex-1 flex-col items-start gap-2 p-3">
       <p className="text-[13px] text-fg-secondary">
-        {hasQuery ? "Ningún caso coincide con la búsqueda." : EMPTY_MESSAGES[filter]}
+        {hasQuery ? "Ningún caso coincide con los filtros." : EMPTY_MESSAGES[filter]}
       </p>
       {filter !== "todos" ? (
         <Button size="small" onClick={onShowAll}>

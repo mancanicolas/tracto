@@ -124,8 +124,13 @@ create table if not exists public.notas (
   operador_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   caso_id uuid not null references public.casos (id) on delete cascade,
   texto text not null check (char_length(btrim(texto)) > 0),
-  creada timestamptz not null default now()
+  creada timestamptz not null default now(),
+  origen text
 );
+
+alter table public.notas add column if not exists origen text;
+alter table public.notas drop constraint if exists notas_origen_check;
+alter table public.notas add constraint notas_origen_check check (origen is null or origen = 'agenda');
 
 create index if not exists notas_caso_idx on public.notas (caso_id, creada desc);
 

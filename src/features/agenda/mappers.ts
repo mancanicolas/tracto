@@ -27,6 +27,7 @@ export interface NotaRow {
   id: string;
   texto: string;
   creada: string;
+  origen: "agenda" | null;
 }
 
 export interface AgendaRow {
@@ -90,7 +91,7 @@ function toAgreement(row: AcuerdoRow): Agreement {
 }
 
 function toNote(row: NotaRow): Note {
-  return { id: row.id, texto: row.texto, creada: row.creada };
+  return { id: row.id, texto: row.texto, creada: row.creada, origen: row.origen ?? undefined };
 }
 
 export function toCase(row: CasoRow): Case {

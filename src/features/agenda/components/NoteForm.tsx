@@ -1,10 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarCheck } from "lucide-react";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { TextAreaField } from "@/components/ui/TextAreaField";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
+import { cn } from "@/lib/cn";
 import { formatDate, formatTime } from "@/lib/format";
 import type { Note } from "@/lib/types";
 import { MOD_LABEL } from "@/lib/shortcuts";
@@ -50,8 +52,20 @@ export function NoteForm({ notes, onSave }: NoteFormProps) {
       {notes.length > 0 ? (
         <ul className="flex flex-col divide-y divide-line-subtle border-t border-line-subtle" aria-label="Notas del caso">
           {notes.map((note) => (
-            <li key={note.id} className="flex flex-col gap-0.5 py-2">
-              <span className="font-mono text-xs tabular-nums text-fg-muted">
+            <li
+              key={note.id}
+              className={cn(
+                "flex flex-col gap-0.5 py-2",
+                note.origen === "agenda" && "my-1 rounded-sm border border-info-border bg-info-subtle px-2",
+              )}
+            >
+              <span className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-fg-muted">
+                {note.origen === "agenda" ? (
+                  <span className="inline-flex items-center gap-1 font-sans font-medium text-info">
+                    <CalendarCheck className="size-3.5" strokeWidth={1.75} aria-hidden />
+                    Agenda resuelta
+                  </span>
+                ) : null}
                 {formatDate(note.creada)} {formatTime(note.creada)}
               </span>
               <p className="text-sm leading-5 whitespace-pre-wrap text-fg-secondary">{note.texto}</p>

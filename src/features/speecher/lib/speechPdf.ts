@@ -28,13 +28,18 @@ const SOFT_RED = "#fbeeee";
 const DARK_RED = "#7d0f14";
 const BRAND_SUBTITLE = "#b9c6e8";
 const WHATSAPP_GREEN = "#25d366";
-const LINK_BUTTON_TEXT = "\u00A0\u00A0Escribir por WhatsApp\u00A0\u00A0";
+const BUTTON_PADDING = "\u00A0".repeat(7);
+const LINK_BUTTON_TEXT = `${BUTTON_PADDING}TOCÁ ACÁ PARA ESCRIBIRNOS POR WHATSAPP${BUTTON_PADDING}`;
 const LINK_BUTTON_COLOR = "#0b2e1a";
-const BUTTON_WIDTH = 118;
-const BUTTON_HEIGHT = 22;
-const BUTTON_RADIUS = 4;
-const BUTTON_FONT_SIZE = 8.6;
-const BUTTON_LINE_HEIGHT = 10;
+const BUTTON_WIDTH = 376;
+const BUTTON_HEIGHT = 32;
+const BUTTON_RADIUS = 7;
+const BUTTON_FONT_SIZE = 11.5;
+const BUTTON_LINE_HEIGHT = 13.5;
+const BUTTON_TOP_PADDING = mm(3.5);
+const BUTTON_ICON_SIZE = 17;
+const BUTTON_ICON_GAP = 9;
+const CONTACT_TEXT_GAP = 9;
 
 const RED_BAR_HEIGHT = mm(4);
 const HEADER_HEIGHT = mm(33);
@@ -43,7 +48,7 @@ const SIDE_MARGIN = mm(20);
 const BADGE_SIZE = mm(22);
 const LOGO_WIDTH = mm(14.5);
 const LEGAL_HEIGHT = mm(11);
-const CONTACT_HEIGHT = mm(19);
+const CONTACT_HEIGHT = mm(30);
 const FOOTER_HEIGHT = LEGAL_HEIGHT + CONTACT_HEIGHT;
 const CONTENT_WIDTH = PAGE_WIDTH - SIDE_MARGIN * 2;
 const BODY_FONT_SIZE = 10.8;
@@ -51,7 +56,8 @@ const LIST_FONT_SIZE = 9.8;
 const BULLET_SIZE = mm(2);
 const WHATSAPP_ICON_SIZE = mm(4.2);
 
-const WHATSAPP_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${WHATSAPP_GREEN}"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z"/><path d="M12.05 21.79h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.89-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 6.99c0 5.45-4.44 9.88-9.88 9.88ZM20.47 3.49A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.69 1.45h.01c6.55 0 11.89-5.34 11.89-11.89 0-3.18-1.24-6.17-3.48-8.42Z"/></svg>`;
+const WHATSAPP_ICON_TEMPLATE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="__COLOR__"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z"/><path d="M12.05 21.79h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.89-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 6.99c0 5.45-4.44 9.88-9.88 9.88ZM20.47 3.49A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.69 1.45h.01c6.55 0 11.89-5.34 11.89-11.89 0-3.18-1.24-6.17-3.48-8.42Z"/></svg>`;
+const whatsAppIcon = (color: string): string => WHATSAPP_ICON_TEMPLATE.replace("__COLOR__", color);
 
 type ListKind = "blue" | "red" | "reach";
 
@@ -90,11 +96,17 @@ function buildContactButton(operator: string, footerTop: number): Content[] {
   const link = buildWhatsAppLink(operator);
   if (!link) return [];
   const x = (PAGE_WIDTH - BUTTON_WIDTH) / 2;
-  const y = footerTop + (CONTACT_HEIGHT - BUTTON_HEIGHT) / 2;
+  const y = footerTop + BUTTON_TOP_PADDING;
+  const textTop = y + (BUTTON_HEIGHT - BUTTON_LINE_HEIGHT) / 2;
   return [
     {
       canvas: [{ type: "rect", x: 0, y: 0, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, r: BUTTON_RADIUS, color: WHATSAPP_GREEN }],
       absolutePosition: { x, y },
+    },
+    {
+      svg: whatsAppIcon(LINK_BUTTON_COLOR),
+      width: BUTTON_ICON_SIZE,
+      absolutePosition: { x: x + BUTTON_ICON_GAP + 2, y: y + (BUTTON_HEIGHT - BUTTON_ICON_SIZE) / 2 },
     },
     {
       columns: [
@@ -105,16 +117,17 @@ function buildContactButton(operator: string, footerTop: number): Content[] {
           color: LINK_BUTTON_COLOR,
           fontSize: BUTTON_FONT_SIZE,
           alignment: "center",
-          width: BUTTON_WIDTH,
+          width: BUTTON_WIDTH - BUTTON_ICON_SIZE - BUTTON_ICON_GAP,
         },
       ],
-      absolutePosition: { x, y: y + (BUTTON_HEIGHT - BUTTON_LINE_HEIGHT) / 2 },
+      absolutePosition: { x: x + BUTTON_ICON_SIZE + BUTTON_ICON_GAP, y: textTop },
     },
   ];
 }
 
 function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
   const footerTop = PAGE_HEIGHT - FOOTER_HEIGHT;
+  const contactTextTop = footerTop + BUTTON_TOP_PADDING + BUTTON_HEIGHT + CONTACT_TEXT_GAP;
   const footerLines = splitLines(speech.pie);
   const [name = "", subtitle = "", ...contact] = footerLines;
   const badgeTop = RED_BAR_HEIGHT + (HEADER_HEIGHT - BADGE_SIZE) / 2;
@@ -162,7 +175,7 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
         { text: name.toUpperCase(), color: NAVY, fontSize: 11, bold: true, characterSpacing: 0.8 },
         { text: subtitle, color: BLUE, fontSize: 8.4, bold: true, characterSpacing: 0.5, margin: [0, 2, 0, 0] },
       ],
-      absolutePosition: { x: SIDE_MARGIN, y: footerTop + mm(5) },
+      absolutePosition: { x: SIDE_MARGIN, y: contactTextTop },
     },
     {
       columns: [
@@ -175,7 +188,7 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
           width: mm(70),
         },
       ],
-      absolutePosition: { x: PAGE_WIDTH - SIDE_MARGIN - mm(70), y: footerTop + mm(5) },
+      absolutePosition: { x: PAGE_WIDTH - SIDE_MARGIN - mm(70), y: contactTextTop },
     },
     rect(0, footerTop + CONTACT_HEIGHT, PAGE_WIDTH, LEGAL_HEIGHT, NAVY),
     {
@@ -263,7 +276,7 @@ function buildListItem(item: string, data: SpeechData, style: ListStyle): Conten
       bulletMarker(style.bullet),
       { text: textOf(before), ...textStyle, width: "auto" },
       node({ text: "", width: mm(1.6) }),
-      { svg: WHATSAPP_ICON_SVG, width: WHATSAPP_ICON_SIZE },
+      { svg: whatsAppIcon(WHATSAPP_GREEN), width: WHATSAPP_ICON_SIZE },
       node({ text: "", width: mm(1.6) }),
       { text: operator ? textOf([operator, ...after]) : "", ...textStyle, width: "*" },
     ],

@@ -1,8 +1,11 @@
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogOut, MessagesSquare, RefreshCw } from "lucide-react";
+import { useState } from "react";
 import Logo from "@/assets/logo.svg?react";
 import { WindowBar } from "@/components/layout/WindowBar";
+import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { AgendaView } from "@/features/agenda/components/AgendaView";
+import { SPEECHER_DRAWER_ID, SpeecherDrawer } from "@/features/speecher/components/SpeecherDrawer";
 import { UpdateBanner } from "@/features/updater/components/UpdateBanner";
 import { useUpdater } from "@/features/updater/useUpdater";
 
@@ -14,6 +17,7 @@ interface OverlayShellProps {
 
 export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellProps) {
   const { state, checkNow, installUpdate, dismiss } = useUpdater();
+  const [isSpeecherOpen, setIsSpeecherOpen] = useState(false);
 
   return (
     <div className="flex h-full flex-col bg-surface">
@@ -27,6 +31,16 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
         center={<Logo className="h-6 w-auto shrink-0 text-brand-white" role="img" aria-label="Tracto" />}
         actions={
           <>
+            <Button
+              size="small"
+              variant="ghost"
+              aria-expanded={isSpeecherOpen}
+              aria-controls={SPEECHER_DRAWER_ID}
+              onClick={() => setIsSpeecherOpen((open) => !open)}
+            >
+              <MessagesSquare className="size-4" strokeWidth={1.75} aria-hidden />
+              Speecher
+            </Button>
             <IconButton
               label="Buscar actualizaciones"
               disabled={state.phase === "checking" || state.phase === "downloading"}
@@ -44,8 +58,9 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
         }
       />
       <UpdateBanner state={state} onInstall={installUpdate} onDismiss={dismiss} />
-      <main className="min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1 overflow-hidden">
         <AgendaView operatorName={operatorName} />
+        <SpeecherDrawer open={isSpeecherOpen} onClose={() => setIsSpeecherOpen(false)} />
       </main>
     </div>
   );

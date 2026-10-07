@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { TextField } from "@/components/ui/TextField";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
-import { formatCentsInput, formatDni } from "@/lib/format";
+import { formatCentsInput, normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import { caseEditSchema, type CaseEditValues } from "../schemas";
@@ -57,7 +57,7 @@ export function EditCaseForm({ account, onSave, onCancel }: EditCaseFormProps) {
         <TextField
           label="DNI"
           readOnly
-          value={formatDni(account.dni)}
+          value={normalizeDni(account.dni)}
           className="font-mono tabular-nums text-fg-muted"
         />
         <TextField

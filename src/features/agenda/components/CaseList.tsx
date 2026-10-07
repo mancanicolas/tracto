@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/cn";
 import { formatNoteAge } from "@/lib/dates";
-import { formatDni } from "@/lib/format";
+import { normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { hasOverdueInstallment } from "@/lib/installmentAlert";
 import { resolveCaseStatus } from "@/lib/status";
@@ -284,7 +284,7 @@ function CaseRow({ account, selected, now, onClick, onContextMenu }: CaseRowProp
         </span>
       </div>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-xs leading-4 tabular-nums text-fg-muted">{formatDni(account.dni)}</span>
+        <span className="font-mono text-xs leading-4 tabular-nums text-fg-muted">{normalizeDni(account.dni)}</span>
         {status ? <StatusBadge status={status} overdue={hasOverdueInstallment(account)} /> : null}
       </div>
     </li>

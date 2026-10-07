@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import type { NewAgreement } from "@/lib/agreements";
 import { formatIsoDate } from "@/lib/dates";
 import { lastPaymentDate } from "@/lib/agreements";
-import { formatDni, formatMoney, formatPhone } from "@/lib/format";
+import { formatMoney, formatPhone, normalizeDni } from "@/lib/format";
 import type { Label, LabelColor } from "@/lib/labels";
 import type { Case } from "@/lib/types";
 import { resolveCaseStatus } from "@/lib/status";
@@ -118,7 +118,7 @@ export function CaseDetail({
         </div>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-          <InfoValue label="DNI" value={formatDni(account.dni)} mono />
+          <InfoValue label="DNI" value={normalizeDni(account.dni)} mono />
           <InfoValue label="Teléfono" value={account.telefono ? formatPhone(account.telefono) : undefined} mono />
           <InfoValue label="Entidad" value={account.entidad} title={account.entidad} />
           <InfoValue label="Cartera" value={account.cartera} title={account.cartera} />

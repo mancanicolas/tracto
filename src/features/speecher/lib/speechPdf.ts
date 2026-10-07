@@ -20,6 +20,8 @@ const SOFT_RED = "#fbeeee";
 const DARK_RED = "#7d0f14";
 const BRAND_SUBTITLE = "#b9c6e8";
 const WHATSAPP_GREEN = "#25d366";
+const LINK_BUTTON_TEXT = "\u00A0\u00A0Escribir por WhatsApp\u00A0\u00A0";
+const LINK_BUTTON_COLOR = "#0b2e1a";
 
 const RED_BAR_HEIGHT = mm(4);
 const HEADER_HEIGHT = mm(33);
@@ -144,6 +146,9 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
 }
 
 function runToText(run: Run, color: string, forceBold: boolean): ContentText {
+  if (run.isLink) {
+    return { text: LINK_BUTTON_TEXT, link: run.text, bold: true, color: LINK_BUTTON_COLOR, background: WHATSAPP_GREEN };
+  }
   return {
     text: run.text,
     bold: forceBold || run.bold,
@@ -172,7 +177,7 @@ function buildParagraph(block: Extract<SpeechBlock, { type: "p" }>, data: Speech
   const runs = toRuns(block.text, data);
   if (block.last) {
     return {
-      text: runs.map((run) => ({ text: run.text, bold: run.bold, italics: true })),
+      text: runs.map((run) => (run.isLink ? runToText(run, MUTED, false) : { text: run.text, bold: run.bold, italics: true })),
       color: MUTED,
       alignment: "left",
       fontSize: BODY_FONT_SIZE,

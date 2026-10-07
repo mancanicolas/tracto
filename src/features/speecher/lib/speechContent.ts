@@ -10,6 +10,7 @@ export interface Run {
   bold: boolean;
   isValue: boolean;
   isOperator: boolean;
+  isLink: boolean;
 }
 
 export type SpeechBlock =
@@ -38,8 +39,17 @@ const MONTHS = [
 ];
 
 const CLOSING_DELAY_DAYS = 2;
+const WHATSAPP_LINK_BASE = "https://wa.me/";
+const ARGENTINA_MOBILE_PREFIX = "549";
 const KEY_PATTERN = /\{([A-Z_]+)\}/g;
 const TOKEN_PATTERN = /(\{[A-Z_]+\}|\*\*.+?\*\*)/;
+
+export function buildWhatsAppLink(operator: string): string {
+  const digits = operator.replace(/\D/g, "");
+  if (!digits) return "";
+  const number = digits.startsWith(ARGENTINA_MOBILE_PREFIX) ? digits : `${ARGENTINA_MOBILE_PREFIX}${digits}`;
+  return `${WHATSAPP_LINK_BASE}${number}`;
+}
 
 export function buildSpeechData(ficha: Ficha, settings: SpeechSettings, now: Date = new Date()): SpeechData {
   const today = todayIso(now);
@@ -55,6 +65,7 @@ export function buildSpeechData(ficha: Ficha, settings: SpeechSettings, now: Dat
     FECHA: format(parseIsoDate(addDaysIso(today, CLOSING_DELAY_DAYS)), "dd/MM/yyyy"),
     OPERADOR: settings.operador,
     INTERNO: settings.interno,
+    LINK: buildWhatsAppLink(settings.operador),
   };
 }
 
@@ -67,12 +78,21 @@ function tokenize(text: string, data: SpeechData, forceBold: boolean): Run[] {
         return tokenize(part.slice(2, -2), data, true);
       }
       const keyMatch = /^\{([A-Z_]+)\}$/.exec(part);
-      if (!keyMatch) return [{ text: part, bold: forceBold, isValue: false, isOperator: false }];
+      if (!keyMatch) return [{ text: part, bold: forceBold, isValue: false, isOperator: false, isLink: false }];
       const key = keyMatch[1] ?? "";
-      if (!(key in data)) return [{ text: part, bold: true, isValue: true, isOperator: false }];
+      if (!(key in data)) return [{ text: part, bold: true, isValue: true, isOperator: false, isLink: false }];
       const value = data[key] ?? "";
       if (!value) return [];
-      return [{ text: value, bold: key !== "LABORAL", isValue: key !== "LABORAL", isOperator: key === "OPERADOR" }];
+      if (key === "LINK") return [{ text: value, bold: false, isValue: false, isOperator: false, isLink: true }];
+      return [
+        {
+          text: value,
+          bold: key !== "LABORAL",
+          isValue: key !== "LABORAL",
+          isOperator: key === "OPERADOR",
+          isLink: false,
+        },
+      ];
     });
 }
 

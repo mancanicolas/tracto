@@ -55,6 +55,13 @@ const LIST_STYLES: Record<ListKind, ListStyle> = {
   reach: { fill: NAVY, color: WHITE, bullet: SKY, bold: true },
 };
 
+function stripQuoteMarker(runs: Run[]): Run[] {
+  const [first, ...rest] = runs;
+  if (!first || first.isValue || first.bold) return runs;
+  const text = first.text.replace(/^\s*>\s*/, "");
+  return text ? [{ ...first, text }, ...rest] : rest;
+}
+
 function node(value: object): Content {
   return value as Content;
 }
@@ -73,7 +80,7 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
   const badgeTop = RED_BAR_HEIGHT + (HEADER_HEIGHT - BADGE_SIZE) / 2;
   const slantWidth = mm(46);
   const slantLeft = PAGE_WIDTH - slantWidth;
-  const confidentiality = toRuns(speech.confidencialidad, data);
+  const confidentiality = stripQuoteMarker(toRuns(speech.confidencialidad, data));
 
   return [
     rect(0, 0, PAGE_WIDTH, RED_BAR_HEIGHT, RED),
@@ -212,6 +219,7 @@ function buildListItem(item: string, data: SpeechData, style: ListStyle): Conten
   }
   const before = runs.slice(0, operatorIndex);
   const operator = runs[operatorIndex];
+  const after = runs.slice(operatorIndex + 1);
   return {
     columns: [
       bulletMarker(style.bullet),
@@ -219,7 +227,7 @@ function buildListItem(item: string, data: SpeechData, style: ListStyle): Conten
       node({ text: "", width: mm(1.6) }),
       { svg: WHATSAPP_ICON_SVG, width: WHATSAPP_ICON_SIZE },
       node({ text: "", width: mm(1.6) }),
-      { text: operator ? textOf([operator]) : "", ...textStyle, width: "*" },
+      { text: operator ? textOf([operator, ...after]) : "", ...textStyle, width: "*" },
     ],
     columnGap: 0,
     margin: [0, 0, 0, mm(1.3)],

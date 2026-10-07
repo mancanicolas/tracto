@@ -26,7 +26,7 @@ En caso de no tener respuesta, deberemos recomendar a nuestro cliente que avance
 
 Con fines de solucionar el conflicto quedamos atentos a su respuesta:
 
--ESCRIBIENDO AL: {OPERADOR}
+-ESCRIBIENDO AL: {OPERADOR} {LINK}
 -LLAMANDO AL TELÉFONO FIJO: (011) 6091 8325 interno {INTERNO} de 8 a 20:00 horas
 
 Sin más, saludamos atte.`,
@@ -36,5 +36,5 @@ Gestión integral digital
 info@5ol.com.ar
 5ol.com.ar`,
 
-  confidencialidad: `**Confidencialidad:** si recibió este mensaje por error le pedimos disculpas, infórmelo para quitar su número telefónico.`,
+  confidencialidad: `> **Confidencialidad:** si recibió este mensaje por error le pedimos disculpas, infórmelo para quitar su número telefónico.`,
 };

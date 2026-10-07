@@ -26,7 +26,7 @@ En caso de no tener respuesta, deberemos recomendar a nuestro cliente que avance
 
 Con fines de solucionar el conflicto quedamos atentos a su respuesta:
 
--ESCRIBIENDO AL: {OPERADOR} {LINK}
+-ESCRIBIENDO AL: {OPERADOR}
 -LLAMANDO AL TELÉFONO FIJO: (011) 6091 8325 interno {INTERNO} de 8 a 20:00 horas
 
 Sin más, saludamos atte.`,

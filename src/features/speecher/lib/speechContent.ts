@@ -10,7 +10,6 @@ export interface Run {
   bold: boolean;
   isValue: boolean;
   isOperator: boolean;
-  isLink: boolean;
 }
 
 export type SpeechBlock =
@@ -65,7 +64,6 @@ export function buildSpeechData(ficha: Ficha, settings: SpeechSettings, now: Dat
     FECHA: format(parseIsoDate(addDaysIso(today, CLOSING_DELAY_DAYS)), "dd/MM/yyyy"),
     OPERADOR: settings.operador,
     INTERNO: settings.interno,
-    LINK: buildWhatsAppLink(settings.operador),
   };
 }
 
@@ -78,19 +76,17 @@ function tokenize(text: string, data: SpeechData, forceBold: boolean): Run[] {
         return tokenize(part.slice(2, -2), data, true);
       }
       const keyMatch = /^\{([A-Z_]+)\}$/.exec(part);
-      if (!keyMatch) return [{ text: part, bold: forceBold, isValue: false, isOperator: false, isLink: false }];
+      if (!keyMatch) return [{ text: part, bold: forceBold, isValue: false, isOperator: false }];
       const key = keyMatch[1] ?? "";
-      if (!(key in data)) return [{ text: part, bold: true, isValue: true, isOperator: false, isLink: false }];
+      if (!(key in data)) return [{ text: part, bold: true, isValue: true, isOperator: false }];
       const value = data[key] ?? "";
       if (!value) return [];
-      if (key === "LINK") return [{ text: value, bold: false, isValue: false, isOperator: false, isLink: true }];
       return [
         {
           text: value,
           bold: key !== "LABORAL",
           isValue: key !== "LABORAL",
           isOperator: key === "OPERADOR",
-          isLink: false,
         },
       ];
     });

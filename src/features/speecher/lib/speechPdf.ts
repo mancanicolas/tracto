@@ -1,7 +1,15 @@
 import type { Content, ContentText, TDocumentDefinitions } from "pdfmake/interfaces";
 import logoSvg from "../../../../5ol.svg?raw";
 import type { SpeechTexts } from "./speechDefaults";
-import { parseBody, splitLines, toRuns, type Run, type SpeechBlock, type SpeechData } from "./speechContent";
+import {
+  buildWhatsAppLink,
+  parseBody,
+  splitLines,
+  toRuns,
+  type Run,
+  type SpeechBlock,
+  type SpeechData,
+} from "./speechContent";
 
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
@@ -22,6 +30,11 @@ const BRAND_SUBTITLE = "#b9c6e8";
 const WHATSAPP_GREEN = "#25d366";
 const LINK_BUTTON_TEXT = "\u00A0\u00A0Escribir por WhatsApp\u00A0\u00A0";
 const LINK_BUTTON_COLOR = "#0b2e1a";
+const BUTTON_WIDTH = 118;
+const BUTTON_HEIGHT = 22;
+const BUTTON_RADIUS = 4;
+const BUTTON_FONT_SIZE = 8.6;
+const BUTTON_LINE_HEIGHT = 10;
 
 const RED_BAR_HEIGHT = mm(4);
 const HEADER_HEIGHT = mm(33);
@@ -73,6 +86,33 @@ function rect(x: number, y: number, width: number, height: number, color: string
   };
 }
 
+function buildContactButton(operator: string, footerTop: number): Content[] {
+  const link = buildWhatsAppLink(operator);
+  if (!link) return [];
+  const x = (PAGE_WIDTH - BUTTON_WIDTH) / 2;
+  const y = footerTop + (CONTACT_HEIGHT - BUTTON_HEIGHT) / 2;
+  return [
+    {
+      canvas: [{ type: "rect", x: 0, y: 0, w: BUTTON_WIDTH, h: BUTTON_HEIGHT, r: BUTTON_RADIUS, color: WHATSAPP_GREEN }],
+      absolutePosition: { x, y },
+    },
+    {
+      columns: [
+        {
+          text: LINK_BUTTON_TEXT,
+          link,
+          bold: true,
+          color: LINK_BUTTON_COLOR,
+          fontSize: BUTTON_FONT_SIZE,
+          alignment: "center",
+          width: BUTTON_WIDTH,
+        },
+      ],
+      absolutePosition: { x, y: y + (BUTTON_HEIGHT - BUTTON_LINE_HEIGHT) / 2 },
+    },
+  ];
+}
+
 function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
   const footerTop = PAGE_HEIGHT - FOOTER_HEIGHT;
   const footerLines = splitLines(speech.pie);
@@ -116,6 +156,7 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
     },
     rect(0, footerTop, PAGE_WIDTH, CONTACT_HEIGHT, PAPER),
     rect(0, footerTop, PAGE_WIDTH, mm(0.5), NAVY),
+    ...buildContactButton(data.OPERADOR ?? "", footerTop),
     {
       stack: [
         { text: name.toUpperCase(), color: NAVY, fontSize: 11, bold: true, characterSpacing: 0.8 },
@@ -153,9 +194,6 @@ function buildBackground(speech: SpeechTexts, data: SpeechData): Content[] {
 }
 
 function runToText(run: Run, color: string, forceBold: boolean): ContentText {
-  if (run.isLink) {
-    return { text: LINK_BUTTON_TEXT, link: run.text, bold: true, color: LINK_BUTTON_COLOR, background: WHATSAPP_GREEN };
-  }
   return {
     text: run.text,
     bold: forceBold || run.bold,
@@ -184,7 +222,7 @@ function buildParagraph(block: Extract<SpeechBlock, { type: "p" }>, data: Speech
   const runs = toRuns(block.text, data);
   if (block.last) {
     return {
-      text: runs.map((run) => (run.isLink ? runToText(run, MUTED, false) : { text: run.text, bold: run.bold, italics: true })),
+      text: runs.map((run) => ({ text: run.text, bold: run.bold, italics: true })),
       color: MUTED,
       alignment: "left",
       fontSize: BODY_FONT_SIZE,

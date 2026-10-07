@@ -6,7 +6,7 @@ import { DEFAULT_SPEECH, SPEECH_FIELDS, type SpeechTexts } from "../lib/speechDe
 import { speechStore } from "../lib/speechStore";
 
 const SAVED_FLASH_MS = 2200;
-const KEYS = ["TRATO", "NOMBRE", "DNI", "MES", "ANIO", "CARTERA", "FECHA", "LABORAL", "OPERADOR", "INTERNO", "LINK"];
+const KEYS = ["TRATO", "NOMBRE", "DNI", "MES", "ANIO", "CARTERA", "FECHA", "LABORAL", "OPERADOR", "INTERNO"];
 
 const FIELD_LABELS: Record<(typeof SPEECH_FIELDS)[number], { label: string; hint: string; rows: number }> = {
   encabezado: { label: "Encabezado", hint: "Línea 1: destinatario. Línea 2: título.", rows: 2 },

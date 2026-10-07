@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { AgendaView } from "@/features/agenda/components/AgendaView";
 import { SPEECHER_DRAWER_ID, SpeecherDrawer } from "@/features/speecher/components/SpeecherDrawer";
+import { useSpeecherWindow } from "@/features/speecher/useSpeecherWindow";
 import { UpdateBanner } from "@/features/updater/components/UpdateBanner";
 import { useUpdater } from "@/features/updater/useUpdater";
 
@@ -18,6 +19,19 @@ interface OverlayShellProps {
 export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellProps) {
   const { state, checkNow, installUpdate, dismiss } = useUpdater();
   const [isSpeecherOpen, setIsSpeecherOpen] = useState(false);
+  const { isPoppedOut, popOut, focusWidget } = useSpeecherWindow(() => setIsSpeecherOpen(true));
+
+  const toggleSpeecher = () => {
+    if (isPoppedOut) void focusWidget();
+    else setIsSpeecherOpen((open) => !open);
+  };
+
+  const popOutSpeecher = () => {
+    setIsSpeecherOpen(false);
+    void popOut().then((created) => {
+      if (!created) setIsSpeecherOpen(true);
+    });
+  };
 
   return (
     <div className="flex h-full flex-col bg-surface">
@@ -36,7 +50,7 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
               variant="ghost"
               aria-expanded={isSpeecherOpen}
               aria-controls={SPEECHER_DRAWER_ID}
-              onClick={() => setIsSpeecherOpen((open) => !open)}
+              onClick={toggleSpeecher}
             >
               <MessagesSquare className="size-4" strokeWidth={1.75} aria-hidden />
               Speecher
@@ -60,7 +74,7 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
       <UpdateBanner state={state} onInstall={installUpdate} onDismiss={dismiss} />
       <main className="relative min-h-0 flex-1 overflow-hidden">
         <AgendaView operatorName={operatorName} />
-        <SpeecherDrawer open={isSpeecherOpen} onClose={() => setIsSpeecherOpen(false)} />
+        <SpeecherDrawer open={isSpeecherOpen} onClose={() => setIsSpeecherOpen(false)} onPopOut={popOutSpeecher} />
       </main>
     </div>
   );

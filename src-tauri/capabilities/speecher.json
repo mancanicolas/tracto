@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "speecher",
+  "description": "Permisos de la ventana flotante de Speecher.",
+  "windows": ["speecher"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-size",
+    "core:window:allow-close",
+    "core:window:allow-set-always-on-top"
+  ]
+}

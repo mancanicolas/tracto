@@ -201,6 +201,10 @@
     height: 100%;
   }
 
+  .window-transparent body {
+    background-color: transparent;
+  }
+
   body {
     background-color: var(--bg-canvas);
     color: var(--text-secondary);

@@ -4,12 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag a publicar, por ejemplo v0.1.6
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -18,14 +24,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Verify tag matches app version
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           app_version=$(node -p "require('./src-tauri/tauri.conf.json').version")
           cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -n 1)
-          if [ "v${app_version}" != "${GITHUB_REF_NAME}" ] || [ "${cargo_version}" != "${app_version}" ]; then
-            echo "Tag ${GITHUB_REF_NAME}, tauri.conf.json ${app_version}, Cargo.toml ${cargo_version}: deben coincidir."
+          if [ "v${app_version}" != "${RELEASE_TAG}" ] || [ "${cargo_version}" != "${app_version}" ]; then
+            echo "Tag ${RELEASE_TAG}, tauri.conf.json ${app_version}, Cargo.toml ${cargo_version}: deben coincidir."
             exit 1
           fi
 
@@ -57,6 +67,18 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Create release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if gh release view "${RELEASE_TAG}" > /dev/null 2>&1; then
+            echo "El release ${RELEASE_TAG} ya existe."
+          else
+            gh release create "${RELEASE_TAG}" --verify-tag --title "Tracto ${RELEASE_TAG}" --notes "Descargá el instalador y ejecutalo. Las instalaciones existentes se actualizan solas."
+          fi
+
       - name: Build and publish release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -66,8 +88,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: Tracto ${{ github.ref_name }}
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: Tracto ${{ inputs.tag || github.ref_name }}
           releaseBody: Descargá el instalador y ejecutalo. Las instalaciones existentes se actualizan solas.
           releaseDraft: false
           prerelease: false

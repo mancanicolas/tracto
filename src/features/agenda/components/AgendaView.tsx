@@ -88,9 +88,11 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   const showDetailPane = isWide || isDetailOpen;
   const showListPane = isWide || !isDetailOpen;
 
+  const selectedIndex = visibleCases.findIndex((account) => account.dni === selectedDni);
+
   useEffect(() => {
     if (selectedDni) document.getElementById(`case-${selectedDni}`)?.scrollIntoView({ block: "nearest" });
-  }, [selectedDni, showListPane]);
+  }, [selectedDni, selectedIndex, showListPane]);
 
   const openCase = useCallback((dni: string) => {
     setSelectedDni(dni);

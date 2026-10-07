@@ -33,9 +33,9 @@ begin
         (7, 'Giordano Paula', 'RECUPERO DE ACTIVOS', 'Consultar por propuesta de pago', null),
         (8, 'Herrera Joaquín', 'EXI GROUP', 'Hablar con el titular sobre la deuda', null),
 
-        (9, 'Ibáñez Camila', 'BIA GROUP', 'Alarma de prueba 13:35 (1)', '13:35'),
-        (10, 'Juárez Tomás', 'UALA', 'Alarma de prueba 13:35 (2)', '13:35'),
-        (11, 'Koch Valentina', 'CENCOSUD EXTRA', 'Alarma de prueba 13:35 (3)', '13:35'),
+        (9, 'Ibáñez Camila', 'BIA GROUP', 'Alarma de prueba 13:43 (1)', '13:43'),
+        (10, 'Juárez Tomás', 'UALA', 'Alarma de prueba 13:43 (2)', '13:43'),
+        (11, 'Koch Valentina', 'CENCOSUD EXTRA', 'Alarma de prueba 13:43 (3)', '13:43'),
 
         (12, 'Ledesma Franco', 'BANCO COMAFI', 'Llamar a la tarde', '14:30'),
         (13, 'Medina Rocío', 'CREDITO DIRECTO', 'Seguimiento de promesa de pago', '15:15'),

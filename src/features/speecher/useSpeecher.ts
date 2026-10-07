@@ -1,0 +1,124 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  copySpeech,
+  downloadSpeech,
+  pasteFicha,
+  validateSpeechInputs,
+  type SpeechFormat,
+} from "./lib/speechActions";
+import { configStore, fichaStore, speechStore, useStore } from "./lib/speechStore";
+import { openSpeechEditor } from "./speechEditorWindow";
+
+export type StatusTone = "neutral" | "success" | "error";
+
+export interface SpeecherStatus {
+  text: string;
+  tone: StatusTone;
+}
+
+const PASTE_FLASH_MS = 2500;
+const EMPTY_STATUS: SpeecherStatus = { text: "", tone: "neutral" };
+
+function readInputs() {
+  const config = configStore.get();
+  return {
+    speech: speechStore.get(),
+    ficha: fichaStore.get().ficha,
+    settings: { cartera: config.cartera, operador: config.operador.trim(), interno: config.interno.trim() },
+  };
+}
+
+export function useSpeecher() {
+  const config = useStore(configStore);
+  const [status, setStatus] = useState<SpeecherStatus>(EMPTY_STATUS);
+  const [justPasted, setJustPasted] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const pasteTimerRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (pasteTimerRef.current !== null) window.clearTimeout(pasteTimerRef.current);
+    },
+    [],
+  );
+
+  const selectCartera = useCallback((cartera: string) => configStore.set({ cartera }), []);
+
+  const addCartera = useCallback((rawName: string) => {
+    const name = rawName.trim();
+    if (!name) return;
+    const current = configStore.get();
+    const existing = current.carteras.find((item) => item.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      configStore.set({ cartera: existing });
+      return;
+    }
+    configStore.set({ carteras: [...current.carteras, name], cartera: name });
+  }, []);
+
+  const removeCartera = useCallback(() => {
+    const current = configStore.get();
+    if (!current.cartera) return;
+    const carteras = current.carteras.filter((item) => item !== current.cartera);
+    configStore.set({ carteras, cartera: carteras[0] ?? "" });
+  }, []);
+
+  const setOperador = useCallback((operador: string) => configStore.set({ operador }), []);
+  const setInterno = useCallback((interno: string) => configStore.set({ interno }), []);
+
+  const paste = useCallback(async () => {
+    const result = await pasteFicha();
+    if (pasteTimerRef.current !== null) window.clearTimeout(pasteTimerRef.current);
+    if (!result.ok) {
+      setJustPasted(false);
+      setStatus({ text: result.error, tone: "error" });
+      return;
+    }
+    fichaStore.set({ ficha: result.data });
+    setJustPasted(true);
+    pasteTimerRef.current = window.setTimeout(() => setJustPasted(false), PASTE_FLASH_MS);
+    setStatus({ text: result.data.NOMBRE || `DNI ${result.data.DNI}`, tone: "neutral" });
+  }, []);
+
+  const copy = useCallback(async () => {
+    const { speech, ficha, settings } = readInputs();
+    const problem = validateSpeechInputs(ficha, settings);
+    if (problem || !ficha) {
+      setStatus({ text: problem ?? "", tone: "error" });
+      return;
+    }
+    const result = await copySpeech(speech, ficha, settings);
+    setStatus(result.ok ? { text: "Speech copiado", tone: "success" } : { text: result.error, tone: "error" });
+  }, []);
+
+  const download = useCallback(async (format: SpeechFormat) => {
+    const { speech, ficha, settings } = readInputs();
+    const problem = validateSpeechInputs(ficha, settings);
+    if (problem || !ficha) {
+      setStatus({ text: problem ?? "", tone: "error" });
+      return;
+    }
+    setIsDownloading(true);
+    setStatus({ text: "Generando…", tone: "neutral" });
+    const result = await downloadSpeech(speech, ficha, settings, format);
+    setIsDownloading(false);
+    if (!result.ok) setStatus({ text: result.error, tone: "error" });
+    else setStatus(result.data === "saved" ? { text: "Speech guardado", tone: "success" } : EMPTY_STATUS);
+  }, []);
+
+  return {
+    config,
+    status,
+    justPasted,
+    isDownloading,
+    selectCartera,
+    addCartera,
+    removeCartera,
+    setOperador,
+    setInterno,
+    paste: () => void paste(),
+    copy: () => void copy(),
+    download: (format: SpeechFormat) => void download(format),
+    editSpeech: () => void openSpeechEditor(),
+  };
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "speecher-editor",
+  "description": "Permisos de la ventana de edición del speech.",
+  "windows": ["speecher-editor"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close"
+  ]
+}

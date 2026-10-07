@@ -1,31 +1,104 @@
-import { ClipboardPaste, Copy, Download, Minus, Plus } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Download, Image, Minus, PencilLine, Plus, X } from "lucide-react";
+import { useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { SelectField } from "@/components/ui/SelectField";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
-import { ENTIDAD_NAMES } from "@/constants/entidades";
 import { cn } from "@/lib/cn";
+import { useSpeecher } from "../useSpeecher";
 
 const INPUT_CLASS =
   "h-8 rounded-sm border border-line bg-input text-[13px] text-fg transition-colors duration-100 placeholder:text-fg-muted hover:border-line-strong motion-reduce:transition-none";
+const SQUARE_BUTTON_CLASS = "size-8 border border-line hover:border-line-strong";
 
-const PORTFOLIO_OPTIONS = ENTIDAD_NAMES.map((name) => ({ value: name, label: name }));
+const STATUS_CLASSES = {
+  neutral: "text-fg-muted",
+  success: "text-success",
+  error: "text-danger",
+} as const;
 
 export function SpeecherPanel() {
+  const speecher = useSpeecher();
+  const { config } = speecher;
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const confirmNew = () => {
+    speecher.addCartera(newName);
+    setNewName("");
+    setIsAdding(false);
+  };
+
+  const cancelNew = () => {
+    setNewName("");
+    setIsAdding(false);
+  };
+
+  const handleNewKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      confirmNew();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      cancelNew();
+    }
+  };
+
+  const options = config.carteras.map((name) => ({ value: name, label: name }));
+
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
-        <div className="flex items-end gap-1.5">
-          <div className="min-w-0 flex-1">
-            <SelectField label="Cartera" options={PORTFOLIO_OPTIONS} placeholder="Elegí una cartera" defaultValue="" />
+        {isAdding ? (
+          <div className="flex items-end gap-1.5">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="speecher-new-cartera" className="mb-1.5 block text-xs leading-4 font-medium text-fg-secondary">
+                Nueva cartera
+              </label>
+              <input
+                id="speecher-new-cartera"
+                value={newName}
+                onChange={(event) => setNewName(event.target.value)}
+                onKeyDown={handleNewKeyDown}
+                maxLength={60}
+                autoComplete="off"
+                autoFocus
+                placeholder="Nombre de la cartera"
+                className={cn(INPUT_CLASS, "w-full px-2.5")}
+              />
+            </div>
+            <IconButton label="Guardar cartera" onClick={confirmNew} className={SQUARE_BUTTON_CLASS}>
+              <Check strokeWidth={1.75} />
+            </IconButton>
+            <IconButton label="Cancelar" onClick={cancelNew} className={SQUARE_BUTTON_CLASS}>
+              <X strokeWidth={1.75} />
+            </IconButton>
           </div>
-          <IconButton label="Agregar cartera" className="size-8 border border-line hover:border-line-strong">
-            <Plus strokeWidth={1.75} />
-          </IconButton>
-          <IconButton label="Quitar cartera" className="size-8 border border-line hover:border-line-strong">
-            <Minus strokeWidth={1.75} />
-          </IconButton>
-        </div>
+        ) : (
+          <div className="flex items-end gap-1.5">
+            <div className="min-w-0 flex-1">
+              <SelectField
+                label="Cartera"
+                options={options}
+                placeholder={options.length === 0 ? "Agregá una con +" : undefined}
+                value={config.cartera}
+                onChange={(event) => speecher.selectCartera(event.target.value)}
+              />
+            </div>
+            <IconButton label="Agregar cartera" onClick={() => setIsAdding(true)} className={SQUARE_BUTTON_CLASS}>
+              <Plus strokeWidth={1.75} />
+            </IconButton>
+            <IconButton
+              label="Quitar la cartera elegida"
+              onClick={speecher.removeCartera}
+              disabled={options.length === 0}
+              className={SQUARE_BUTTON_CLASS}
+            >
+              <Minus strokeWidth={1.75} />
+            </IconButton>
+          </div>
+        )}
 
         <div role="group" aria-labelledby="speecher-operator-label" className="flex flex-col gap-1.5">
           <span id="speecher-operator-label" className="text-xs leading-4 font-medium text-fg-secondary">
@@ -38,6 +111,9 @@ export function SpeecherPanel() {
                 type="tel"
                 inputMode="tel"
                 autoComplete="off"
+                maxLength={30}
+                value={config.operador}
+                onChange={(event) => speecher.setOperador(event.target.value)}
                 aria-label="Número de WhatsApp del operador"
                 placeholder="11 1234 5678"
                 className={cn(INPUT_CLASS, "w-full pr-2.5 pl-8 font-mono tabular-nums")}
@@ -47,6 +123,9 @@ export function SpeecherPanel() {
               type="text"
               inputMode="numeric"
               autoComplete="off"
+              maxLength={8}
+              value={config.interno}
+              onChange={(event) => speecher.setInterno(event.target.value)}
               aria-label="Interno"
               placeholder="Interno"
               className={cn(INPUT_CLASS, "w-20 shrink-0 px-2.5 text-center font-mono tabular-nums")}
@@ -54,20 +133,51 @@ export function SpeecherPanel() {
           </div>
         </div>
 
-        <Button className="w-full">
-          <ClipboardPaste className="size-4" strokeWidth={1.75} aria-hidden />
-          Pegar
+        <Button className="w-full" onClick={speecher.paste}>
+          {speecher.justPasted ? (
+            <Check className="size-4 text-success" strokeWidth={1.75} aria-hidden />
+          ) : (
+            <ClipboardPaste className="size-4" strokeWidth={1.75} aria-hidden />
+          )}
+          {speecher.justPasted ? "Pegado" : "Pegar"}
         </Button>
+
+        <p
+          role="status"
+          aria-live="polite"
+          className={cn("min-h-4 truncate text-center text-xs leading-4", STATUS_CLASSES[speecher.status.tone])}
+          title={speecher.status.text}
+        >
+          {speecher.status.text}
+        </p>
       </div>
 
       <div className="flex shrink-0 flex-col gap-2 border-t border-line-subtle p-3">
-        <Button variant="primary" className="w-full">
+        <Button variant="primary" className="w-full" onClick={speecher.copy}>
           <Copy className="size-4" strokeWidth={1.75} aria-hidden />
           Copiar speech
         </Button>
-        <Button className="w-full">
-          <Download className="size-4" strokeWidth={1.75} aria-hidden />
-          Descargar speech
+        <div className="flex gap-1.5">
+          <Button
+            className="min-w-0 flex-1"
+            loading={speecher.isDownloading}
+            onClick={() => speecher.download("pdf")}
+          >
+            <Download className="size-4" strokeWidth={1.75} aria-hidden />
+            Descargar speech
+          </Button>
+          <IconButton
+            label="Descargar speech como imagen"
+            disabled={speecher.isDownloading}
+            onClick={() => speecher.download("png")}
+            className={SQUARE_BUTTON_CLASS}
+          >
+            <Image strokeWidth={1.75} />
+          </IconButton>
+        </div>
+        <Button className="w-full" onClick={speecher.editSpeech}>
+          <PencilLine className="size-4" strokeWidth={1.75} aria-hidden />
+          Editar speech
         </Button>
       </div>
     </>

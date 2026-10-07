@@ -3,7 +3,7 @@ import { emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { PictureInPicture2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import Isotype from "@/assets/icon.svg?react";
+import Isotype from "@/assets/isotype.svg?react";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   FOLD_DELAY_MS,
@@ -79,7 +79,7 @@ export function SpeecherWidget() {
     >
       {isFolded ? (
         <div data-tauri-drag-region className="flex size-full items-center justify-center bg-surface">
-          <Isotype className="pointer-events-none h-5 w-auto text-brand-white" role="img" aria-label="Speecher" />
+          <Isotype className="pointer-events-none h-6 w-auto text-brand-white" role="img" aria-label="Speecher" />
         </div>
       ) : (
         <section aria-label="Speecher" className="flex h-full flex-col">

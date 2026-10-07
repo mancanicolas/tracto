@@ -1,29 +1,37 @@
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SPEECHER_DOCK_EVENT,
   SPEECHER_WINDOW_LABEL,
   SPEECHER_WINDOW_QUERY_KEY,
+  WIDGET_GAP,
   WIDGET_HEIGHT,
-  WIDGET_MARGIN_RIGHT,
   WIDGET_OFFSET_TOP,
   WIDGET_WIDTH,
 } from "./windowConfig";
+import { computeWidgetPlacement } from "./windowPlacement";
 
 async function resolveWidgetPosition(): Promise<{ x: number; y: number } | null> {
   try {
     const mainWindow = getCurrentWindow();
-    const [position, size, scale] = await Promise.all([
+    const [position, size, scale, monitor] = await Promise.all([
       mainWindow.outerPosition(),
       mainWindow.outerSize(),
       mainWindow.scaleFactor(),
+      currentMonitor(),
     ]);
-    return {
-      x: Math.max(0, (position.x + size.width) / scale - WIDGET_WIDTH - WIDGET_MARGIN_RIGHT),
-      y: Math.max(0, position.y / scale + WIDGET_OFFSET_TOP),
-    };
+    if (!monitor) return null;
+    const area = monitor.workArea ?? { position: monitor.position, size: monitor.size };
+    const placement = computeWidgetPlacement({
+      main: { x: position.x, y: position.y, width: size.width, height: size.height },
+      monitor: { x: area.position.x, y: area.position.y, width: area.size.width, height: area.size.height },
+      widget: { width: WIDGET_WIDTH * scale, height: WIDGET_HEIGHT * scale },
+      gap: WIDGET_GAP * scale,
+      offsetTop: WIDGET_OFFSET_TOP * scale,
+    });
+    return { x: placement.x / scale, y: placement.y / scale };
   } catch {
     return null;
   }
@@ -89,15 +97,15 @@ export function useSpeecherWindow(onDocked: () => void) {
     }
   }, []);
 
-  const focusWidget = useCallback(async () => {
+  const closeWidget = useCallback(async () => {
     try {
       const widget = await WebviewWindow.getByLabel(SPEECHER_WINDOW_LABEL);
-      await widget?.setFocus();
+      await widget?.close();
     } catch {
       return;
     }
   }, []);
 
-  return { isPoppedOut, popOut, focusWidget };
+  return { isPoppedOut, popOut, closeWidget };
 }
 

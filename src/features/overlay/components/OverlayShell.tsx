@@ -19,11 +19,15 @@ interface OverlayShellProps {
 export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellProps) {
   const { state, checkNow, installUpdate, dismiss } = useUpdater();
   const [isSpeecherOpen, setIsSpeecherOpen] = useState(false);
-  const { isPoppedOut, popOut, focusWidget } = useSpeecherWindow(() => setIsSpeecherOpen(true));
+  const { isPoppedOut, popOut, closeWidget } = useSpeecherWindow(() => setIsSpeecherOpen(true));
 
   const toggleSpeecher = () => {
-    if (isPoppedOut) void focusWidget();
-    else setIsSpeecherOpen((open) => !open);
+    if (isPoppedOut) {
+      void closeWidget();
+      setIsSpeecherOpen(true);
+    } else {
+      setIsSpeecherOpen((open) => !open);
+    }
   };
 
   const popOutSpeecher = () => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { useClock } from "@/hooks/useClock";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
@@ -72,7 +73,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const isWide = useMediaQuery("(min-width: 768px)");
 
-  const today = todayIso();
+  const now = useClock();
+  const today = todayIso(now);
   const entityCases = useMemo(() => cases.filter((account) => matchesEntity(account, entity)), [cases, entity]);
   const entityOptions = useMemo(() => listEntityOptions(cases), [cases]);
   const visibleCases = useMemo(
@@ -171,6 +173,13 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     setAnnouncement("Caso eliminado");
   };
 
+  const postponeSchedule = (dni: string, fecha: string, hora: string) => {
+    const account = cases.find((item) => item.dni === dni);
+    if (!account) return;
+    schedule(dni, fecha, account.agendado_motivo?.trim() || "Sin motivo", hora);
+    setAnnouncement("Seguimiento pospuesto");
+  };
+
   const saveAgreement = (dni: string, agreement: NewAgreement) => {
     setAgreement(dni, agreement);
     setAnnouncement("Acuerdo registrado");
@@ -204,6 +213,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
             query={query}
             listRef={listRef}
             searchRef={searchRef}
+            now={now}
             onFilterChange={setFilter}
             onQueryChange={setQuery}
             sort={sort}
@@ -252,6 +262,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
                 schedule(selectedCase.dni, fecha, motivo, hora);
                 setAnnouncement("Seguimiento agendado");
               }}
+              onPostponeSchedule={(fecha, hora) => postponeSchedule(selectedCase.dni, fecha, hora)}
               onResolveSchedule={() => {
                 resolveSchedule(selectedCase.dni);
                 setAnnouncement("Seguimiento resuelto");
@@ -291,6 +302,10 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
       <StatsDialog open={isStatsOpen} cases={cases} operator={operatorName} onOpenChange={setIsStatsOpen} />
       <AlarmToasts
         alarms={ringing}
+        onPostpone={(alarm, fecha, hora) => {
+          postponeSchedule(alarm.dni, fecha, hora);
+          dismissAlarm(alarm.key);
+        }}
         onOpen={(alarm) => {
           openCase(alarm.dni);
           dismissAlarm(alarm.key);

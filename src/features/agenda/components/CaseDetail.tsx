@@ -44,6 +44,7 @@ interface CaseDetailProps {
   onSaveNote: (texto: string) => void;
   onSchedule: (fecha: string, motivo: string, hora?: string) => void;
   onResolveSchedule: () => void;
+  onPostponeSchedule: (fecha: string, hora: string) => void;
   onSaveAgreement: (agreement: NewAgreement) => void;
   onToggleInstallment: (installmentId: string) => void;
   onToggleInstallmentStats: (installmentId: string) => void;
@@ -65,6 +66,7 @@ export function CaseDetail({
   onSaveNote,
   onSchedule,
   onResolveSchedule,
+  onPostponeSchedule,
   onSaveAgreement,
   onToggleInstallment,
   onToggleInstallmentStats,
@@ -146,7 +148,7 @@ export function CaseDetail({
               onDone={() => onMarkAlertDone(installmentAlert.installment.id, installmentAlert.kind)}
             />
           ) : null}
-          <AgendaSummary account={account} onResolve={onResolveSchedule} />
+          <AgendaSummary account={account} onResolve={onResolveSchedule} onPostpone={onPostponeSchedule} />
           {account.acuerdo ? (
             <AgreementAccordion
               key={`agreement-${account.dni}`}

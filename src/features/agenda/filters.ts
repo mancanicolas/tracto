@@ -1,6 +1,6 @@
 import { todayIso } from "@/lib/dates";
 import { ENTIDAD_NAMES, findEntity, foldName } from "@/constants/entidades";
-import { normalizeDni } from "@/lib/format";
+import { formatTime, normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { resolveInstallmentAlert } from "@/lib/installmentAlert";
 import { resolveCaseStatus } from "@/lib/status";
@@ -34,10 +34,34 @@ export function hasPendingAgenda(account: Case, today: string = todayIso()): boo
   return Boolean(account.agendado_para && !account.agendado_resuelto && account.agendado_para <= today);
 }
 
-function agendaSortKey(account: Case, today: string): string {
+export function isAgendaPending(account: Case, now: Date = new Date()): boolean {
+  const { agendado_para: date, agendado_hora: time, agendado_resuelto: isResolved } = account;
+  if (!date || isResolved) return false;
+  const today = todayIso(now);
+  if (date < today) return true;
+  if (date > today) return false;
+  return !time || time <= formatTime(now);
+}
+
+interface AgendaOrder {
+  hasTime: boolean;
+  key: string;
+}
+
+function agendaOrder(account: Case, today: string): AgendaOrder {
+  if (hasPendingAgenda(account, today) && account.agendado_para) {
+    const time = account.agendado_hora;
+    return { hasTime: Boolean(time), key: `${account.agendado_para}T${time ?? "99:99"}` };
+  }
   const alert = resolveInstallmentAlert(account, today);
-  const scheduled = hasPendingAgenda(account, today) ? account.agendado_para : undefined;
-  return [scheduled, alert?.installment.fecha].filter((value): value is string => Boolean(value)).sort()[0] ?? "";
+  return { hasTime: false, key: `${alert?.installment.fecha ?? "9999-99-99"}T99:99` };
+}
+
+function compareAgendaOrder(a: Case, b: Case, today: string): number {
+  const first = agendaOrder(a, today);
+  const second = agendaOrder(b, today);
+  if (first.hasTime !== second.hasTime) return first.hasTime ? -1 : 1;
+  return first.key.localeCompare(second.key);
 }
 
 export function matchesFilter(account: Case, filter: ListView, today: string = todayIso()): boolean {
@@ -141,5 +165,5 @@ export function selectVisibleCases(
   const visible = cases.filter((c) => matchesFilter(c, filter, today) && matchesQuery(c, query));
   if (sort !== "default") return sortCases(visible, sort, today);
   if (filter !== "agenda") return visible;
-  return [...visible].sort((a, b) => agendaSortKey(a, today).localeCompare(agendaSortKey(b, today)));
+  return [...visible].sort((a, b) => compareAgendaOrder(a, b, today));
 }

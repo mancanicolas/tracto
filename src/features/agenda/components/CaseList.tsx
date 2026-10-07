@@ -10,7 +10,17 @@ import { formatDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { hasOverdueInstallment } from "@/lib/installmentAlert";
 import { resolveCaseStatus } from "@/lib/status";
-import { ALL_ENTITIES, ARCHIVED_VIEW, FILTERS, NO_ENTITY, SORTS, type ListView, type SortKey } from "../filters";
+import {
+  ALL_ENTITIES,
+  ARCHIVED_VIEW,
+  FILTERS,
+  NO_ENTITY,
+  SORTS,
+  isAgendaPending,
+  type ListView,
+  type SortKey,
+} from "../filters";
+import { PendingDot } from "./PendingDot";
 import { CaseContextMenu, type ContextMenuTarget } from "./CaseContextMenu";
 import { DeleteCaseDialog } from "./DeleteCaseDialog";
 
@@ -25,6 +35,7 @@ interface CaseListProps {
   query: string;
   listRef: RefObject<HTMLUListElement | null>;
   searchRef: Ref<HTMLInputElement>;
+  now: Date;
   onFilterChange: (filter: ListView) => void;
   onQueryChange: (query: string) => void;
   sort: SortKey;
@@ -48,6 +59,7 @@ export function CaseList({
   query,
   listRef,
   searchRef,
+  now,
   onFilterChange,
   onQueryChange,
   sort,
@@ -185,6 +197,7 @@ export function CaseList({
               account={account}
               selected={account.dni === selectedDni}
               onClick={() => onOpen(account.dni)}
+              now={now}
               onContextMenu={(event) => openMenu(account, event)}
             />
           ))}
@@ -237,10 +250,11 @@ interface CaseRowProps {
   account: Case;
   selected: boolean;
   onClick: () => void;
+  now: Date;
   onContextMenu: (event: MouseEvent) => void;
 }
 
-function CaseRow({ account, selected, onClick, onContextMenu }: CaseRowProps) {
+function CaseRow({ account, selected, now, onClick, onContextMenu }: CaseRowProps) {
   const status = resolveCaseStatus(account);
   const lastNote = account.notas[0];
   return (
@@ -256,11 +270,14 @@ function CaseRow({ account, selected, onClick, onContextMenu }: CaseRowProps) {
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span
-          className={cn("truncate text-[13px] leading-5 font-medium", account.nombre ? "text-fg" : "text-fg-muted")}
-          title={account.nombre}
-        >
-          {account.nombre ?? "Sin info"}
+        <span className="flex min-w-0 items-center gap-1.5">
+          {isAgendaPending(account, now) ? <PendingDot /> : null}
+          <span
+            className={cn("truncate text-[13px] leading-5 font-medium", account.nombre ? "text-fg" : "text-fg-muted")}
+            title={account.nombre}
+          >
+            {account.nombre ?? "Sin info"}
+          </span>
         </span>
         <span className="shrink-0 text-xs leading-5 text-fg-muted">
           {lastNote ? `Última nota ${formatNoteAge(lastNote.creada)}` : "Sin notas"}

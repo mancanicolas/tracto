@@ -17,6 +17,7 @@
     "dialog:allow-open",
     "fs:allow-exists",
     "fs:allow-write-file",
+    "fs:allow-remove",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
     "updater:default"

@@ -75,6 +75,7 @@ export interface SpeecherConfig {
   interno: string;
   carpeta: string;
   sobrescribir: boolean;
+  lastGeneratedPdfPath: string;
 }
 
 export interface FichaState {
@@ -88,6 +89,7 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
   interno: "",
   carpeta: "",
   sobrescribir: true,
+  lastGeneratedPdfPath: "",
 });
 
 export const speechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech", DEFAULT_SPEECH);

@@ -1,6 +1,6 @@
 import { join } from "@tauri-apps/api/path";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { exists, writeFile } from "@tauri-apps/plugin-fs";
+import { exists, remove, writeFile } from "@tauri-apps/plugin-fs";
 import { fail, ok, type Result } from "./result";
 
 export type SaveOutcome = "saved" | "cancelled";
@@ -42,6 +42,20 @@ interface FolderSaveRequest {
   fileName: string;
   bytes: Uint8Array;
   overwrite: boolean;
+  previousPath?: string;
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();
+}
+
+function isInFolder(path: string, folder: string): boolean {
+  return normalizePath(path).startsWith(`${normalizePath(folder)}/`);
+}
+
+async function removePreviousFile(previousPath: string, folder: string): Promise<void> {
+  if (!isInFolder(previousPath, folder) || !(await exists(previousPath))) return;
+  await remove(previousPath);
 }
 
 function splitExtension(fileName: string): { base: string; extension: string } {
@@ -65,8 +79,15 @@ function isFileInUse(error: unknown): boolean {
   return message.includes("os error 32") || message.includes("being used by another process");
 }
 
-export async function saveBytesInFolder({ folder, fileName, bytes, overwrite }: FolderSaveRequest): Promise<Result<string>> {
+export async function saveBytesInFolder({
+  folder,
+  fileName,
+  bytes,
+  overwrite,
+  previousPath,
+}: FolderSaveRequest): Promise<Result<string>> {
   try {
+    if (overwrite && previousPath) await removePreviousFile(previousPath, folder);
     const target = await resolveFolderTarget(folder, fileName, overwrite);
     await writeFile(target, bytes);
     return ok(target);

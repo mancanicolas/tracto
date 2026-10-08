@@ -17,6 +17,7 @@
     "dialog:allow-save",
     "dialog:allow-open",
     "fs:allow-exists",
-    "fs:allow-write-file"
+    "fs:allow-write-file",
+    "fs:allow-remove"
   ]
 }

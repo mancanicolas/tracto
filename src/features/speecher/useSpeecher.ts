@@ -19,6 +19,7 @@ export interface SpeecherStatus {
 
 const PASTE_FLASH_MS = 2500;
 const EMPTY_STATUS: SpeecherStatus = { text: "", tone: "neutral" };
+const FOLDER_REQUIRED_MESSAGE = "Elegí una carpeta de descarga para guardar el archivo";
 
 function readInputs() {
   const config = configStore.get();
@@ -99,11 +100,26 @@ export function useSpeecher() {
       setStatus({ text: problem ?? "", tone: "error" });
       return;
     }
+    let folder = configStore.get().carpeta;
+    if (!folder) {
+      const picked = await pickFolder();
+      if (!picked) {
+        setStatus({ text: FOLDER_REQUIRED_MESSAGE, tone: "error" });
+        return;
+      }
+      folder = picked;
+      configStore.set({ carpeta: picked });
+    }
     setIsDownloading(true);
     setStatus({ text: "Generando…", tone: "neutral" });
-    const { carpeta, sobrescribir } = configStore.get();
-    const result = await downloadSpeech(speech, ficha, settings, format, { folder: carpeta, overwrite: sobrescribir });
+    const { sobrescribir, lastGeneratedPdfPath } = configStore.get();
+    const result = await downloadSpeech(speech, ficha, settings, format, {
+      folder,
+      overwrite: sobrescribir,
+      previousPath: lastGeneratedPdfPath,
+    });
     setIsDownloading(false);
+    if (result.ok && result.data.path) configStore.set({ lastGeneratedPdfPath: result.data.path });
     if (!result.ok) setStatus({ text: result.error, tone: "error" });
     else if (result.data.outcome === "saved") setStatus({ text: `Guardado: ${result.data.fileName}`, tone: "success" });
     else setStatus(EMPTY_STATUS);
@@ -114,7 +130,6 @@ export function useSpeecher() {
     if (folder) configStore.set({ carpeta: folder });
   }, []);
 
-  const clearFolder = useCallback(() => configStore.set({ carpeta: "" }), []);
   const setOverwrite = useCallback((sobrescribir: boolean) => configStore.set({ sobrescribir }), []);
 
   return {
@@ -128,7 +143,6 @@ export function useSpeecher() {
     setOperador,
     setInterno,
     chooseFolder: () => void chooseFolder(),
-    clearFolder,
     setOverwrite,
     paste: () => void paste(),
     copy: () => void copy(),

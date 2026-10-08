@@ -1,6 +1,6 @@
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { fail, ok, type Result } from "@/lib/result";
-import { SAVE_ERROR_MESSAGE, saveBytesInFolder, saveBytesWithDialog, type SaveOutcome } from "@/lib/saveFile";
+import { SAVE_ERROR_MESSAGE, saveBytesInFolder, type SaveOutcome } from "@/lib/saveFile";
 import { parseFicha, type Ficha } from "./parser";
 import { buildSpeechData, renderSpeechText, type SpeechSettings } from "./speechContent";
 import type { SpeechTexts } from "./speechDefaults";
@@ -10,14 +10,15 @@ export type SpeechFormat = "pdf" | "png";
 export interface DownloadTarget {
   folder: string;
   overwrite: boolean;
+  previousPath: string;
 }
 
 export interface DownloadOutcome {
   outcome: SaveOutcome;
   fileName: string;
+  path?: string;
 }
 
-const FORMAT_FILTERS: Record<SpeechFormat, string> = { pdf: "PDF", png: "Imagen PNG" };
 const NO_DATA_MESSAGE = "No se reconocieron datos";
 const CLIPBOARD_READ_ERROR = "No se pudo leer el portapapeles";
 const CLIPBOARD_WRITE_ERROR = "No se pudo copiar el speech";
@@ -100,16 +101,12 @@ export async function downloadSpeech(
   }
   const fileName = `${buildFileName(ficha)}.${format}`;
 
-  if (target.folder) {
-    const saved = await saveBytesInFolder({ folder: target.folder, fileName, bytes, overwrite: target.overwrite });
-    return saved.ok ? ok({ outcome: "saved", fileName: lastSegment(saved.data) }) : saved;
-  }
-
-  const result = await saveBytesWithDialog({
-    defaultName: fileName,
-    filterName: FORMAT_FILTERS[format],
-    extension: format,
+  const saved = await saveBytesInFolder({
+    folder: target.folder,
+    fileName,
     bytes,
+    overwrite: target.overwrite,
+    previousPath: target.previousPath,
   });
-  return result.ok ? ok({ outcome: result.data, fileName }) : result;
+  return saved.ok ? ok({ outcome: "saved", fileName: lastSegment(saved.data), path: saved.data }) : saved;
 }

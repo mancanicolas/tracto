@@ -156,24 +156,15 @@ export function SpeecherPanel() {
                 config.carpeta ? "text-fg" : "font-sans text-fg-muted",
               )}
             >
-              <span className="truncate">{config.carpeta || "Preguntar al guardar"}</span>
+              <span className="truncate">{config.carpeta || "Se pide al descargar"}</span>
             </p>
             <IconButton label="Elegir carpeta de descarga" onClick={speecher.chooseFolder} className={SQUARE_BUTTON_CLASS}>
               <FolderOpen strokeWidth={1.75} />
-            </IconButton>
-            <IconButton
-              label="Volver a preguntar al guardar"
-              onClick={speecher.clearFolder}
-              disabled={!config.carpeta}
-              className={SQUARE_BUTTON_CLASS}
-            >
-              <X strokeWidth={1.75} />
             </IconButton>
           </div>
           <CheckboxField
             label="Sobrescribir si el archivo ya existe"
             checked={config.sobrescribir}
-            disabled={!config.carpeta}
             onChange={(event) => speecher.setOverwrite(event.target.checked)}
           />
         </div>

@@ -1,5 +1,6 @@
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { join } from "@tauri-apps/api/path";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { exists, writeFile } from "@tauri-apps/plugin-fs";
 import { fail, ok, type Result } from "./result";
 
 export type SaveOutcome = "saved" | "cancelled";
@@ -31,3 +32,55 @@ export async function saveBytesWithDialog({
     return fail(SAVE_ERROR_MESSAGE);
   }
 }
+
+export const FILE_IN_USE_MESSAGE = "Cerrá el archivo abierto y reintentá";
+
+const MAX_NAME_ATTEMPTS = 200;
+
+interface FolderSaveRequest {
+  folder: string;
+  fileName: string;
+  bytes: Uint8Array;
+  overwrite: boolean;
+}
+
+function splitExtension(fileName: string): { base: string; extension: string } {
+  const dot = fileName.lastIndexOf(".");
+  return dot > 0 ? { base: fileName.slice(0, dot), extension: fileName.slice(dot) } : { base: fileName, extension: "" };
+}
+
+async function resolveFolderTarget(folder: string, fileName: string, overwrite: boolean): Promise<string> {
+  const preferred = await join(folder, fileName);
+  if (overwrite || !(await exists(preferred))) return preferred;
+  const { base, extension } = splitExtension(fileName);
+  for (let attempt = 2; attempt <= MAX_NAME_ATTEMPTS; attempt += 1) {
+    const candidate = await join(folder, `${base} (${attempt})${extension}`);
+    if (!(await exists(candidate))) return candidate;
+  }
+  return preferred;
+}
+
+function isFileInUse(error: unknown): boolean {
+  const message = String(error).toLowerCase();
+  return message.includes("os error 32") || message.includes("being used by another process");
+}
+
+export async function saveBytesInFolder({ folder, fileName, bytes, overwrite }: FolderSaveRequest): Promise<Result<string>> {
+  try {
+    const target = await resolveFolderTarget(folder, fileName, overwrite);
+    await writeFile(target, bytes);
+    return ok(target);
+  } catch (error) {
+    return fail(isFileInUse(error) ? FILE_IN_USE_MESSAGE : SAVE_ERROR_MESSAGE);
+  }
+}
+
+export async function pickFolder(): Promise<string | null> {
+  try {
+    const selected = await open({ directory: true, multiple: false, recursive: true });
+    return typeof selected === "string" ? selected : null;
+  } catch {
+    return null;
+  }
+}
+

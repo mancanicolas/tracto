@@ -1,5 +1,6 @@
-import { Check, ClipboardPaste, Copy, Download, Image, Minus, PencilLine, Plus, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Download, FolderOpen, Image, Minus, PencilLine, Plus, X } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
+import { CheckboxField } from "@/components/ui/CheckboxField";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { SelectField } from "@/components/ui/SelectField";
@@ -141,6 +142,41 @@ export function SpeecherPanel() {
           )}
           {speecher.justPasted ? "Pegado" : "Pegar"}
         </Button>
+
+        <div className="flex flex-col gap-1.5">
+          <span id="speecher-folder-label" className="text-xs leading-4 font-medium text-fg-secondary">
+            Carpeta de descarga
+          </span>
+          <div className="flex items-center gap-1.5">
+            <p
+              aria-labelledby="speecher-folder-label"
+              title={config.carpeta || undefined}
+              className={cn(
+                "flex h-8 min-w-0 flex-1 items-center rounded-sm border border-line bg-input px-2.5 font-mono text-xs",
+                config.carpeta ? "text-fg" : "font-sans text-fg-muted",
+              )}
+            >
+              <span className="truncate">{config.carpeta || "Preguntar al guardar"}</span>
+            </p>
+            <IconButton label="Elegir carpeta de descarga" onClick={speecher.chooseFolder} className={SQUARE_BUTTON_CLASS}>
+              <FolderOpen strokeWidth={1.75} />
+            </IconButton>
+            <IconButton
+              label="Volver a preguntar al guardar"
+              onClick={speecher.clearFolder}
+              disabled={!config.carpeta}
+              className={SQUARE_BUTTON_CLASS}
+            >
+              <X strokeWidth={1.75} />
+            </IconButton>
+          </div>
+          <CheckboxField
+            label="Sobrescribir si el archivo ya existe"
+            checked={config.sobrescribir}
+            disabled={!config.carpeta}
+            onChange={(event) => speecher.setOverwrite(event.target.checked)}
+          />
+        </div>
 
         <p
           role="status"

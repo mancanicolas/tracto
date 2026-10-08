@@ -9,7 +9,7 @@ export const EDITOR_MIN_WIDTH = 520;
 export const EDITOR_MIN_HEIGHT = 480;
 
 export const WIDGET_WIDTH = 288;
-export const WIDGET_HEIGHT = 440;
+export const WIDGET_HEIGHT = 540;
 export const FOLDED_SIZE = 48;
 export const FOLD_DELAY_MS = 180;
 export const WIDGET_GAP = 8;

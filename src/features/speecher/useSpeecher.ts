@@ -6,6 +6,7 @@ import {
   validateSpeechInputs,
   type SpeechFormat,
 } from "./lib/speechActions";
+import { pickFolder } from "@/lib/saveFile";
 import { configStore, fichaStore, speechStore, useStore } from "./lib/speechStore";
 import { openSpeechEditor } from "./speechEditorWindow";
 
@@ -100,11 +101,21 @@ export function useSpeecher() {
     }
     setIsDownloading(true);
     setStatus({ text: "Generando…", tone: "neutral" });
-    const result = await downloadSpeech(speech, ficha, settings, format);
+    const { carpeta, sobrescribir } = configStore.get();
+    const result = await downloadSpeech(speech, ficha, settings, format, { folder: carpeta, overwrite: sobrescribir });
     setIsDownloading(false);
     if (!result.ok) setStatus({ text: result.error, tone: "error" });
-    else setStatus(result.data === "saved" ? { text: "Speech guardado", tone: "success" } : EMPTY_STATUS);
+    else if (result.data.outcome === "saved") setStatus({ text: `Guardado: ${result.data.fileName}`, tone: "success" });
+    else setStatus(EMPTY_STATUS);
   }, []);
+
+  const chooseFolder = useCallback(async () => {
+    const folder = await pickFolder();
+    if (folder) configStore.set({ carpeta: folder });
+  }, []);
+
+  const clearFolder = useCallback(() => configStore.set({ carpeta: "" }), []);
+  const setOverwrite = useCallback((sobrescribir: boolean) => configStore.set({ sobrescribir }), []);
 
   return {
     config,
@@ -116,6 +127,9 @@ export function useSpeecher() {
     removeCartera,
     setOperador,
     setInterno,
+    chooseFolder: () => void chooseFolder(),
+    clearFolder,
+    setOverwrite,
     paste: () => void paste(),
     copy: () => void copy(),
     download: (format: SpeechFormat) => void download(format),

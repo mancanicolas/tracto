@@ -73,6 +73,8 @@ export interface SpeecherConfig {
   cartera: string;
   operador: string;
   interno: string;
+  carpeta: string;
+  sobrescribir: boolean;
 }
 
 export interface FichaState {
@@ -84,6 +86,8 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
   cartera: "",
   operador: "",
   interno: "",
+  carpeta: "",
+  sobrescribir: true,
 });
 
 export const speechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech", DEFAULT_SPEECH);

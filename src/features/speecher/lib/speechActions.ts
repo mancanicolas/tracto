@@ -1,11 +1,21 @@
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { fail, ok, type Result } from "@/lib/result";
-import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "@/lib/saveFile";
+import { SAVE_ERROR_MESSAGE, saveBytesInFolder, saveBytesWithDialog, type SaveOutcome } from "@/lib/saveFile";
 import { parseFicha, type Ficha } from "./parser";
 import { buildSpeechData, renderSpeechText, type SpeechSettings } from "./speechContent";
 import type { SpeechTexts } from "./speechDefaults";
 
 export type SpeechFormat = "pdf" | "png";
+
+export interface DownloadTarget {
+  folder: string;
+  overwrite: boolean;
+}
+
+export interface DownloadOutcome {
+  outcome: SaveOutcome;
+  fileName: string;
+}
 
 const FORMAT_FILTERS: Record<SpeechFormat, string> = { pdf: "PDF", png: "Imagen PNG" };
 const NO_DATA_MESSAGE = "No se reconocieron datos";
@@ -69,12 +79,17 @@ function buildFileName(ficha: Ficha): string {
   return name || FALLBACK_FILE_NAME;
 }
 
+function lastSegment(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
+}
+
 export async function downloadSpeech(
   speech: SpeechTexts,
   ficha: Ficha,
   settings: SpeechSettings,
   format: SpeechFormat,
-): Promise<Result<SaveOutcome>> {
+  target: DownloadTarget,
+): Promise<Result<DownloadOutcome>> {
   let bytes: Uint8Array;
   try {
     const { buildSpeechPdfBytes } = await import("./speechPdf");
@@ -83,10 +98,18 @@ export async function downloadSpeech(
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
   }
-  return saveBytesWithDialog({
-    defaultName: `${buildFileName(ficha)}.${format}`,
+  const fileName = `${buildFileName(ficha)}.${format}`;
+
+  if (target.folder) {
+    const saved = await saveBytesInFolder({ folder: target.folder, fileName, bytes, overwrite: target.overwrite });
+    return saved.ok ? ok({ outcome: "saved", fileName: lastSegment(saved.data) }) : saved;
+  }
+
+  const result = await saveBytesWithDialog({
+    defaultName: fileName,
     filterName: FORMAT_FILTERS[format],
     extension: format,
     bytes,
   });
+  return result.ok ? ok({ outcome: result.data, fileName }) : result;
 }

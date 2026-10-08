@@ -19,6 +19,44 @@ create policy "profiles_select_own"
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to authenticated;
 
+alter table public.profiles add column if not exists rol text not null default 'operador';
+alter table public.profiles add column if not exists admin_id uuid references public.profiles (id) on delete set null;
+
+alter table public.profiles drop constraint if exists profiles_rol_check;
+alter table public.profiles add constraint profiles_rol_check check (rol in ('admin', 'operador'));
+
+alter table public.profiles drop constraint if exists profiles_admin_id_check;
+alter table public.profiles
+  add constraint profiles_admin_id_check check (admin_id is null or (rol = 'operador' and admin_id <> id));
+
+create index if not exists profiles_admin_id_idx on public.profiles (admin_id);
+
+create or replace function public.validate_profile_admin()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.admin_id is not null
+    and not exists (select 1 from public.profiles p where p.id = new.admin_id and p.rol = 'admin') then
+    raise exception 'admin_id debe apuntar a un perfil con rol admin';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_validate_admin on public.profiles;
+create trigger profiles_validate_admin
+  before insert or update of admin_id, rol on public.profiles
+  for each row execute function public.validate_profile_admin();
+
+drop policy if exists "profiles_select_operadores" on public.profiles;
+create policy "profiles_select_operadores"
+  on public.profiles
+  for select
+  to authenticated
+  using (admin_id = (select auth.uid()));
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

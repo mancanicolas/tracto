@@ -1,5 +1,6 @@
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { LicenseBlockedScreen } from "@/features/auth/components/LicenseBlockedScreen";
+import { RoleProvider } from "@/features/auth/RoleContext";
 import { LoginScreen } from "@/features/auth/components/LoginScreen";
 import { useAuth } from "@/features/auth/useAuth";
 import { OverlayShell } from "@/features/overlay/components/OverlayShell";
@@ -23,6 +24,10 @@ export function App() {
         />
       );
     case "licensed":
-      return <OverlayShell email={access.email} operatorName={access.operatorName} onSignOut={signOut} />;
+      return (
+        <RoleProvider role={access.role} adminId={access.adminId}>
+          <OverlayShell email={access.email} operatorName={access.operatorName} onSignOut={signOut} />
+        </RoleProvider>
+      );
   }
 }

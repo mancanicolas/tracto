@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useClock } from "@/hooks/useClock";
+import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { todayIso } from "@/lib/dates";
 import type { NewAgreement } from "@/lib/agreements";
@@ -76,7 +77,8 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
   const now = useClock();
   const today = todayIso(now);
   const entityCases = useMemo(() => cases.filter((account) => matchesEntity(account, entity)), [cases, entity]);
-  const entityOptions = useMemo(() => listEntityOptions(cases), [cases]);
+  const catalog = useEntityCatalog();
+  const entityOptions = useMemo(() => listEntityOptions(cases, Object.keys(catalog)), [cases, catalog]);
   const visibleCases = useMemo(
     () => selectVisibleCases(entityCases, filter, query, today, sort),
     [entityCases, filter, query, today, sort],

@@ -4,6 +4,7 @@ export interface MetodoPago {
 }
 
 export interface Entidad {
+  id?: string;
   carteras: string[];
   productos: string[];
   metodosPago: Record<string, MetodoPago[]>;
@@ -29,7 +30,7 @@ const cencosudMethods: MetodoPago[] = [
   },
 ];
 
-export const ENTIDADES: Record<string, Entidad> = {
+export const DEFAULT_ENTIDADES: Record<string, Entidad> = {
   "BANCO MACRO": generalEntity(
     { etiqueta: "CUIT", valor: "30500010084" },
     { etiqueta: "CBU", valor: "2850811-3-3009400374292-1" },
@@ -102,7 +103,30 @@ export const ENTIDADES: Record<string, Entidad> = {
   ),
 };
 
-export const ENTIDAD_NAMES = Object.keys(ENTIDADES);
+type CatalogListener = () => void;
+
+let catalog: Record<string, Entidad> = DEFAULT_ENTIDADES;
+const catalogListeners = new Set<CatalogListener>();
+
+export function getEntityCatalog(): Record<string, Entidad> {
+  return catalog;
+}
+
+export function setEntityCatalog(next: Record<string, Entidad>): void {
+  catalog = next;
+  catalogListeners.forEach((listener) => listener());
+}
+
+export function subscribeEntityCatalog(listener: CatalogListener): () => void {
+  catalogListeners.add(listener);
+  return () => {
+    catalogListeners.delete(listener);
+  };
+}
+
+export function getEntityNames(): string[] {
+  return Object.keys(catalog);
+}
 
 export function foldName(name: string): string {
   return name
@@ -114,11 +138,11 @@ export function foldName(name: string): string {
 
 export function findEntity(name: string | undefined): Entidad | undefined {
   if (!name) return undefined;
-  const exact = ENTIDADES[name];
+  const exact = catalog[name];
   if (exact) return exact;
   const folded = foldName(name);
-  const match = ENTIDAD_NAMES.find((candidate) => foldName(candidate) === folded);
-  return match ? ENTIDADES[match] : undefined;
+  const match = getEntityNames().find((candidate) => foldName(candidate) === folded);
+  return match ? catalog[match] : undefined;
 }
 
 const REGULARIZATION_ENTITY = "UALA";

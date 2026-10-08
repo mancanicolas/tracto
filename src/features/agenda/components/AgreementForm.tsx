@@ -7,6 +7,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
 import { findEntity, hasMultipleProducts } from "@/constants/entidades";
+import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import type { NewAgreement } from "@/lib/agreements";
 import { cn } from "@/lib/cn";
@@ -31,6 +32,7 @@ const KINDS: { key: AgreementKind; label: string }[] = [
 
 export function AgreementForm({ entidad, balance, onSave }: AgreementFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  useEntityCatalog();
   const requiresProduct = hasMultipleProducts(entidad);
   const schema = useMemo(() => agreementSchema(requiresProduct), [requiresProduct]);
   const {

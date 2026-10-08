@@ -1,6 +1,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { SelectField } from "@/components/ui/SelectField";
-import { DEFAULT_PORTFOLIO, ENTIDAD_NAMES, findEntity } from "@/constants/entidades";
+import { DEFAULT_PORTFOLIO, findEntity } from "@/constants/entidades";
+import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 
 interface EntityFormValues {
   entidad: string;
@@ -18,7 +19,8 @@ export function EntityFields() {
   } = useFormContext<EntityFormValues>();
   const entidad = useWatch({ control, name: "entidad" });
 
-  const entityNames = entidad && !ENTIDAD_NAMES.includes(entidad) ? [...ENTIDAD_NAMES, entidad] : ENTIDAD_NAMES;
+  const catalogNames = Object.keys(useEntityCatalog());
+  const entityNames = entidad && !catalogNames.includes(entidad) ? [...catalogNames, entidad] : catalogNames;
   const carteras = findEntity(entidad)?.carteras ?? [DEFAULT_PORTFOLIO];
   const entidadField = register("entidad");
 

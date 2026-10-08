@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { TextField } from "@/components/ui/TextField";
 import { DEFAULT_PORTFOLIO, findEntity } from "@/constants/entidades";
+import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import type { Case } from "@/lib/types";
@@ -29,6 +30,7 @@ interface ConvenioFormProps {
 
 export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  useEntityCatalog();
   const carteras = findEntity(account.entidad)?.carteras ?? [DEFAULT_PORTFOLIO];
   const {
     register,

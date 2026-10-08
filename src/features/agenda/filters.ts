@@ -1,5 +1,5 @@
 import { todayIso } from "@/lib/dates";
-import { ENTIDAD_NAMES, findEntity, foldName } from "@/constants/entidades";
+import { findEntity, foldName } from "@/constants/entidades";
 import { formatTime, normalizeDni } from "@/lib/format";
 import type { Case } from "@/lib/types";
 import { resolveInstallmentAlert } from "@/lib/installmentAlert";
@@ -117,11 +117,11 @@ export function matchesEntity(account: Case, entity: string): boolean {
   return Boolean(name) && foldName(name ?? "") === foldName(entity);
 }
 
-export function listEntityOptions(cases: Case[]): string[] {
+export function listEntityOptions(cases: Case[], catalogNames: string[]): string[] {
   const unknown = cases
     .map((account) => account.entidad?.trim())
     .filter((name): name is string => Boolean(name) && !findEntity(name));
-  return [...ENTIDAD_NAMES, ...new Set(unknown)];
+  return [...catalogNames, ...new Set(unknown)];
 }
 
 function lastNoteTime(account: Case): number {

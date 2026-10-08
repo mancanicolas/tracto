@@ -1,5 +1,5 @@
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
-import { DEFAULT_PRODUCT, ENTIDADES, getPaymentMethods } from "@/constants/entidades";
+import { DEFAULT_PRODUCT, getEntityCatalog, getPaymentMethods } from "@/constants/entidades";
 import { buildConvenioDefinition, type ConvenioCase } from "./convenio";
 import type { Agreement, Installment } from "./types";
 
@@ -45,7 +45,7 @@ function installmentsAgreement(producto: string): Agreement {
 }
 
 function buildScenarios(): TestScenario[] {
-  return Object.entries(ENTIDADES).flatMap(([entidad, config]) =>
+  return Object.entries(getEntityCatalog()).flatMap(([entidad, config]) =>
     (config.productos.length > 0 ? config.productos : [DEFAULT_PRODUCT]).flatMap((producto) => {
       const name = producto === DEFAULT_PRODUCT ? entidad : `${entidad} ${producto}`;
       return [

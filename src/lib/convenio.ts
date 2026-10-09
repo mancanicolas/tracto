@@ -139,7 +139,7 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
   const headerCells: TableCell[] = ["CUOTA", "DESCRIPCION", "VENCIMIENTO", "IMPORTE"].map((text, index) => ({
     text,
     bold: true,
-    color: WHITE,
+    color: BRAND_DEEP,
     alignment: index === 3 ? "right" : "left",
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
@@ -163,15 +163,15 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
       body: [headerCells, ...rows, totalRow],
     },
     layout: {
-      hLineWidth: (index, node) => (index === node.table.body.length - 1 ? 1.2 : 0.4),
-      hLineColor: (index, node) => (index === node.table.body.length - 1 ? BRAND_PRIMARY : RULE),
+      hLineWidth: (index, node) => (index === 1 || index === node.table.body.length - 1 ? 1.2 : 0.4),
+      hLineColor: (index, node) => (index === 1 || index === node.table.body.length - 1 ? BRAND_PRIMARY : RULE),
       vLineWidth: () => 0,
       paddingTop: () => 4,
       paddingBottom: () => 4,
       paddingLeft: () => 8,
       paddingRight: () => 8,
       fillColor: (rowIndex) => {
-        if (rowIndex === 0) return BRAND_PRIMARY;
+        if (rowIndex === 0) return null;
         if (rowIndex === lastRowIndex) return PRIMARY_SOFT;
         return rowIndex % 2 === 0 ? TINT : null;
       },

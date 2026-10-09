@@ -311,8 +311,7 @@ export function buildConvenioDefinition(
             width: "*",
             stack: [
               { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: BRAND_DEEP },
-              { text: account.entidad, alignment: "center", bold: true, fontSize: 13, margin: [0, 2, 0, 4] },
-              { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED },
+              { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED, margin: [0, 6, 0, 0] },
             ],
             margin: [0, 8, 0, 0],
           },

@@ -86,7 +86,6 @@ interface PdfPreset {
   calloutFill: string;
   buttonLabel: string;
   isHeadingUppercase: boolean;
-  subtitleSpacing: number;
 }
 
 const PRESETS: Record<PdfPresetId, PdfPreset> = {
@@ -101,7 +100,6 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     calloutFill: PAPER,
     buttonLabel: "TOCÁ ACÁ PARA ESCRIBIRNOS POR WHATSAPP",
     isHeadingUppercase: true,
-    subtitleSpacing: 2.4,
   },
   suave: {
     topBar: SOFT_TOP_BAR,
@@ -114,7 +112,6 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     calloutFill: SOFT_CALLOUT,
     buttonLabel: "Tocá acá para escribirnos por WhatsApp",
     isHeadingUppercase: false,
-    subtitleSpacing: 1.2,
   },
 };
 
@@ -260,13 +257,7 @@ function buildBackground(speech: SpeechTexts, data: SpeechData, preset: PdfPrese
     {
       stack: [
         { text: "5 ONLINE SRL", color: WHITE, fontSize: 21, bold: true, characterSpacing: 1 },
-        {
-          text: subtitle.toUpperCase(),
-          color: BRAND_SUBTITLE,
-          fontSize: 7.6,
-          characterSpacing: preset.subtitleSpacing,
-          margin: [0, 4, 0, 0],
-        },
+        { text: "GESTIÓN INTEGRAL DIGITAL", color: BRAND_SUBTITLE, fontSize: 7.6, characterSpacing: 2.4, margin: [0, 4, 0, 0] },
       ],
       absolutePosition: { x: SIDE_MARGIN + BADGE_SIZE + mm(7), y: RED_BAR_HEIGHT + mm(10.5) },
     },

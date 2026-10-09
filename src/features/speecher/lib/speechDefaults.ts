@@ -71,14 +71,7 @@ Podés corroborar tu agencia de cobro asignada en el canal oficial de UALA: 15 x
 
 Sin más, saludamos atte.`,
 
-  pie: `5 Online SRL
-Conciliaciones - Embargos - Ejecuciones
-Teléfono fijo: (011) 6091 8325
-WhatsApp informes: 11 5022 1272
-info@5ol.com.ar
-5ol.com.ar
-Carlos Pellegrini 1163 Piso 13
-Ciudad Autónoma de Buenos Aires`,
+  pie: DEFAULT_SPEECH.pie,
 
   confidencialidad: `> **Confidencialidad:** si recibió este mensaje por error le pedimos disculpas, infórmelo para quitar su número telefónico.`,
 };

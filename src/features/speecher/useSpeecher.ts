@@ -7,7 +7,8 @@ import {
   type SpeechFormat,
 } from "./lib/speechActions";
 import { pickFolder } from "@/lib/saveFile";
-import { configStore, fichaStore, speechStore, useStore } from "./lib/speechStore";
+import { getActiveSpeech } from "./lib/speechLibrary";
+import { configStore, fichaStore, useStore } from "./lib/speechStore";
 import { openSpeechEditor } from "./speechEditorWindow";
 
 export type StatusTone = "neutral" | "success" | "error";
@@ -24,7 +25,7 @@ const FOLDER_REQUIRED_MESSAGE = "Elegí una carpeta de descarga para guardar el 
 function readInputs() {
   const config = configStore.get();
   return {
-    speech: speechStore.get(),
+    speech: getActiveSpeech().texts,
     ficha: fichaStore.get().ficha,
     settings: { cartera: config.cartera, operador: config.operador.trim(), interno: config.interno.trim() },
   };

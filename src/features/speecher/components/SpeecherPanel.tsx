@@ -6,6 +6,13 @@ import { IconButton } from "@/components/ui/IconButton";
 import { SelectField } from "@/components/ui/SelectField";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { cn } from "@/lib/cn";
+import {
+  createSpeech,
+  MAX_SPEECH_NAME_LENGTH,
+  nameExists,
+  selectSpeech,
+  useSpeeches,
+} from "../lib/speechLibrary";
 import { useSpeecher } from "../useSpeecher";
 
 const INPUT_CLASS =
@@ -23,6 +30,10 @@ export function SpeecherPanel() {
   const { config } = speecher;
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
+  const [isAddingSpeech, setIsAddingSpeech] = useState(false);
+  const [newSpeechName, setNewSpeechName] = useState("");
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const { entries, active } = useSpeeches();
 
   const confirmNew = () => {
     speecher.addCartera(newName);
@@ -47,6 +58,39 @@ export function SpeecherPanel() {
   };
 
   const options = config.carteras.map((name) => ({ value: name, label: name }));
+  const speechOptions = entries.map((entry) => ({ value: entry.id, label: entry.name }));
+
+  const confirmNewSpeech = () => {
+    const name = newSpeechName.trim();
+    if (!name) {
+      setSpeechError("Ingresá un nombre para el speech.");
+      return;
+    }
+    if (nameExists(name)) {
+      setSpeechError("Ya existe un speech con ese nombre.");
+      return;
+    }
+    createSpeech(name);
+    cancelNewSpeech();
+    speecher.editSpeech();
+  };
+
+  const cancelNewSpeech = () => {
+    setNewSpeechName("");
+    setSpeechError(null);
+    setIsAddingSpeech(false);
+  };
+
+  const handleNewSpeechKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      confirmNewSpeech();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      cancelNewSpeech();
+    }
+  };
 
   return (
     <>
@@ -97,6 +141,58 @@ export function SpeecherPanel() {
               className={SQUARE_BUTTON_CLASS}
             >
               <Minus strokeWidth={1.75} />
+            </IconButton>
+          </div>
+        )}
+
+        {isAddingSpeech ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-end gap-1.5">
+              <div className="min-w-0 flex-1">
+                <label htmlFor="speecher-new-speech" className="mb-1.5 block text-xs leading-4 font-medium text-fg-secondary">
+                  Nuevo speech
+                </label>
+                <input
+                  id="speecher-new-speech"
+                  value={newSpeechName}
+                  onChange={(event) => {
+                    setNewSpeechName(event.target.value);
+                    setSpeechError(null);
+                  }}
+                  onKeyDown={handleNewSpeechKeyDown}
+                  maxLength={MAX_SPEECH_NAME_LENGTH}
+                  autoComplete="off"
+                  autoFocus
+                  aria-invalid={speechError ? true : undefined}
+                  placeholder="Nombre del speech"
+                  className={cn(INPUT_CLASS, "w-full px-2.5")}
+                />
+              </div>
+              <IconButton label="Crear speech" onClick={confirmNewSpeech} className={SQUARE_BUTTON_CLASS}>
+                <Check strokeWidth={1.75} />
+              </IconButton>
+              <IconButton label="Cancelar" onClick={cancelNewSpeech} className={SQUARE_BUTTON_CLASS}>
+                <X strokeWidth={1.75} />
+              </IconButton>
+            </div>
+            {speechError ? (
+              <p role="alert" className="text-xs leading-4 text-danger">
+                {speechError}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="flex items-end gap-1.5">
+            <div className="min-w-0 flex-1">
+              <SelectField
+                label="Speech"
+                options={speechOptions}
+                value={active.id}
+                onChange={(event) => selectSpeech(event.target.value)}
+              />
+            </div>
+            <IconButton label="Crear speech" onClick={() => setIsAddingSpeech(true)} className={SQUARE_BUTTON_CLASS}>
+              <Plus strokeWidth={1.75} />
             </IconButton>
           </div>
         )}

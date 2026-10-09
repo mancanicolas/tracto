@@ -2,8 +2,16 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextAreaField } from "@/components/ui/TextAreaField";
+import { TextField } from "@/components/ui/TextField";
 import { DEFAULT_SPEECH, SPEECH_FIELDS, type SpeechTexts } from "../lib/speechDefaults";
-import { speechStore } from "../lib/speechStore";
+import {
+  deleteSpeech,
+  MAX_SPEECH_NAME_LENGTH,
+  restoreDefaultSpeech,
+  saveSpeech,
+  useSpeeches,
+  type SpeechEntry,
+} from "../lib/speechLibrary";
 
 const SAVED_FLASH_MS = 2200;
 const KEYS = ["TRATO", "NOMBRE", "DNI", "MES", "ANIO", "CARTERA", "FECHA", "LABORAL", "OPERADOR", "INTERNO"];
@@ -16,7 +24,15 @@ const FIELD_LABELS: Record<(typeof SPEECH_FIELDS)[number], { label: string; hint
 };
 
 export function SpeechEditor() {
-  const [values, setValues] = useState<SpeechTexts>(() => ({ ...DEFAULT_SPEECH, ...speechStore.get() }));
+  const { active } = useSpeeches();
+  return <SpeechEditorForm key={active.id} speech={active} />;
+}
+
+function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
+  const [values, setValues] = useState<SpeechTexts>(() => ({ ...speech.texts }));
+  const [name, setName] = useState(speech.name);
+  const [error, setError] = useState<string | null>(null);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [message, setMessage] = useState("");
   const messageTimerRef = useRef<number | null>(null);
 
@@ -34,14 +50,19 @@ export function SpeechEditor() {
   };
 
   const save = () => {
-    speechStore.set(values);
-    flash("Guardado");
+    const problem = saveSpeech(speech.id, values, name);
+    setError(problem);
+    if (!problem) flash("Guardado");
   };
 
   const restore = () => {
-    speechStore.reset();
-    setValues({ ...DEFAULT_SPEECH });
+    restoreDefaultSpeech();
+    setValues({ ...speech.texts, ...DEFAULT_SPEECH });
     flash("Texto original restaurado");
+  };
+
+  const remove = () => {
+    deleteSpeech(speech.id);
   };
 
   const close = () => {
@@ -54,10 +75,25 @@ export function SpeechEditor() {
     <div className="flex h-full flex-col bg-surface">
       <header className="flex items-baseline gap-3 border-b border-line-subtle px-4 py-3">
         <h1 className="text-sm leading-5 font-semibold text-fg">Editar speech</h1>
-        <p className="text-xs text-fg-muted">Los cambios se guardan y se usan en todos los speech.</p>
+        <p className="text-xs text-fg-muted">
+          {speech.isDefault ? "Speech por defecto." : `Speech: ${speech.name}.`} Los cambios se usan al copiar y descargar.
+        </p>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+        {speech.isDefault ? null : (
+          <TextField
+            label="Nombre del speech"
+            value={name}
+            maxLength={MAX_SPEECH_NAME_LENGTH}
+            autoComplete="off"
+            error={error ?? undefined}
+            onChange={(event) => {
+              setName(event.target.value);
+              setError(null);
+            }}
+          />
+        )}
         <p className="text-xs leading-5 text-fg-muted">
           Claves disponibles:{" "}
           {KEYS.map((key) => (
@@ -94,7 +130,20 @@ export function SpeechEditor() {
         <p role="status" aria-live="polite" className="flex-1 text-xs text-success">
           {message}
         </p>
-        <Button onClick={restore}>Restaurar original</Button>
+        {speech.isDefault ? (
+          <Button onClick={restore}>Restaurar original</Button>
+        ) : isConfirmingDelete ? (
+          <>
+            <Button onClick={() => setIsConfirmingDelete(false)}>Conservar</Button>
+            <Button variant="destructive" onClick={remove}>
+              Confirmar eliminación
+            </Button>
+          </>
+        ) : (
+          <Button variant="destructive" onClick={() => setIsConfirmingDelete(true)}>
+            Eliminar speech
+          </Button>
+        )}
         <Button onClick={close}>Cerrar</Button>
         <Button variant="primary" onClick={save}>
           Guardar

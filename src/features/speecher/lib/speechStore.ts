@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { Ficha } from "./parser";
+import type { SavedSpeech } from "./speechLibrary";
 import { DEFAULT_SPEECH, type SpeechTexts } from "./speechDefaults";
 
 interface LocalStore<T> {
@@ -93,6 +94,11 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
 });
 
 export const speechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech", DEFAULT_SPEECH);
+
+export const libraryStore = createLocalStore<{ speeches: SavedSpeech[]; activeId: string }>(
+  "tracto.speecher.library",
+  { speeches: [], activeId: "default" },
+);
 
 export const fichaStore = createLocalStore<FichaState>("tracto.speecher.ficha", { ficha: null });
 

@@ -92,6 +92,19 @@ function tokenize(text: string, data: SpeechData, forceBold: boolean): Run[] {
     });
 }
 
+const EMOJI_PATTERN = /\p{Extended_Pictographic}\uFE0F?/gu;
+const LEADING_EMOJI_PATTERN = /^\s*(\p{Extended_Pictographic})\uFE0F?\s*/u;
+
+export function splitLeadingEmoji(text: string): { emoji: string; rest: string } {
+  const match = LEADING_EMOJI_PATTERN.exec(text);
+  if (!match) return { emoji: "", rest: text };
+  return { emoji: match[1] ?? "", rest: text.slice(match[0].length) };
+}
+
+export function stripEmoji(text: string): string {
+  return text.replace(EMOJI_PATTERN, "").replace(/ {2,}/g, " ");
+}
+
 export function toRuns(text: string, data: SpeechData): Run[] {
   return tokenize(text, data, false);
 }
@@ -179,7 +192,9 @@ export function renderSpeechText(speech: SpeechTexts, data: SpeechData): string 
   const body = parseBody(speech.cuerpo, data).map((block) =>
     block.type === "p"
       ? whatsApp(toRuns(block.text, data))
-      : block.items.map((item) => `- ${whatsApp(toRuns(item, data))}`).join("\n"),
+      : block.items
+          .map((item) => `${splitLeadingEmoji(item).emoji ? "" : "- "}${whatsApp(toRuns(item, data))}`)
+          .join("\n"),
   );
   const footer = splitLines(speech.pie).join("\n");
   const confidentiality = whatsApp(toRuns(speech.confidencialidad, data));

@@ -3,11 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextAreaField } from "@/components/ui/TextAreaField";
 import { TextField } from "@/components/ui/TextField";
-import { DEFAULT_SPEECH, SPEECH_FIELDS, type SpeechTexts } from "../lib/speechDefaults";
+import { SelectField } from "@/components/ui/SelectField";
+import {
+  DEFAULT_SPEECH,
+  PDF_PRESET_OPTIONS,
+  SPEECH_FIELDS,
+  type PdfPresetId,
+  type SpeechTexts,
+} from "../lib/speechDefaults";
 import {
   deleteSpeech,
   MAX_SPEECH_NAME_LENGTH,
-  restoreDefaultSpeech,
+  restoreBuiltinSpeech,
   saveSpeech,
   useSpeeches,
   type SpeechEntry,
@@ -56,8 +63,8 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
   };
 
   const restore = () => {
-    restoreDefaultSpeech();
-    setValues({ ...speech.texts, ...DEFAULT_SPEECH });
+    restoreBuiltinSpeech(speech.id);
+    setValues({ ...DEFAULT_SPEECH, ...speech.original });
     flash("Texto original restaurado");
   };
 
@@ -76,12 +83,12 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
       <header className="flex items-baseline gap-3 border-b border-line-subtle px-4 py-3">
         <h1 className="text-sm leading-5 font-semibold text-fg">Editar speech</h1>
         <p className="text-xs text-fg-muted">
-          {speech.isDefault ? "Speech por defecto." : `Speech: ${speech.name}.`} Los cambios se usan al copiar y descargar.
+          {`Speech: ${speech.name}.`} Los cambios se usan al copiar y descargar.
         </p>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-        {speech.isDefault ? null : (
+        {speech.isBuiltin ? null : (
           <TextField
             label="Nombre del speech"
             value={name}
@@ -94,6 +101,12 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
             }}
           />
         )}
+        <SelectField
+          label="Diseño del PDF"
+          options={PDF_PRESET_OPTIONS}
+          value={values.preset}
+          onChange={(event) => setValues((current) => ({ ...current, preset: event.target.value as PdfPresetId }))}
+        />
         <p className="text-xs leading-5 text-fg-muted">
           Claves disponibles:{" "}
           {KEYS.map((key) => (
@@ -130,7 +143,7 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
         <p role="status" aria-live="polite" className="flex-1 text-xs text-success">
           {message}
         </p>
-        {speech.isDefault ? (
+        {speech.isBuiltin ? (
           <Button onClick={restore}>Restaurar original</Button>
         ) : isConfirmingDelete ? (
           <>

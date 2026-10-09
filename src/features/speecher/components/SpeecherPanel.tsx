@@ -7,7 +7,9 @@ import { SelectField } from "@/components/ui/SelectField";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { cn } from "@/lib/cn";
 import {
+  BASE_OPTIONS,
   createSpeech,
+  DEFAULT_SPEECH_ID,
   MAX_SPEECH_NAME_LENGTH,
   nameExists,
   selectSpeech,
@@ -32,6 +34,7 @@ export function SpeecherPanel() {
   const [newName, setNewName] = useState("");
   const [isAddingSpeech, setIsAddingSpeech] = useState(false);
   const [newSpeechName, setNewSpeechName] = useState("");
+  const [newSpeechBase, setNewSpeechBase] = useState(DEFAULT_SPEECH_ID);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const { entries, active } = useSpeeches();
 
@@ -70,13 +73,14 @@ export function SpeecherPanel() {
       setSpeechError("Ya existe un speech con ese nombre.");
       return;
     }
-    createSpeech(name);
+    createSpeech(name, newSpeechBase);
     cancelNewSpeech();
     speecher.editSpeech();
   };
 
   const cancelNewSpeech = () => {
     setNewSpeechName("");
+    setNewSpeechBase(DEFAULT_SPEECH_ID);
     setSpeechError(null);
     setIsAddingSpeech(false);
   };
@@ -175,6 +179,12 @@ export function SpeecherPanel() {
                 <X strokeWidth={1.75} />
               </IconButton>
             </div>
+            <SelectField
+              label="Partir de"
+              options={BASE_OPTIONS}
+              value={newSpeechBase}
+              onChange={(event) => setNewSpeechBase(event.target.value)}
+            />
             {speechError ? (
               <p role="alert" className="text-xs leading-4 text-danger">
                 {speechError}

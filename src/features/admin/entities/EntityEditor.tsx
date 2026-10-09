@@ -86,14 +86,6 @@ export function EntityEditor({
           onRemove={removeProduct}
         />
 
-        <ChipListField
-          label="Carteras"
-          items={draft.carteras}
-          addPlaceholder="Nueva cartera"
-          onAdd={(name) => onChange({ ...draft, carteras: [...draft.carteras, name] })}
-          onRemove={(name) => onChange({ ...draft, carteras: draft.carteras.filter((item) => item !== name) })}
-        />
-
         <div className="flex flex-col gap-2">
           <h3 className="text-xs leading-4 font-medium text-fg-secondary">Medios de pago de los convenios</h3>
           {draft.productos.length > 1 ? (

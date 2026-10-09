@@ -54,7 +54,6 @@ export function validateDraft(draft: EntityDraft, existingNames: string[]): stri
   const isDuplicate = !draft.id && existingNames.some((existing) => foldName(existing) === foldName(name));
   if (isDuplicate) return "Ya existe una entidad con ese nombre.";
   if (draft.productos.length === 0) return "La entidad necesita al menos un producto.";
-  if (draft.carteras.length === 0) return "La entidad necesita al menos una cartera.";
   const hasIncomplete = draft.productos.some((producto) =>
     (draft.metodos[producto] ?? []).some((metodo) => !metodo.etiqueta.trim() || !metodo.valor.trim()),
   );

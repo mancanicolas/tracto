@@ -18,7 +18,6 @@ import { convenioSchema, type ConvenioValues } from "../schemas";
 
 export type ConvenioMode = "copy" | "download" | "image";
 
-const CARTERAS_LIST_ID = "convenio-carteras";
 const EMPTY_PRODUCT_ROW = { cartera: "", producto: "" };
 
 const CONFIRM_LABELS: Record<ConvenioMode, string> = {
@@ -59,7 +58,6 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
   });
   const chosenEntity = useWatch({ control, name: "entidad" });
   const entity = findEntity(chosenEntity);
-  const carteras = entity?.carteras ?? [];
   const needsAgreementProduct = hasMultipleProducts(chosenEntity);
   const entityNames = Object.keys(catalog);
   const entityOptions = (currentEntity && !entityNames.includes(currentEntity) ? [...entityNames, currentEntity] : entityNames).map(
@@ -121,7 +119,6 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
               <li key={field.id} className="flex flex-col gap-1">
                 <div className="grid grid-cols-[1fr_1fr_4.5rem] items-center gap-1.5">
                   <input
-                    list={CARTERAS_LIST_ID}
                     autoComplete="off"
                     aria-label={`Cartera del producto ${index + 1}`}
                     aria-invalid={rowErrors?.cartera ? true : undefined}
@@ -168,11 +165,6 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
             );
           })}
         </ul>
-        <datalist id={CARTERAS_LIST_ID}>
-          {carteras.map((cartera) => (
-            <option key={cartera} value={cartera} />
-          ))}
-        </datalist>
       </fieldset>
 
       <div className="flex justify-end gap-2">

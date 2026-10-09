@@ -1,7 +1,6 @@
 import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
 import { completeProducts, type ConvenioCase, type ConvenioProduct } from "./convenio";
 import { installmentLabel } from "./agreements";
-import { todayIso } from "./dates";
 import { formatArs } from "./format";
 import { getConvenioWording } from "./convenioWording";
 import { fail, ok, type Result } from "./result";
@@ -29,27 +28,34 @@ function paymentLines(methods: MetodoPago[]): string[] {
   return methods.map(({ etiqueta, valor }) => `* ${etiqueta}: ${valor}`);
 }
 
-function describeObligations(entidad: string, products: ConvenioProduct[]): string {
-  const portfolios = [...new Set(completeProducts(products).map((row) => row.cartera))];
-  return portfolios.length > 0 ? portfolios.join(", ") : entidad;
+function introductionLines(entidad: string, products: ConvenioProduct[]): string[] {
+  const instructions = `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${entidad}`;
+  const agreementText =
+    "se formaliza el convenio de pago con el titular, sujeto a los términos y condiciones que se detallan a continuación:";
+  if (products.length === 0) return [`${instructions}, ${agreementText}`];
+  return [
+    `${instructions}, se informa que el titular mantiene una deuda al día de la fecha originada con la entidad con los siguientes productos:`,
+    "",
+    ...products.map((row) => `* ${row.cartera} -${row.producto}`),
+    "",
+    `En virtud de ello, ${agreementText}`,
+  ];
 }
 
 export function buildConvenioMessage(
   account: ConvenioCase,
   agreement: Agreement,
-  today: string = todayIso(),
   products: ConvenioProduct[] = [],
 ): string {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
-  const { planTitle, purpose } = getConvenioWording(account.entidad, agreement);
+  const { planTitle } = getConvenioWording(account.entidad, agreement);
   const importantLines =
     agreement.tipo === "parcial" ? [INCUMPLIMIENTO_LINE] : [LIBRE_DE_DEUDA_LINE, INCUMPLIMIENTO_LINE];
 
   return [
-    `Estimado/a ${account.nombre} - ${account.dni}:`,
-    "",
-    `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${purpose} de sus obligaciones de ${describeObligations(account.entidad, products)}`,
+    `Estimado/a ${account.nombre} -${account.dni}:`,
+    ...introductionLines(account.entidad, completeProducts(products)),
     "",
     `${planTitle} (${formatArs(total)})`,
     ...agreement.cuotas.map(installmentLine),
@@ -71,7 +77,7 @@ export async function copyConvenioMessage(
   products: ConvenioProduct[] = [],
 ): Promise<Result> {
   try {
-    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, todayIso(), products));
+    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, products));
     return ok();
   } catch {
     return fail(COPY_ERROR_MESSAGE);

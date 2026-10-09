@@ -2,6 +2,7 @@ import { Copy, FileText, Image, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
+import { hasMultipleProducts } from "@/constants/entidades";
 import { useToast } from "@/hooks/useToast";
 import { completeProducts, downloadConvenio, downloadConvenioImage } from "@/lib/convenio";
 import { copyConvenioMessage } from "@/lib/convenioMessage";
@@ -36,16 +37,19 @@ export function ConvenioAction({ account, onFillCaseData, onSetAgreementProduct 
     const mode = dialogMode;
     setDialogMode(null);
     const { acuerdo } = account;
-    const entidad = account.entidad?.trim() || values.entidad;
+    const entidad = values.entidad;
     if (!mode || !acuerdo || !entidad) return;
 
     const patch: { nombre?: string; entidad?: string } = {};
     if (values.nombre !== account.nombre) patch.nombre = values.nombre;
-    if (!account.entidad?.trim()) patch.entidad = entidad;
+    if (entidad !== account.entidad) patch.entidad = entidad;
     if (patch.nombre !== undefined || patch.entidad !== undefined) onFillCaseData(patch);
-    if (!acuerdo.producto && values.productoAcuerdo) onSetAgreementProduct(values.productoAcuerdo);
 
-    const agreement = { ...acuerdo, producto: acuerdo.producto ?? (values.productoAcuerdo || undefined) };
+    const isMultiProduct = hasMultipleProducts(entidad);
+    const chosenProduct = isMultiProduct ? values.productoAcuerdo : undefined;
+    if (isMultiProduct && chosenProduct && chosenProduct !== acuerdo.producto) onSetAgreementProduct(chosenProduct);
+
+    const agreement = { ...acuerdo, producto: chosenProduct };
     const merged = { ...account, nombre: values.nombre, entidad, acuerdo: agreement };
     const products = completeProducts(values.productos);
 

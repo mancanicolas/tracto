@@ -159,5 +159,8 @@ export function hasMultipleProducts(entidad: string | undefined): boolean {
 export function getPaymentMethods(entidad: string, producto: string | undefined): MetodoPago[] {
   const entity = findEntity(entidad);
   if (!entity) return [];
-  return entity.metodosPago[producto ?? DEFAULT_PRODUCT] ?? [];
+  const hasSingleProduct = entity.productos.length === 1;
+  if (producto && entity.metodosPago[producto]) return entity.metodosPago[producto] ?? [];
+  const fallback = hasSingleProduct ? (entity.productos[0] ?? DEFAULT_PRODUCT) : DEFAULT_PRODUCT;
+  return entity.metodosPago[fallback] ?? [];
 }

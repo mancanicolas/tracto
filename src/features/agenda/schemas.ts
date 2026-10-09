@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hasMultipleProducts } from "@/constants/entidades";
+import { findEntity, hasMultipleProducts } from "@/constants/entidades";
 import { todayIso } from "@/lib/dates";
 import { formatTime, normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { LABEL_COLORS } from "@/lib/labels";
@@ -61,12 +61,7 @@ export const caseEditSchema = z.object({
     monto: optionalMoney,
 });
 
-interface ConvenioSchemaOptions {
-  existingEntity: string | undefined;
-  hasAgreementProduct: boolean;
-}
-
-export function convenioSchema({ existingEntity, hasAgreementProduct }: ConvenioSchemaOptions) {
+export function convenioSchema() {
   return z
     .object({
       nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
@@ -80,11 +75,11 @@ export function convenioSchema({ existingEntity, hasAgreementProduct }: Convenio
       ),
     })
     .superRefine((values, ctx) => {
-      if (!existingEntity && !values.entidad) {
+      if (!values.entidad) {
         ctx.addIssue({ code: "custom", path: ["entidad"], message: "Elegí la entidad." });
       }
-      const entity = existingEntity || values.entidad;
-      if (!hasAgreementProduct && hasMultipleProducts(entity) && !values.productoAcuerdo) {
+      const knownProducts = findEntity(values.entidad)?.productos ?? [];
+      if (hasMultipleProducts(values.entidad) && !knownProducts.includes(values.productoAcuerdo)) {
         ctx.addIssue({ code: "custom", path: ["productoAcuerdo"], message: "Elegí el producto del acuerdo." });
       }
       let hasPartialRow = false;

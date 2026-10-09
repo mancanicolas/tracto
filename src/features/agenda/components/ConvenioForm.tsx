@@ -11,6 +11,7 @@ import { findEntity, hasMultipleProducts } from "@/constants/entidades";
 import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import { cn } from "@/lib/cn";
+import { normalizeDni } from "@/lib/format";
 import { MOD_LABEL } from "@/lib/shortcuts";
 import type { Case } from "@/lib/types";
 import { convenioSchema, type ConvenioValues } from "../schemas";
@@ -39,12 +40,9 @@ interface ConvenioFormProps {
 export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const catalog = useEntityCatalog();
-  const existingEntity = account.entidad?.trim() || undefined;
-  const hasAgreementProduct = Boolean(account.acuerdo?.producto);
-  const schema = useMemo(
-    () => convenioSchema({ existingEntity, hasAgreementProduct }),
-    [existingEntity, hasAgreementProduct],
-  );
+  const schema = useMemo(() => convenioSchema(), []);
+  const currentEntity = account.entidad?.trim() ?? "";
+  const currentProduct = account.acuerdo?.producto ?? "";
   const {
     register,
     control,
@@ -52,13 +50,21 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
     formState: { errors },
   } = useForm<ConvenioValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nombre: account.nombre ?? "", entidad: "", productoAcuerdo: "", productos: [EMPTY_PRODUCT_ROW] },
+    defaultValues: {
+      nombre: account.nombre ?? "",
+      entidad: currentEntity,
+      productoAcuerdo: currentProduct,
+      productos: [EMPTY_PRODUCT_ROW],
+    },
   });
   const chosenEntity = useWatch({ control, name: "entidad" });
-  const effectiveEntity = existingEntity ?? chosenEntity;
-  const entity = findEntity(effectiveEntity);
+  const entity = findEntity(chosenEntity);
   const carteras = entity?.carteras ?? [];
-  const needsAgreementProduct = !hasAgreementProduct && hasMultipleProducts(effectiveEntity);
+  const needsAgreementProduct = hasMultipleProducts(chosenEntity);
+  const entityNames = Object.keys(catalog);
+  const entityOptions = (currentEntity && !entityNames.includes(currentEntity) ? [...entityNames, currentEntity] : entityNames).map(
+    (name) => ({ value: name, label: name }),
+  );
   const { fields, insert, remove } = useFieldArray({ control, name: "productos" });
 
   useSubmitShortcut(formRef);
@@ -75,15 +81,21 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
         {...register("nombre")}
       />
 
-      {existingEntity ? null : (
-        <SelectField
-          label="Entidad"
-          placeholder="Elegí la entidad"
-          options={Object.keys(catalog).map((name) => ({ value: name, label: name }))}
-          error={errors.entidad?.message}
-          {...register("entidad")}
-        />
-      )}
+      <TextField
+        label="DNI"
+        value={normalizeDni(account.dni)}
+        readOnly
+        tabIndex={-1}
+        className="cursor-default font-mono tabular-nums text-fg-secondary"
+      />
+
+      <SelectField
+        label="Entidad"
+        placeholder="Elegí la entidad"
+        options={entityOptions}
+        error={errors.entidad?.message}
+        {...register("entidad")}
+      />
 
       {needsAgreementProduct ? (
         <SelectField

@@ -52,8 +52,6 @@ export interface ConvenioProduct {
   producto: string;
 }
 
-const PRODUCT_TABLE_LINE = "#000000";
-
 export function completeProducts(products: ConvenioProduct[]): ConvenioProduct[] {
   return products
     .map((row) => ({ cartera: row.cartera.trim(), producto: row.producto.trim() }))
@@ -182,7 +180,8 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
 }
 
 function buildProductsTable(products: ConvenioProduct[]): Content {
-  const header = (text: string): TableCell => ({ text, bold: true, alignment: "center" });
+  const header = (text: string): TableCell => ({ text, bold: true, color: WHITE, alignment: "center" });
+  const lastRowIndex = products.length;
   return {
     table: {
       headerRows: 1,
@@ -196,12 +195,16 @@ function buildProductsTable(products: ConvenioProduct[]): Content {
       ],
     },
     layout: {
-      hLineWidth: () => 0.8,
-      vLineWidth: () => 0.8,
-      hLineColor: () => PRODUCT_TABLE_LINE,
-      vLineColor: () => PRODUCT_TABLE_LINE,
+      hLineWidth: (index, node) => (index === node.table.body.length ? 1.2 : 0.4),
+      vLineWidth: () => 0.4,
+      hLineColor: (index, node) => (index === node.table.body.length ? BRAND_PRIMARY : RULE),
+      vLineColor: () => RULE,
       paddingTop: () => 4,
       paddingBottom: () => 4,
+      fillColor: (rowIndex) => {
+        if (rowIndex === 0) return BRAND_PRIMARY;
+        return rowIndex % 2 === 0 && rowIndex <= lastRowIndex ? TINT : null;
+      },
     },
     margin: [0, 8, 0, 4],
   };

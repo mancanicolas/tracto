@@ -27,7 +27,6 @@ const optionalMoney = z
 
 const entityFields = {
   entidad: z.string(),
-  cartera: z.string(),
 };
 
 export function newCaseSchema(existingDnis: string[]) {
@@ -61,10 +60,26 @@ export const caseEditSchema = z.object({
     monto: optionalMoney,
 });
 
-export const convenioSchema = z.object({
-  nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
-  cartera: z.string().trim().min(1, "Ingresá o elegí la cartera.").max(60, "Máximo 60 caracteres."),
-});
+export const convenioSchema = z
+  .object({
+    nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
+    productos: z.array(
+      z.object({
+        cartera: z.string().trim().max(60, "Máximo 60 caracteres."),
+        producto: z.string().trim().max(40, "Máximo 40 caracteres."),
+      }),
+    ),
+  })
+  .superRefine((values, ctx) => {
+    values.productos.forEach((row, index) => {
+      if (row.cartera && !row.producto) {
+        ctx.addIssue({ code: "custom", path: ["productos", index, "producto"], message: "Falta el N° de producto." });
+      }
+      if (row.producto && !row.cartera) {
+        ctx.addIssue({ code: "custom", path: ["productos", index, "cartera"], message: "Falta la cartera." });
+      }
+    });
+  });
 
 export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),

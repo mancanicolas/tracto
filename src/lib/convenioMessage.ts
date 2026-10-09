@@ -1,5 +1,5 @@
 import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
-import type { ConvenioCase } from "./convenio";
+import { completeProducts, type ConvenioCase, type ConvenioProduct } from "./convenio";
 import { installmentLabel } from "./agreements";
 import { todayIso } from "./dates";
 import { formatArs } from "./format";
@@ -29,7 +29,17 @@ function paymentLines(methods: MetodoPago[]): string[] {
   return methods.map(({ etiqueta, valor }) => `* ${etiqueta}: ${valor}`);
 }
 
-export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement, today: string = todayIso()): string {
+function describeObligations(entidad: string, products: ConvenioProduct[]): string {
+  const portfolios = [...new Set(completeProducts(products).map((row) => row.cartera))];
+  return portfolios.length > 0 ? portfolios.join(", ") : entidad;
+}
+
+export function buildConvenioMessage(
+  account: ConvenioCase,
+  agreement: Agreement,
+  today: string = todayIso(),
+  products: ConvenioProduct[] = [],
+): string {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const { planTitle, purpose } = getConvenioWording(account.entidad, agreement);
@@ -39,7 +49,7 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
   return [
     `Estimado/a ${account.nombre} - ${account.dni}:`,
     "",
-    `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${purpose} de sus obligaciones de ${account.cartera ?? ""}`,
+    `Le informamos desde 5oL, en representación de ${account.entidad}, los términos del convenio de pago formalizado el ${formatFullDate(today)} para la ${purpose} de sus obligaciones de ${describeObligations(account.entidad, products)}`,
     "",
     `${planTitle} (${formatArs(total)})`,
     ...agreement.cuotas.map(installmentLine),
@@ -55,9 +65,13 @@ export function buildConvenioMessage(account: ConvenioCase, agreement: Agreement
   ].join("\n");
 }
 
-export async function copyConvenioMessage(account: ConvenioCase, agreement: Agreement): Promise<Result> {
+export async function copyConvenioMessage(
+  account: ConvenioCase,
+  agreement: Agreement,
+  products: ConvenioProduct[] = [],
+): Promise<Result> {
   try {
-    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement));
+    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, todayIso(), products));
     return ok();
   } catch {
     return fail(COPY_ERROR_MESSAGE);

@@ -37,7 +37,7 @@ interface CaseDetailProps {
   onTabChange: (tab: ManagementTab) => void;
   onBack: () => void;
   onEditCase: () => void;
-  onFillCaseData: (nombre: string, cartera: string) => void;
+  onFillCaseData: (nombre: string) => void;
   onApplyLabel: (labelId: string) => void;
   onRemoveLabel: (labelId: string) => void;
   onCreateLabel: (nombre: string, color: LabelColor) => void;
@@ -121,7 +121,6 @@ export function CaseDetail({
           <InfoValue label="DNI" value={normalizeDni(account.dni)} mono />
           <InfoValue label="Teléfono" value={account.telefono ? formatPhone(account.telefono) : undefined} mono />
           <InfoValue label="Entidad" value={account.entidad} title={account.entidad} />
-          <InfoValue label="Cartera" value={account.cartera} title={account.cartera} />
           {account.acuerdo?.producto ? <InfoValue label="Producto" value={account.acuerdo.producto} /> : null}
           <InfoValue label="Mail" value={account.mail} title={account.mail} />
           <InfoValue

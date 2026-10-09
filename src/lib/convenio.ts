@@ -49,6 +49,19 @@ export type ConvenioField = "nombre" | "DNI" | "entidad" | "producto";
 
 export type ConvenioCase = Case & { nombre: string; entidad: string };
 
+export interface ConvenioProduct {
+  cartera: string;
+  producto: string;
+}
+
+const PRODUCT_TABLE_LINE = "#000000";
+
+export function completeProducts(products: ConvenioProduct[]): ConvenioProduct[] {
+  return products
+    .map((row) => ({ cartera: row.cartera.trim(), producto: row.producto.trim() }))
+    .filter((row) => row.cartera && row.producto);
+}
+
 export function missingConvenioFields(account: Case): ConvenioField[] {
   const missing: ConvenioField[] = [];
   if (!account.nombre?.trim()) missing.push("nombre");
@@ -118,6 +131,20 @@ function clauseTitle(title: string): Content {
   };
 }
 
+function buildIntroduction(entidad: string, products: ConvenioProduct[]): Content[] {
+  const instructions = `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${entidad}`;
+  const agreementText =
+    "se formaliza el convenio de pago con el titular, sujeto a los términos y condiciones que se detallan a continuación:";
+  if (products.length === 0) return [{ text: `${instructions}, ${agreementText}` }];
+  return [
+    {
+      text: `${instructions}, se informa que el titular mantiene una deuda al día de la fecha originada con la entidad con los siguientes productos:`,
+    },
+    buildProductsTable(products),
+    { text: `En virtud de ello, ${agreementText}`, margin: [0, 4, 0, 0] },
+  ];
+}
+
 function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
@@ -162,6 +189,32 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
         return rowIndex % 2 === 0 ? TINT : null;
       },
     },
+  };
+}
+
+function buildProductsTable(products: ConvenioProduct[]): Content {
+  const header = (text: string): TableCell => ({ text, bold: true, alignment: "center" });
+  return {
+    table: {
+      headerRows: 1,
+      widths: ["*", "*"],
+      body: [
+        [header("CARTERA"), header("NPRODUCTO")],
+        ...products.map((row): TableCell[] => [
+          { text: row.cartera, alignment: "center" },
+          { text: row.producto, alignment: "center" },
+        ]),
+      ],
+    },
+    layout: {
+      hLineWidth: () => 0.8,
+      vLineWidth: () => 0.8,
+      hLineColor: () => PRODUCT_TABLE_LINE,
+      vLineColor: () => PRODUCT_TABLE_LINE,
+      paddingTop: () => 4,
+      paddingBottom: () => 4,
+    },
+    margin: [0, 8, 0, 4],
   };
 }
 
@@ -246,8 +299,10 @@ export function buildConvenioDefinition(
   account: ConvenioCase,
   agreement: Agreement,
   today: string = todayIso(),
+  products: ConvenioProduct[] = [],
 ): TDocumentDefinitions {
   const methods = getPaymentMethods(account.entidad, agreement.producto);
+  const productRows = completeProducts(products);
   const wording = getConvenioWording(account.entidad, agreement);
   const debtorName = account.nombre;
 
@@ -274,9 +329,7 @@ export function buildConvenioDefinition(
         margin: [0, 0, 0, 8],
       },
       { text: `Buenos Aires, ${formatLongDate(today)}`, alignment: "right", margin: [0, 0, 0, 8] },
-      {
-        text: `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${account.entidad}, se formaliza el convenio de pago con el titular, sujeto a los términos y condiciones que se detallan a continuación:`,
-      },
+      ...buildIntroduction(account.entidad, productRows),
       sectionBar("DATOS DEL DEUDOR"),
       {
         text: [
@@ -308,13 +361,17 @@ export function buildConvenioDefinition(
   };
 }
 
-export async function buildConvenioBytes(account: ConvenioCase, agreement: Agreement): Promise<Uint8Array> {
+export async function buildConvenioBytes(
+  account: ConvenioCase,
+  agreement: Agreement,
+  products: ConvenioProduct[] = [],
+): Promise<Uint8Array> {
   const [{ default: pdfMake }, { default: vfs }] = await Promise.all([
     import("pdfmake/build/pdfmake"),
     import("pdfmake/build/vfs_fonts"),
   ]);
   pdfMake.addVirtualFileSystem(vfs);
-  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement)).getBuffer();
+  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement, todayIso(), products)).getBuffer();
   return new Uint8Array(buffer);
 }
 
@@ -322,14 +379,18 @@ type ConvenioFormat = "pdf" | "png";
 
 const FORMAT_FILTERS: Record<ConvenioFormat, string> = { pdf: "PDF", png: "Imagen PNG" };
 
-async function saveConvenio(account: Case, format: ConvenioFormat): Promise<Result<SaveOutcome>> {
+async function saveConvenio(
+  account: Case,
+  format: ConvenioFormat,
+  products: ConvenioProduct[],
+): Promise<Result<SaveOutcome>> {
   const { acuerdo, nombre, entidad } = account;
   if (!acuerdo || !nombre?.trim() || !entidad?.trim()) {
     return fail("Faltan datos del caso para generar el convenio.");
   }
   let bytes: Uint8Array;
   try {
-    const pdfBytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo);
+    const pdfBytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo, products);
     bytes = format === "png" ? await (await import("./pdfToPng")).renderPdfToPng(pdfBytes) : pdfBytes;
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
@@ -342,10 +403,10 @@ async function saveConvenio(account: Case, format: ConvenioFormat): Promise<Resu
   });
 }
 
-export function downloadConvenio(account: Case): Promise<Result<SaveOutcome>> {
-  return saveConvenio(account, "pdf");
+export function downloadConvenio(account: Case, products: ConvenioProduct[] = []): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "pdf", products);
 }
 
-export function downloadConvenioImage(account: Case): Promise<Result<SaveOutcome>> {
-  return saveConvenio(account, "png");
+export function downloadConvenioImage(account: Case, products: ConvenioProduct[] = []): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "png", products);
 }

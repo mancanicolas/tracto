@@ -5,7 +5,11 @@ import type { Agreement, Installment } from "./types";
 
 const TEST_FILE_NAME = "test_convenios_todos.pdf";
 const TEST_TODAY = "2026-10-04";
-const TEST_DEBTOR = { nombre: "Juan Pérez", dni: "30.123.456", cartera: "Cartera Test" };
+const TEST_DEBTOR = { nombre: "Juan Pérez", dni: "30.123.456" };
+const TEST_PRODUCTS = [
+  { cartera: "Cartera Test", producto: "123456789" },
+  { cartera: "Cartera Test 2", producto: "987654321" },
+];
 const PARTIAL_AMOUNT_CENTS = 15000000;
 const INSTALLMENT_AMOUNT_CENTS = 10000000;
 const INSTALLMENT_DATES = ["2026-10-15", "2026-11-15", "2026-12-15"];
@@ -72,7 +76,7 @@ function assertScenarioIsComplete(scenario: TestScenario, definition: TDocumentD
 export function buildAllConveniosDefinition(): TDocumentDefinitions {
   const scenarios = buildScenarios();
   const definitions = scenarios.map((scenario) => {
-    const definition = buildConvenioDefinition(buildTestCase(scenario.entidad), scenario.agreement, TEST_TODAY);
+    const definition = buildConvenioDefinition(buildTestCase(scenario.entidad), scenario.agreement, TEST_TODAY, TEST_PRODUCTS);
     assertScenarioIsComplete(scenario, definition);
     return definition;
   });

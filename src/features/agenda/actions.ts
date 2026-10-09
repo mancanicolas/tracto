@@ -19,7 +19,6 @@ export async function insertCase(id: string, dni: string, values: CaseDetails): 
     nombre: values.nombre ?? null,
     telefono: values.telefono ?? null,
     entidad: values.entidad ?? null,
-    cartera: values.cartera ?? null,
     mail: values.mail ?? null,
     monto: values.monto ?? null,
   });
@@ -33,7 +32,6 @@ export async function updateCaseDetails(id: string, values: CaseDetails): Promis
       nombre: values.nombre ?? null,
       telefono: values.telefono ?? null,
       entidad: values.entidad ?? null,
-      cartera: values.cartera ?? null,
       mail: values.mail ?? null,
       monto: values.monto ?? null,
     })

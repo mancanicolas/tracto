@@ -42,7 +42,6 @@ export interface CasoRow {
   dni: string;
   nombre: string | null;
   telefono: string | null;
-  cartera: string | null;
   entidad: string | null;
   monto: number | null;
   mail: string | null;
@@ -103,7 +102,6 @@ export function toCase(row: CasoRow): Case {
     dni: row.dni,
     nombre: row.nombre ?? undefined,
     telefono: row.telefono ?? undefined,
-    cartera: row.cartera ?? undefined,
     entidad: row.entidad ?? undefined,
     monto: row.monto ?? undefined,
     mail: row.mail ?? undefined,

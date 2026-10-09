@@ -91,7 +91,7 @@ export function matchesQuery(account: Case, query: string): boolean {
   const needle = fold(query.trim());
   if (!needle) return true;
   const digits = normalizeDni(needle);
-  const text = [account.nombre, account.entidad, account.cartera, account.mail]
+  const text = [account.nombre, account.entidad, account.mail]
     .filter((value): value is string => Boolean(value))
     .map(fold)
     .join(" ");

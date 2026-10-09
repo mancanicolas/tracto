@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
-import { downloadConvenio, downloadConvenioImage, missingConvenioFields } from "@/lib/convenio";
+import { completeProducts, downloadConvenio, downloadConvenioImage, missingConvenioFields } from "@/lib/convenio";
 import { copyConvenioMessage } from "@/lib/convenioMessage";
 import type { Case } from "@/lib/types";
 import type { ConvenioValues } from "../schemas";
@@ -13,7 +13,7 @@ import type { ConvenioMode } from "./ConvenioForm";
 interface ConvenioActionProps {
   account: Case;
   onEditCase: () => void;
-  onFillCaseData: (nombre: string, cartera: string) => void;
+  onFillCaseData: (nombre: string) => void;
 }
 
 interface Feedback {
@@ -62,20 +62,19 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
     const { acuerdo, entidad } = account;
     if (!mode || !acuerdo || !entidad) return;
 
-    if (values.nombre !== account.nombre || values.cartera !== account.cartera) {
-      onFillCaseData(values.nombre, values.cartera);
-    }
-    const merged = { ...account, nombre: values.nombre, cartera: values.cartera };
+    if (values.nombre !== account.nombre) onFillCaseData(values.nombre);
+    const merged = { ...account, nombre: values.nombre };
+    const products = completeProducts(values.productos);
 
     if (mode === "copy") {
-      const result = await copyConvenioMessage({ ...merged, entidad }, acuerdo);
+      const result = await copyConvenioMessage({ ...merged, entidad }, acuerdo, products);
       if (result.ok) toast.show("Convenio copiado");
       else setFeedback({ text: result.error, tone: "error", offersEdit: false });
       return;
     }
 
     setIsGenerating(true);
-    const result = mode === "image" ? await downloadConvenioImage(merged) : await downloadConvenio(merged);
+    const result = mode === "image" ? await downloadConvenioImage(merged, products) : await downloadConvenio(merged, products);
     setIsGenerating(false);
     if (!result.ok) setFeedback({ text: result.error, tone: "error", offersEdit: false });
     else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success", offersEdit: false });

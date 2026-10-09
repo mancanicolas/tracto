@@ -245,10 +245,9 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
               onTabChange={setTab}
               onBack={() => setIsDetailOpen(false)}
               onEditCase={() => setIsEditOpen(true)}
-              onFillCaseData={(nombre, cartera) =>
+              onFillCaseData={(nombre) =>
                 updateCase(selectedCase.dni, {
                   nombre,
-                  cartera,
                   telefono: selectedCase.telefono,
                   entidad: selectedCase.entidad,
                   mail: selectedCase.mail,

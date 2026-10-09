@@ -52,6 +52,7 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
     resolveSchedule,
     setAgreement,
     deleteAgreement,
+    setAgreementProduct,
     archiveCase,
     removeCase,
     toggleInstallment,
@@ -245,11 +246,12 @@ export function AgendaView({ operatorName }: AgendaViewProps) {
               onTabChange={setTab}
               onBack={() => setIsDetailOpen(false)}
               onEditCase={() => setIsEditOpen(true)}
-              onFillCaseData={(nombre) =>
+              onSetAgreementProduct={(producto) => setAgreementProduct(selectedCase.dni, producto)}
+              onFillCaseData={(patch) =>
                 updateCase(selectedCase.dni, {
-                  nombre,
+                  nombre: patch.nombre ?? selectedCase.nombre,
                   telefono: selectedCase.telefono,
-                  entidad: selectedCase.entidad,
+                  entidad: patch.entidad ?? selectedCase.entidad,
                   mail: selectedCase.mail,
                   monto: selectedCase.monto,
                 })

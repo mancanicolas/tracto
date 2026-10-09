@@ -1,5 +1,5 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
-import { getPaymentMethods, hasMultipleProducts, type MetodoPago } from "@/constants/entidades";
+import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
 import logoSvg from "../../5ol.svg?raw";
 import { parseIsoDate, todayIso } from "./dates";
 import { getConvenioWording } from "./convenioWording";
@@ -45,8 +45,6 @@ const LIBRE_DE_DEUDA_TEXT =
 const INCUMPLIMIENTO_TEXT =
   "Se deja expresa constancia que, en el supuesto de incumplimiento, el presente acuerdo quedará sin efecto, restableciéndose el saldo original de la deuda con más los intereses y gastos que correspondan.";
 
-export type ConvenioField = "nombre" | "DNI" | "entidad" | "producto";
-
 export type ConvenioCase = Case & { nombre: string; entidad: string };
 
 export interface ConvenioProduct {
@@ -60,15 +58,6 @@ export function completeProducts(products: ConvenioProduct[]): ConvenioProduct[]
   return products
     .map((row) => ({ cartera: row.cartera.trim(), producto: row.producto.trim() }))
     .filter((row) => row.cartera && row.producto);
-}
-
-export function missingConvenioFields(account: Case): ConvenioField[] {
-  const missing: ConvenioField[] = [];
-  if (!account.nombre?.trim()) missing.push("nombre");
-  if (!account.dni.trim()) missing.push("DNI");
-  if (!account.entidad?.trim()) missing.push("entidad");
-  else if (hasMultipleProducts(account.entidad) && !account.acuerdo?.producto) missing.push("producto");
-  return missing;
 }
 
 function formatLongDate(iso: string): string {

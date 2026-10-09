@@ -32,6 +32,7 @@ type Action =
   | { type: "schedule_resolve"; dni: string; note: Note }
   | { type: "agreement_set"; dni: string; agreement: Agreement }
   | { type: "agreement_delete"; dni: string }
+  | { type: "agreement_product"; dni: string; producto: string }
   | { type: "installment_toggle"; dni: string; installmentId: string; today: string }
   | { type: "installment_stats_toggle"; dni: string; installmentId: string }
   | { type: "installment_alert_done"; dni: string; installmentId: string; kind: InstallmentAlertKind };
@@ -123,6 +124,12 @@ function reducer(state: State, action: Action): State {
           acuerdo: action.agreement,
           pagos_previos: a.pagos_previos || hasPaidInstallment(a),
         })),
+      );
+    case "agreement_product":
+      return withCases(
+        update(state.cases, action.dni, (a) =>
+          a.acuerdo ? { ...a, acuerdo: { ...a.acuerdo, producto: action.producto } } : a,
+        ),
       );
     case "agreement_delete":
       return withCases(update(state.cases, action.dni, (a) => ({ ...a, acuerdo: undefined })));
@@ -269,6 +276,13 @@ export function useCases() {
         const hadPreviousPayments = Boolean(account.pagos_previos) || hasPaidInstallment(account);
         void commit({ type: "agreement_set", dni, agreement }, () =>
           writes.replaceAgreement(account.id, agreement, hadPreviousPayments),
+        );
+      },
+      setAgreementProduct: (dni: string, producto: string) => {
+        const agreementId = findCase(dni)?.acuerdo?.id;
+        if (!agreementId) return;
+        void commit({ type: "agreement_product", dni, producto }, () =>
+          writes.updateAgreementProduct(agreementId, producto),
         );
       },
       deleteAgreement: (dni: string) => {

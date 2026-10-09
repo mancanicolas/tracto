@@ -105,6 +105,11 @@ export async function replaceAgreement(
   return toResult(error);
 }
 
+export async function updateAgreementProduct(agreementId: string, producto: string): Promise<Result> {
+  const { error } = await supabase.from("acuerdos").update({ producto }).eq("id", agreementId);
+  return toResult(error);
+}
+
 export async function deleteAgreement(caseId: string): Promise<Result> {
   const { error } = await supabase.from("acuerdos").delete().eq("caso_id", caseId);
   return toResult(error);

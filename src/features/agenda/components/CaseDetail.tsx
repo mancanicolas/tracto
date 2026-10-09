@@ -37,7 +37,8 @@ interface CaseDetailProps {
   onTabChange: (tab: ManagementTab) => void;
   onBack: () => void;
   onEditCase: () => void;
-  onFillCaseData: (nombre: string) => void;
+  onFillCaseData: (patch: { nombre?: string; entidad?: string }) => void;
+  onSetAgreementProduct: (producto: string) => void;
   onApplyLabel: (labelId: string) => void;
   onRemoveLabel: (labelId: string) => void;
   onCreateLabel: (nombre: string, color: LabelColor) => void;
@@ -60,6 +61,7 @@ export function CaseDetail({
   onBack,
   onEditCase,
   onFillCaseData,
+  onSetAgreementProduct,
   onApplyLabel,
   onRemoveLabel,
   onCreateLabel,
@@ -161,8 +163,8 @@ export function CaseDetail({
             <ConvenioAction
               key={`convenio-${account.dni}`}
               account={account}
-              onEditCase={onEditCase}
               onFillCaseData={onFillCaseData}
+              onSetAgreementProduct={onSetAgreementProduct}
             />
           ) : null}
         </div>

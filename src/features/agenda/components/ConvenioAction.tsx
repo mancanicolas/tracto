@@ -1,9 +1,9 @@
-import { Copy, FileText, Image, Pencil, TriangleAlert } from "lucide-react";
+import { Copy, FileText, Image, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
-import { completeProducts, downloadConvenio, downloadConvenioImage, missingConvenioFields } from "@/lib/convenio";
+import { completeProducts, downloadConvenio, downloadConvenioImage } from "@/lib/convenio";
 import { copyConvenioMessage } from "@/lib/convenioMessage";
 import type { Case } from "@/lib/types";
 import type { ConvenioValues } from "../schemas";
@@ -12,46 +12,22 @@ import type { ConvenioMode } from "./ConvenioForm";
 
 interface ConvenioActionProps {
   account: Case;
-  onEditCase: () => void;
-  onFillCaseData: (nombre: string) => void;
+  onFillCaseData: (patch: { nombre?: string; entidad?: string }) => void;
+  onSetAgreementProduct: (producto: string) => void;
 }
 
 interface Feedback {
   text: string;
   tone: "error" | "success";
-  offersEdit: boolean;
 }
 
-function joinFields(fields: string[]): string {
-  if (fields.length <= 1) return fields.join("");
-  return `${fields.slice(0, -1).join(", ")} y ${fields.at(-1)}`;
-}
-
-export function ConvenioAction({ account, onEditCase, onFillCaseData }: ConvenioActionProps) {
+export function ConvenioAction({ account, onFillCaseData, onSetAgreementProduct }: ConvenioActionProps) {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [dialogMode, setDialogMode] = useState<ConvenioMode | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const toast = useToast();
 
   const openDialog = (mode: ConvenioMode) => {
-    const missing = missingConvenioFields(account).filter((field) => field !== "nombre");
-    const missingData = missing.filter((field) => field !== "producto");
-    if (missingData.length > 0) {
-      setFeedback({
-        text: `Para generar el convenio falta ${joinFields(missingData)}. Editá el caso para completar los datos.`,
-        tone: "error",
-        offersEdit: true,
-      });
-      return;
-    }
-    if (missing.includes("producto")) {
-      setFeedback({
-        text: "Falta el producto del acuerdo (TC o PYC). Registrá el acuerdo de nuevo eligiendo el producto.",
-        tone: "error",
-        offersEdit: false,
-      });
-      return;
-    }
     setFeedback(null);
     setDialogMode(mode);
   };
@@ -59,25 +35,32 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
   const confirm = async (values: ConvenioValues) => {
     const mode = dialogMode;
     setDialogMode(null);
-    const { acuerdo, entidad } = account;
+    const { acuerdo } = account;
+    const entidad = account.entidad?.trim() || values.entidad;
     if (!mode || !acuerdo || !entidad) return;
 
-    if (values.nombre !== account.nombre) onFillCaseData(values.nombre);
-    const merged = { ...account, nombre: values.nombre };
+    const patch: { nombre?: string; entidad?: string } = {};
+    if (values.nombre !== account.nombre) patch.nombre = values.nombre;
+    if (!account.entidad?.trim()) patch.entidad = entidad;
+    if (patch.nombre !== undefined || patch.entidad !== undefined) onFillCaseData(patch);
+    if (!acuerdo.producto && values.productoAcuerdo) onSetAgreementProduct(values.productoAcuerdo);
+
+    const agreement = { ...acuerdo, producto: acuerdo.producto ?? (values.productoAcuerdo || undefined) };
+    const merged = { ...account, nombre: values.nombre, entidad, acuerdo: agreement };
     const products = completeProducts(values.productos);
 
     if (mode === "copy") {
-      const result = await copyConvenioMessage({ ...merged, entidad }, acuerdo, products);
+      const result = await copyConvenioMessage(merged, agreement, products);
       if (result.ok) toast.show("Convenio copiado");
-      else setFeedback({ text: result.error, tone: "error", offersEdit: false });
+      else setFeedback({ text: result.error, tone: "error" });
       return;
     }
 
     setIsGenerating(true);
     const result = mode === "image" ? await downloadConvenioImage(merged, products) : await downloadConvenio(merged, products);
     setIsGenerating(false);
-    if (!result.ok) setFeedback({ text: result.error, tone: "error", offersEdit: false });
-    else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success", offersEdit: false });
+    if (!result.ok) setFeedback({ text: result.error, tone: "error" });
+    else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success" });
   };
 
   return (
@@ -110,12 +93,6 @@ export function ConvenioAction({ account, onEditCase, onFillCaseData }: Convenio
               <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
             ) : null}
             <span className="flex-1">{feedback.text}</span>
-            {feedback.offersEdit ? (
-              <Button size="small" onClick={onEditCase}>
-                <Pencil className="size-3.5" strokeWidth={1.75} aria-hidden />
-                Editar caso
-              </Button>
-            ) : null}
           </div>
         ) : null}
       </div>

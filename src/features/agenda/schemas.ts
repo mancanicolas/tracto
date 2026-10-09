@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasMultipleProducts } from "@/constants/entidades";
 import { todayIso } from "@/lib/dates";
 import { formatTime, normalizeDni, parseMoneyToCents } from "@/lib/format";
 import { LABEL_COLORS } from "@/lib/labels";
@@ -60,26 +61,49 @@ export const caseEditSchema = z.object({
     monto: optionalMoney,
 });
 
-export const convenioSchema = z
-  .object({
-    nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
-    productos: z.array(
+interface ConvenioSchemaOptions {
+  existingEntity: string | undefined;
+  hasAgreementProduct: boolean;
+}
+
+export function convenioSchema({ existingEntity, hasAgreementProduct }: ConvenioSchemaOptions) {
+  return z
+    .object({
+      nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
+      entidad: z.string(),
+      productoAcuerdo: z.string(),
+      productos: z.array(
       z.object({
-        cartera: z.string().trim().max(60, "Máximo 60 caracteres."),
-        producto: z.string().trim().max(40, "Máximo 40 caracteres."),
-      }),
-    ),
-  })
-  .superRefine((values, ctx) => {
-    values.productos.forEach((row, index) => {
-      if (row.cartera && !row.producto) {
-        ctx.addIssue({ code: "custom", path: ["productos", index, "producto"], message: "Falta el N° de producto." });
+          cartera: z.string().trim().max(60, "Máximo 60 caracteres."),
+          producto: z.string().trim().max(40, "Máximo 40 caracteres."),
+        }),
+      ),
+    })
+    .superRefine((values, ctx) => {
+      if (!existingEntity && !values.entidad) {
+        ctx.addIssue({ code: "custom", path: ["entidad"], message: "Elegí la entidad." });
       }
-      if (row.producto && !row.cartera) {
-        ctx.addIssue({ code: "custom", path: ["productos", index, "cartera"], message: "Falta la cartera." });
+      const entity = existingEntity || values.entidad;
+      if (!hasAgreementProduct && hasMultipleProducts(entity) && !values.productoAcuerdo) {
+        ctx.addIssue({ code: "custom", path: ["productoAcuerdo"], message: "Elegí el producto del acuerdo." });
+      }
+      let hasPartialRow = false;
+      values.productos.forEach((row, index) => {
+        if (row.cartera && !row.producto) {
+          hasPartialRow = true;
+          ctx.addIssue({ code: "custom", path: ["productos", index, "producto"], message: "Falta el N° de producto." });
+        }
+        if (row.producto && !row.cartera) {
+          hasPartialRow = true;
+          ctx.addIssue({ code: "custom", path: ["productos", index, "cartera"], message: "Falta la cartera." });
+        }
+      });
+      const hasCompleteRow = values.productos.some((row) => row.cartera && row.producto);
+      if (!hasCompleteRow && !hasPartialRow) {
+        ctx.addIssue({ code: "custom", path: ["productos", 0, "cartera"], message: "Cargá al menos un producto." });
       }
     });
-  });
+}
 
 export const noteSchema = z.object({
   texto: z.string().trim().min(1, "Escribí la nota."),
@@ -214,7 +238,7 @@ export function labelSchema(existingNames: string[]) {
 
 export type CaseEditValues = z.infer<typeof caseEditSchema>;
 export type NewCaseValues = z.infer<ReturnType<typeof newCaseSchema>>;
-export type ConvenioValues = z.infer<typeof convenioSchema>;
+export type ConvenioValues = z.infer<ReturnType<typeof convenioSchema>>;
 export type NoteValues = z.infer<typeof noteSchema>;
 export type ScheduleValues = z.infer<typeof scheduleSchema>;
 export type AgreementValues = z.infer<ReturnType<typeof agreementSchema>>;

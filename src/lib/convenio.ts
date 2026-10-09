@@ -18,7 +18,6 @@ const LOGO_WIDTH = 90;
 const BRAND_PRIMARY = "#155595";
 const BRAND_DEEP = "#24377A";
 const BRAND_SKY = "#2598D3";
-const PRIMARY_SOFT = "#D6E6F3";
 const TINT = "#F1F7FB";
 const RULE = "#CCDDEB";
 const WHITE = "#FFFFFF";
@@ -135,7 +134,6 @@ function buildIntroduction(entidad: string, products: ConvenioProduct[]): Conten
 function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
-  const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const headerCells: TableCell[] = ["CUOTA", "DESCRIPCION", "VENCIMIENTO", "IMPORTE"].map((text, index) => ({
     text,
     bold: true,
@@ -148,23 +146,15 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
     { text: formatFullDate(installment.fecha) },
     { text: formatMoney(installment.monto), alignment: "right" },
   ]);
-  const totalRow: TableCell[] = [
-    { text: "TOTAL", colSpan: 3, bold: true, fontSize: 10.5, color: BRAND_PRIMARY, alignment: "right" },
-    {},
-    {},
-    { text: formatMoney(total), bold: true, fontSize: 10.5, color: BRAND_PRIMARY, alignment: "right" },
-  ];
-  const lastRowIndex = rows.length + 1;
-
   return {
     table: {
       headerRows: 1,
       widths: [60, "*", 90, 100],
-      body: [headerCells, ...rows, totalRow],
+      body: [headerCells, ...rows],
     },
     layout: {
-      hLineWidth: (index, node) => (index === 1 || index === node.table.body.length - 1 ? 1.2 : 0.4),
-      hLineColor: (index, node) => (index === 1 || index === node.table.body.length - 1 ? BRAND_PRIMARY : RULE),
+      hLineWidth: (index, node) => (index === 1 || index === node.table.body.length ? 1.2 : 0.4),
+      hLineColor: (index, node) => (index === 1 || index === node.table.body.length ? BRAND_PRIMARY : RULE),
       vLineWidth: () => 0,
       paddingTop: () => 4,
       paddingBottom: () => 4,
@@ -172,7 +162,6 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
       paddingRight: () => 8,
       fillColor: (rowIndex) => {
         if (rowIndex === 0) return null;
-        if (rowIndex === lastRowIndex) return PRIMARY_SOFT;
         return rowIndex % 2 === 0 ? TINT : null;
       },
     },

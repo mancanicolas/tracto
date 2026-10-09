@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { ADMIN_PANEL_ID, AdminPanel } from "@/features/admin/AdminPanel";
 import { useCatalogSync } from "@/features/admin/entities/useCatalogSync";
+import { useActivityPing } from "@/features/auth/useActivityPing";
 import { RoleGate } from "@/features/auth/RoleContext";
 import { AgendaView } from "@/features/agenda/components/AgendaView";
 import { SPEECHER_DRAWER_ID, SpeecherDrawer } from "@/features/speecher/components/SpeecherDrawer";
@@ -24,6 +25,7 @@ export function OverlayShell({ email, operatorName, onSignOut }: OverlayShellPro
   const [isSpeecherOpen, setIsSpeecherOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   useCatalogSync();
+  useActivityPing();
   const { isPoppedOut, popOut, closeWidget } = useSpeecherWindow(() => setIsSpeecherOpen(true));
 
   const toggleSpeecher = () => {

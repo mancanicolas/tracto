@@ -12,7 +12,7 @@ export function useActivityPing(): void {
       const now = Date.now();
       if (now - lastPingAt < MIN_PING_GAP_MS) return;
       lastPingAt = now;
-      void supabase.rpc("registrar_actividad");
+      void supabase.rpc("registrar_actividad").then(() => undefined);
     };
 
     ping();

@@ -28,7 +28,7 @@ security definer
 set search_path = ''
 as $$
   select exists (
-    select 1 from public.profiles p where p.id = (select auth.uid()) and p.rol = 'admin'
+    select 1 from public.profiles p where p.id = (select auth.uid()) and p.rol in ('admin', 'super_admin')
   );
 $$;
 

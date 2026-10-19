@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { DEFAULT_ROLE, type UserRole } from "./roles";
+import { DEFAULT_ROLE, hasAdminAccess, type UserRole } from "./roles";
 
 interface RoleValue {
   role: UserRole;
@@ -18,7 +18,7 @@ export function RoleProvider({ role, adminId, children }: RoleProviderProps) {
 
 export function useRole(): RoleValue & { isAdmin: boolean } {
   const value = useContext(RoleContext);
-  return { ...value, isAdmin: value.role === "admin" };
+  return { ...value, isAdmin: hasAdminAccess(value.role) };
 }
 
 interface RoleGateProps {
@@ -29,5 +29,6 @@ interface RoleGateProps {
 
 export function RoleGate({ allow, children, fallback = null }: RoleGateProps) {
   const { role } = useRole();
-  return role === allow ? children : fallback;
+  const isAllowed = allow === "admin" ? hasAdminAccess(role) : role === allow;
+  return isAllowed ? children : fallback;
 }

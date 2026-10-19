@@ -23,7 +23,7 @@ alter table public.profiles add column if not exists rol text not null default '
 alter table public.profiles add column if not exists admin_id uuid references public.profiles (id) on delete set null;
 
 alter table public.profiles drop constraint if exists profiles_rol_check;
-alter table public.profiles add constraint profiles_rol_check check (rol in ('admin', 'operador'));
+alter table public.profiles add constraint profiles_rol_check check (rol in ('admin', 'operador', 'super_admin'));
 
 alter table public.profiles drop constraint if exists profiles_admin_id_check;
 alter table public.profiles

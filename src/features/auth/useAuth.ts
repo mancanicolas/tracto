@@ -63,6 +63,7 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async () => {
+    await supabase.rpc("cerrar_sesion");
     await supabase.auth.signOut();
     setAccess({ status: "signed_out" });
   }, []);

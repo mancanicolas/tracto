@@ -1,8 +1,9 @@
-export type PdfPresetId = "normal" | "suave";
+export type PdfPresetId = "normal" | "suave" | "r2r";
 
 export const PDF_PRESET_OPTIONS = [
   { value: "normal", label: "Normal" },
   { value: "suave", label: "Suave" },
+  { value: "r2r", label: "R2R" },
 ];
 
 export interface SpeechTexts {

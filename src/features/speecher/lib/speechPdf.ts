@@ -1,5 +1,6 @@
 import type { Content, ContentText, TDocumentDefinitions } from "pdfmake/interfaces";
 import logoSvg from "../../../../5ol.svg?raw";
+import r2rLogo from "@/assets/r2r.png?inline";
 import type { PdfPresetId, SpeechTexts } from "./speechDefaults";
 import {
   buildWhatsAppLink,
@@ -29,6 +30,17 @@ const WHITE = "#ffffff";
 const SOFT_RED = "#fbeeee";
 const DARK_RED = "#7d0f14";
 const BRAND_SUBTITLE = "#b9c6e8";
+const R2R_DEEP = "#0f3b2b";
+const R2R_MID = "#165c3b";
+const R2R_GREEN = "#3dbb5c";
+const R2R_TITLE = "#17743c";
+const R2R_PAPER = "#f0f6f2";
+const R2R_CALLOUT = "#e8f5ec";
+const R2R_MINT = "#7be0a0";
+const R2R_SUBTITLE = "#b7e3c7";
+const R2R_RING = ["#0b1a2a", "#5e9aa6", "#3dbb5c"];
+const R2R_LOGO_SIZE = mm(27.5);
+const GRADIENT_SLICES = 72;
 const WHATSAPP_GREEN = "#25d366";
 const BUTTON_PADDING = "\u00A0".repeat(7);
 const SOFT_TOP_BAR = "#7fcdf2";
@@ -76,6 +88,15 @@ const CHAT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><
 const EMOJI_ICONS: Record<string, string> = { "✅": CHECK_ICON, "💬": CHAT_ICON };
 
 interface PdfPreset {
+  primary: string;
+  secondary: string;
+  paper: string;
+  highlight: string;
+  headerSubtitleColor: string;
+  brandName: string;
+  brandSubtitle: string;
+  badge: "square" | "round";
+  topBarGradient: string[] | null;
   topBar: string;
   accent: string;
   titleColor: string;
@@ -90,6 +111,15 @@ interface PdfPreset {
 
 const PRESETS: Record<PdfPresetId, PdfPreset> = {
   normal: {
+    primary: NAVY,
+    secondary: BLUE,
+    paper: PAPER,
+    highlight: SKY,
+    headerSubtitleColor: BRAND_SUBTITLE,
+    brandName: "5 ONLINE SRL",
+    brandSubtitle: "GESTIÓN INTEGRAL DIGITAL",
+    badge: "square",
+    topBarGradient: null,
     topBar: RED,
     accent: RED,
     titleColor: RED,
@@ -102,6 +132,15 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     isHeadingUppercase: true,
   },
   suave: {
+    primary: NAVY,
+    secondary: BLUE,
+    paper: PAPER,
+    highlight: SKY,
+    headerSubtitleColor: BRAND_SUBTITLE,
+    brandName: "5 ONLINE SRL",
+    brandSubtitle: "GESTIÓN INTEGRAL DIGITAL",
+    badge: "square",
+    topBarGradient: null,
     topBar: SOFT_TOP_BAR,
     accent: SKY,
     titleColor: BLUE,
@@ -113,7 +152,49 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     buttonLabel: "Tocá acá para escribirnos por WhatsApp",
     isHeadingUppercase: false,
   },
+  r2r: {
+    primary: R2R_DEEP,
+    secondary: R2R_MID,
+    paper: R2R_PAPER,
+    highlight: R2R_MINT,
+    headerSubtitleColor: R2R_SUBTITLE,
+    brandName: "R2R",
+    brandSubtitle: "ESTUDIO DE COBRANZA",
+    badge: "round",
+    topBarGradient: R2R_RING,
+    topBar: R2R_GREEN,
+    accent: R2R_GREEN,
+    titleColor: R2R_TITLE,
+    bulletColor: R2R_GREEN,
+    warnFill: SOFT_WARN_FILL,
+    warnText: SOFT_WARN_TEXT,
+    warnBorder: SOFT_WARN_BORDER,
+    calloutFill: R2R_CALLOUT,
+    buttonLabel: "Tocá acá para escribirnos por WhatsApp",
+    isHeadingUppercase: true,
+  },
 };
+
+function mixColor(from: string, to: string, ratio: number): string {
+  const channel = (hex: string, offset: number) => Number.parseInt(hex.slice(offset, offset + 2), 16);
+  return `#${[1, 3, 5]
+    .map((offset) => Math.round(channel(from, offset) + (channel(to, offset) - channel(from, offset)) * ratio))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function gradientColor(stops: string[], position: number): string {
+  const scaled = position * (stops.length - 1);
+  const index = Math.min(Math.floor(scaled), stops.length - 2);
+  return mixColor(stops[index] ?? "#000000", stops[index + 1] ?? "#000000", scaled - index);
+}
+
+function gradientBar(y: number, height: number, stops: string[]): Content[] {
+  const width = PAGE_WIDTH / GRADIENT_SLICES;
+  return Array.from({ length: GRADIENT_SLICES }, (_, index) =>
+    rect(index * width, y, width + 0.6, height, gradientColor(stops, index / (GRADIENT_SLICES - 1))),
+  );
+}
 
 type ListKind = "blue" | "red" | "reach";
 
@@ -126,9 +207,9 @@ interface ListStyle {
 
 function listStyles(preset: PdfPreset): Record<ListKind, ListStyle> {
   return {
-    blue: { fill: PAPER, color: NAVY, bullet: preset.bulletColor, bold: false },
-    red: { fill: preset.warnFill, color: preset.warnText, bullet: preset.bulletColor, bold: false },
-    reach: { fill: NAVY, color: WHITE, bullet: SKY, bold: true },
+    blue: { fill: preset.paper, color: preset.primary, bullet: preset.bulletColor, bold: false },
+    red: { fill: preset.warnFill, color: preset.warnText, bullet: preset.warnBorder, bold: false },
+    reach: { fill: preset.primary, color: WHITE, bullet: preset.highlight, bold: true },
   };
 }
 
@@ -196,18 +277,42 @@ function buildContactButton(operator: string, footerTop: number, label: string):
   ];
 }
 
+function badgeWidth(preset: PdfPreset): number {
+  return preset.badge === "round" ? R2R_LOGO_SIZE : BADGE_SIZE;
+}
+
+function buildBadge(preset: PdfPreset): Content[] {
+  if (preset.badge === "round") {
+    return [
+      {
+        image: r2rLogo,
+        width: R2R_LOGO_SIZE,
+        absolutePosition: { x: SIDE_MARGIN, y: RED_BAR_HEIGHT + (HEADER_HEIGHT - R2R_LOGO_SIZE) / 2 },
+      },
+    ];
+  }
+  const badgeTop = RED_BAR_HEIGHT + (HEADER_HEIGHT - BADGE_SIZE) / 2;
+  return [
+    rect(SIDE_MARGIN, badgeTop, BADGE_SIZE, BADGE_SIZE, WHITE),
+    {
+      svg: logoSvg,
+      width: LOGO_WIDTH,
+      absolutePosition: { x: SIDE_MARGIN + (BADGE_SIZE - LOGO_WIDTH) / 2, y: badgeTop + (BADGE_SIZE - LOGO_WIDTH * 0.56) / 2 },
+    },
+  ];
+}
+
 function buildBackground(speech: SpeechTexts, data: SpeechData, preset: PdfPreset): Content[] {
   const footerTop = PAGE_HEIGHT - FOOTER_HEIGHT;
   const contactTextTop = footerTop + BUTTON_TOP_PADDING + BUTTON_HEIGHT + CONTACT_TEXT_GAP;
   const footerLines = splitLines(speech.pie);
   const [name = "", subtitle = "", ...contact] = footerLines;
-  const badgeTop = RED_BAR_HEIGHT + (HEADER_HEIGHT - BADGE_SIZE) / 2;
   const slantWidth = mm(46);
   const slantLeft = PAGE_WIDTH - slantWidth;
   const confidentiality = stripQuoteMarker(pdfRuns(speech.confidencialidad, data));
   const isContactSplit = contact.length > SPLIT_CONTACT_THRESHOLD;
   const splitAt = Math.ceil(contact.length / 2);
-  const contactStyle = { color: NAVY, fontSize: 8.4, bold: true, alignment: "right" } as const;
+  const contactStyle = { color: preset.primary, fontSize: 8.4, bold: true, alignment: "right" } as const;
   const contactBlocks: Content[] = isContactSplit
     ? [
         {
@@ -230,14 +335,16 @@ function buildBackground(speech: SpeechTexts, data: SpeechData, preset: PdfPrese
       ];
 
   return [
-    rect(0, 0, PAGE_WIDTH, RED_BAR_HEIGHT, preset.topBar),
-    rect(0, RED_BAR_HEIGHT, PAGE_WIDTH, HEADER_HEIGHT, NAVY),
+    ...(preset.topBarGradient
+      ? gradientBar(0, RED_BAR_HEIGHT, preset.topBarGradient)
+      : [rect(0, 0, PAGE_WIDTH, RED_BAR_HEIGHT, preset.topBar)]),
+    rect(0, RED_BAR_HEIGHT, PAGE_WIDTH, HEADER_HEIGHT, preset.primary),
     {
       canvas: [
         {
           type: "polyline",
           closePath: true,
-          color: BLUE,
+          color: preset.secondary,
           points: [
             { x: slantWidth * 0.3, y: 0 },
             { x: slantWidth, y: 0 },
@@ -248,33 +355,34 @@ function buildBackground(speech: SpeechTexts, data: SpeechData, preset: PdfPrese
       ],
       absolutePosition: { x: slantLeft, y: RED_BAR_HEIGHT },
     },
-    rect(SIDE_MARGIN, badgeTop, BADGE_SIZE, BADGE_SIZE, WHITE),
-    {
-      svg: logoSvg,
-      width: LOGO_WIDTH,
-      absolutePosition: { x: SIDE_MARGIN + (BADGE_SIZE - LOGO_WIDTH) / 2, y: badgeTop + (BADGE_SIZE - LOGO_WIDTH * 0.56) / 2 },
-    },
+    ...buildBadge(preset),
     {
       stack: [
-        { text: "5 ONLINE SRL", color: WHITE, fontSize: 21, bold: true, characterSpacing: 1 },
-        { text: "GESTIÓN INTEGRAL DIGITAL", color: BRAND_SUBTITLE, fontSize: 7.6, characterSpacing: 2.4, margin: [0, 4, 0, 0] },
+        { text: preset.brandName, color: WHITE, fontSize: 21, bold: true, characterSpacing: 1 },
+        {
+          text: preset.brandSubtitle,
+          color: preset.headerSubtitleColor,
+          fontSize: 7.6,
+          characterSpacing: 2.4,
+          margin: [0, 4, 0, 0],
+        },
       ],
-      absolutePosition: { x: SIDE_MARGIN + BADGE_SIZE + mm(7), y: RED_BAR_HEIGHT + mm(10.5) },
+      absolutePosition: { x: SIDE_MARGIN + badgeWidth(preset) + mm(7), y: RED_BAR_HEIGHT + mm(10.5) },
     },
-    rect(0, footerTop, PAGE_WIDTH, CONTACT_HEIGHT, PAPER),
-    rect(0, footerTop, PAGE_WIDTH, mm(0.5), NAVY),
+    rect(0, footerTop, PAGE_WIDTH, CONTACT_HEIGHT, preset.paper),
+    rect(0, footerTop, PAGE_WIDTH, mm(0.5), preset.primary),
     ...buildContactButton(data.OPERADOR ?? "", footerTop, preset.buttonLabel),
     {
       stack: [
-        { text: name.toUpperCase(), color: NAVY, fontSize: 11, bold: true, characterSpacing: 0.8 },
+        { text: name.toUpperCase(), color: preset.primary, fontSize: 11, bold: true, characterSpacing: 0.8 },
         ...(isContactSplit
           ? []
-          : [node({ text: subtitle, color: BLUE, fontSize: 8.4, bold: true, characterSpacing: 0.5, margin: [0, 2, 0, 0] })]),
+          : [node({ text: subtitle, color: preset.secondary, fontSize: 8.4, bold: true, characterSpacing: 0.5, margin: [0, 2, 0, 0] })]),
       ],
       absolutePosition: { x: SIDE_MARGIN, y: contactTextTop },
     },
     ...contactBlocks,
-    rect(0, footerTop + CONTACT_HEIGHT, PAGE_WIDTH, LEGAL_HEIGHT, NAVY),
+    rect(0, footerTop + CONTACT_HEIGHT, PAGE_WIDTH, LEGAL_HEIGHT, preset.primary),
     {
       columns: [
         {
@@ -329,7 +437,7 @@ function buildParagraph(block: Extract<SpeechBlock, { type: "p" }>, data: Speech
     };
   }
   const text: Content = {
-    text: runs.map((run) => runToText(run, NAVY, false)),
+    text: runs.map((run) => runToText(run, preset.primary, false)),
     alignment: "justify",
     fontSize: BODY_FONT_SIZE,
     lineHeight: 1.3,
@@ -404,7 +512,7 @@ function buildHeading(speech: SpeechTexts, data: SpeechData, preset: PdfPreset):
   return [
     {
       stack: [
-        { text: plainText(addressee), color: NAVY, fontSize: 11.2, bold: true, characterSpacing: 0.5 },
+        { text: plainText(addressee), color: preset.primary, fontSize: 11.2, bold: true, characterSpacing: 0.5 },
         { canvas: [{ type: "line", x1: 0, y1: 4, x2: CONTENT_WIDTH, y2: 4, lineWidth: mm(0.5), lineColor: preset.accent }] },
       ],
       margin: [0, 0, 0, mm(5)],

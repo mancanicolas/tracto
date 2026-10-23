@@ -33,7 +33,6 @@ const BRAND_SUBTITLE = "#b9c6e8";
 const R2R_DEEP = "#0f3b2b";
 const R2R_MID = "#165c3b";
 const R2R_GREEN = "#3dbb5c";
-const R2R_TITLE = "#17743c";
 const R2R_PAPER = "#f0f6f2";
 const R2R_CALLOUT = "#e8f5ec";
 const R2R_MINT = "#7be0a0";
@@ -99,6 +98,7 @@ interface PdfPreset {
   topBarGradient: string[] | null;
   topBar: string;
   accent: string;
+  headingAccent: string;
   titleColor: string;
   bulletColor: string;
   warnFill: string;
@@ -122,6 +122,7 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     topBarGradient: null,
     topBar: RED,
     accent: RED,
+    headingAccent: RED,
     titleColor: RED,
     bulletColor: RED,
     warnFill: SOFT_RED,
@@ -143,6 +144,7 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     topBarGradient: null,
     topBar: SOFT_TOP_BAR,
     accent: SKY,
+    headingAccent: SKY,
     titleColor: BLUE,
     bulletColor: SKY,
     warnFill: SOFT_WARN_FILL,
@@ -164,7 +166,8 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     topBarGradient: R2R_RING,
     topBar: R2R_GREEN,
     accent: R2R_GREEN,
-    titleColor: R2R_TITLE,
+    headingAccent: RED,
+    titleColor: RED,
     bulletColor: R2R_GREEN,
     warnFill: SOFT_WARN_FILL,
     warnText: SOFT_WARN_TEXT,
@@ -513,14 +516,14 @@ function buildHeading(speech: SpeechTexts, data: SpeechData, preset: PdfPreset):
     {
       stack: [
         { text: plainText(addressee), color: preset.primary, fontSize: 11.2, bold: true, characterSpacing: 0.5 },
-        { canvas: [{ type: "line", x1: 0, y1: 4, x2: CONTENT_WIDTH, y2: 4, lineWidth: mm(0.5), lineColor: preset.accent }] },
+        { canvas: [{ type: "line", x1: 0, y1: 4, x2: CONTENT_WIDTH, y2: 4, lineWidth: mm(0.5), lineColor: preset.headingAccent }] },
       ],
       margin: [0, 0, 0, mm(5)],
     },
     leftBorderBox(
       { text: plainText(title.join(" ")), color: preset.titleColor, fontSize: 14.4, bold: true, characterSpacing: 0.5 },
       null,
-      preset.accent,
+      preset.headingAccent,
       mm(1.4),
       mm(3),
     ),

@@ -76,3 +76,42 @@ Sin más, saludamos atte.`,
 
   confidencialidad: `> **Confidencialidad:** si recibió este mensaje por error le pedimos disculpas, infórmelo para quitar su número telefónico.`,
 };
+
+export const R2R_WHATSAPP = "11 5741 4680";
+export const R2R_PHONE = "(011) 3220-3010";
+export const R2R_EMAIL = "Gestor35@r2r.com.ar";
+
+export const R2R_SPEECH: SpeechTexts = {
+  preset: "r2r",
+
+  encabezado: DEFAULT_SPEECH.encabezado,
+
+  cuerpo: `Tomando el tiempo transcurrido como negativa de pago de su parte respecto a la mora originada con {CARTERA}, cumplimos en informarle que se dará por concluida esta etapa conciliatoria el **{FECHA}**.
+
+No obstante, nuestra intención no es perjudicarlo ni que siga excluido del sistema financiero. Pensamos que usted quizás quiera llegar a un acuerdo sin necesidad de judicializar el cobro, ya que le sumaría más gastos a su cargo como honorarios y tasa de justicia. Es por ello que lo invitamos a encontrar una solución a su problema, pudiendo:
+
+-Ingresar al plan de cuotas sin interés
+-Consultar quita de intereses y punitorios
+-Elevar su propuesta de pago para que sea evaluada
+
+En caso de no tener respuesta, deberemos recomendar a nuestro cliente que avance con la tramitación —ante Juzgado Civil y Comercial— del pedido de embargo sobre:
+
+-{LABORAL}
+-Cuentas bancarias y/o billeteras virtuales vinculadas a su CUIL/CUIT
+
+Con fines de solucionar el conflicto quedamos atentos a su respuesta:
+
+-ESCRIBIENDO AL WHATSAPP: {OPERADOR}
+-LLAMANDO AL TELÉFONO FIJO: ${R2R_PHONE}
+-ESCRIBIENDO AL MAIL: ${R2R_EMAIL}
+
+Sin más, saludamos atte.`,
+
+  pie: `R2R
+Estudio de cobranza
+Teléfono fijo: ${R2R_PHONE}
+WhatsApp: ${R2R_WHATSAPP}
+${R2R_EMAIL}`,
+
+  confidencialidad: DEFAULT_SPEECH.confidencialidad,
+};

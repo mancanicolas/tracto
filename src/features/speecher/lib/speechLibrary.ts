@@ -1,8 +1,9 @@
-import { DEFAULT_SPEECH, SOFT_SPEECH, type SpeechTexts } from "./speechDefaults";
-import { libraryStore, softSpeechStore, speechStore, useStore } from "./speechStore";
+import { DEFAULT_SPEECH, R2R_SPEECH, SOFT_SPEECH, type SpeechTexts } from "./speechDefaults";
+import { configStore, libraryStore, r2rSpeechStore, softSpeechStore, speechStore, useStore } from "./speechStore";
 
 export const DEFAULT_SPEECH_ID = "default";
 export const SOFT_SPEECH_ID = "suave";
+export const R2R_SPEECH_ID = "r2r";
 export const MAX_SPEECH_NAME_LENGTH = 50;
 
 export interface SpeechEntry {
@@ -23,6 +24,8 @@ const BUILTINS = [
   { id: DEFAULT_SPEECH_ID, name: "Speech normal", original: DEFAULT_SPEECH, store: speechStore },
   { id: SOFT_SPEECH_ID, name: "Speech suave", original: SOFT_SPEECH, store: softSpeechStore },
 ];
+
+const R2R_BUILTIN = { id: R2R_SPEECH_ID, name: "Speech fuerte R2R", original: R2R_SPEECH, store: r2rSpeechStore };
 
 export const BASE_OPTIONS = BUILTINS.map(({ id, name }) => ({ value: id, label: name }));
 
@@ -46,11 +49,17 @@ function buildEntries(customs: SavedSpeech[]): SpeechEntry[] {
   ];
 }
 
+function buildR2rEntry(): SpeechEntry {
+  const { id, name, original, store } = R2R_BUILTIN;
+  return { id, name, texts: { ...original, ...store.get() }, original, isBuiltin: true };
+}
+
 function resolveActive(entries: SpeechEntry[], activeId: string): SpeechEntry {
   return entries.find((entry) => entry.id === activeId) ?? entries[0]!;
 }
 
 export function getActiveSpeech(): SpeechEntry {
+  if (configStore.get().estudio === "r2r") return buildR2rEntry();
   const { speeches, activeId } = libraryStore.get();
   return resolveActive(buildEntries(speeches), activeId);
 }
@@ -59,6 +68,12 @@ export function useSpeeches() {
   const library = useStore(libraryStore);
   useStore(speechStore);
   useStore(softSpeechStore);
+  useStore(r2rSpeechStore);
+  const { estudio } = useStore(configStore);
+  if (estudio === "r2r") {
+    const entry = buildR2rEntry();
+    return { entries: [entry], active: entry };
+  }
   const entries = buildEntries(library.speeches);
   return { entries, active: resolveActive(entries, library.activeId) };
 }
@@ -86,7 +101,7 @@ export function createSpeech(rawName: string, baseId: string): string | null {
 }
 
 export function saveSpeech(id: string, texts: SpeechTexts, rawName?: string): string | null {
-  const builtin = BUILTINS.find((item) => item.id === id);
+  const builtin = [...BUILTINS, R2R_BUILTIN].find((item) => item.id === id);
   if (builtin) {
     builtin.store.set(texts);
     return null;
@@ -101,7 +116,7 @@ export function saveSpeech(id: string, texts: SpeechTexts, rawName?: string): st
 }
 
 export function restoreBuiltinSpeech(id: string) {
-  BUILTINS.find((builtin) => builtin.id === id)?.store.reset();
+  [...BUILTINS, R2R_BUILTIN].find((builtin) => builtin.id === id)?.store.reset();
 }
 
 export function deleteSpeech(id: string) {

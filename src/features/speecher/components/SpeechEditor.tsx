@@ -13,6 +13,7 @@ import {
 } from "../lib/speechDefaults";
 import {
   deleteSpeech,
+  R2R_SPEECH_ID,
   MAX_SPEECH_NAME_LENGTH,
   restoreBuiltinSpeech,
   saveSpeech,
@@ -101,12 +102,14 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
             }}
           />
         )}
+        {speech.id === R2R_SPEECH_ID ? null : (
         <SelectField
           label="Diseño del PDF"
           options={PDF_PRESET_OPTIONS}
           value={values.preset}
           onChange={(event) => setValues((current) => ({ ...current, preset: event.target.value as PdfPresetId }))}
         />
+        )}
         <p className="text-xs leading-5 text-fg-muted">
           Claves disponibles:{" "}
           {KEYS.map((key) => (

@@ -15,7 +15,13 @@ import {
   selectSpeech,
   useSpeeches,
 } from "../lib/speechLibrary";
+import type { Studio } from "../lib/speechStore";
 import { useSpeecher } from "../useSpeecher";
+
+const STUDIO_OPTIONS = [
+  { value: "5ol", label: "5 Online" },
+  { value: "r2r", label: "R2R" },
+];
 
 const INPUT_CLASS =
   "h-8 rounded-sm border border-line bg-input text-[13px] text-fg transition-colors duration-100 placeholder:text-fg-muted hover:border-line-strong motion-reduce:transition-none";
@@ -37,6 +43,7 @@ export function SpeecherPanel() {
   const [newSpeechBase, setNewSpeechBase] = useState(DEFAULT_SPEECH_ID);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const { entries, active } = useSpeeches();
+  const isR2r = config.estudio === "r2r";
 
   const confirmNew = () => {
     speecher.addCartera(newName);
@@ -99,6 +106,13 @@ export function SpeecherPanel() {
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        <SelectField
+          label="Estudio"
+          options={STUDIO_OPTIONS}
+          value={config.estudio}
+          onChange={(event) => speecher.selectEstudio(event.target.value as Studio)}
+        />
+
         {isAdding ? (
           <div className="flex items-end gap-1.5">
             <div className="min-w-0 flex-1">
@@ -149,7 +163,7 @@ export function SpeecherPanel() {
           </div>
         )}
 
-        {isAddingSpeech ? (
+        {isR2r ? null : isAddingSpeech ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-end gap-1.5">
               <div className="min-w-0 flex-1">
@@ -207,6 +221,7 @@ export function SpeecherPanel() {
           </div>
         )}
 
+        {isR2r ? null : (
         <div role="group" aria-labelledby="speecher-operator-label" className="flex flex-col gap-1.5">
           <span id="speecher-operator-label" className="text-xs leading-4 font-medium text-fg-secondary">
             Operador · Interno
@@ -239,6 +254,8 @@ export function SpeecherPanel() {
             />
           </div>
         </div>
+
+        )}
 
         <Button className="w-full" onClick={speecher.paste}>
           {speecher.justPasted ? (

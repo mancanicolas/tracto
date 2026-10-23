@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Ficha } from "./parser";
 import type { SavedSpeech } from "./speechLibrary";
-import { DEFAULT_SPEECH, SOFT_SPEECH, type SpeechTexts } from "./speechDefaults";
+import { DEFAULT_SPEECH, R2R_SPEECH, SOFT_SPEECH, type SpeechTexts } from "./speechDefaults";
 
 interface LocalStore<T> {
   get: () => T;
@@ -69,7 +69,10 @@ function createLocalStore<T extends object>(key: string, fallback: T): LocalStor
   };
 }
 
+export type Studio = "5ol" | "r2r";
+
 export interface SpeecherConfig {
+  estudio: Studio;
   carteras: string[];
   cartera: string;
   operador: string;
@@ -84,6 +87,7 @@ export interface FichaState {
 }
 
 export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.config", {
+  estudio: "5ol",
   carteras: [],
   cartera: "",
   operador: "",
@@ -96,6 +100,8 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
 export const speechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech", DEFAULT_SPEECH);
 
 export const softSpeechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech.suave", SOFT_SPEECH);
+
+export const r2rSpeechStore = createLocalStore<SpeechTexts>("tracto.speecher.speech.r2r", R2R_SPEECH);
 
 export const libraryStore = createLocalStore<{ speeches: SavedSpeech[]; activeId: string }>(
   "tracto.speecher.library",

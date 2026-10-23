@@ -7,8 +7,8 @@ import {
   type SpeechFormat,
 } from "./lib/speechActions";
 import { pickFolder } from "@/lib/saveFile";
-import { R2R_WHATSAPP } from "./lib/speechDefaults";
 import { getActiveSpeech } from "./lib/speechLibrary";
+import { applyStudio, STUDIO_PROFILES } from "./lib/studios";
 import { configStore, fichaStore, useStore, type Studio } from "./lib/speechStore";
 import { openSpeechEditor } from "./speechEditorWindow";
 
@@ -25,13 +25,18 @@ const FOLDER_REQUIRED_MESSAGE = "Elegí una carpeta de descarga para guardar el 
 
 function readInputs() {
   const config = configStore.get();
+  const profile = STUDIO_PROFILES[config.estudio];
+  const isOperatorFixed = profile.fixedOperator !== null;
   return {
-    speech: getActiveSpeech().texts,
+    speech: applyStudio(getActiveSpeech().texts, config.estudio),
     ficha: fichaStore.get().ficha,
-    settings:
-      config.estudio === "r2r"
-        ? { cartera: config.cartera, operador: R2R_WHATSAPP, interno: "" }
-        : { cartera: config.cartera, operador: config.operador.trim(), interno: config.interno.trim() },
+    settings: {
+      cartera: config.cartera,
+      operador: profile.fixedOperator ?? config.operador.trim(),
+      interno: isOperatorFixed ? "" : config.interno.trim(),
+      telefono: profile.telefono,
+      horario: profile.horario,
+    },
   };
 }
 

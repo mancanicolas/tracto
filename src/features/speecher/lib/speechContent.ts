@@ -20,6 +20,8 @@ export interface SpeechSettings {
   cartera: string;
   operador: string;
   interno: string;
+  telefono: string;
+  horario: string;
 }
 
 const MONTHS = [
@@ -40,6 +42,7 @@ const MONTHS = [
 const CLOSING_DELAY_DAYS = 2;
 const WHATSAPP_LINK_BASE = "https://wa.me/";
 const ARGENTINA_MOBILE_PREFIX = "549";
+const PLAIN_KEYS = new Set(["LABORAL", "TELEFONO", "HORARIO"]);
 const KEY_PATTERN = /\{([A-Z_]+)\}/g;
 const TOKEN_PATTERN = /(\{[A-Z_]+\}|\*\*.+?\*\*)/;
 
@@ -64,6 +67,8 @@ export function buildSpeechData(ficha: Ficha, settings: SpeechSettings, now: Dat
     FECHA: format(parseIsoDate(addDaysIso(today, CLOSING_DELAY_DAYS)), "dd/MM/yyyy"),
     OPERADOR: settings.operador,
     INTERNO: settings.interno,
+    TELEFONO: settings.telefono,
+    HORARIO: settings.horario,
   };
 }
 
@@ -84,8 +89,8 @@ function tokenize(text: string, data: SpeechData, forceBold: boolean): Run[] {
       return [
         {
           text: value,
-          bold: key !== "LABORAL",
-          isValue: key !== "LABORAL",
+          bold: !PLAIN_KEYS.has(key),
+          isValue: !PLAIN_KEYS.has(key),
           isOperator: key === "OPERADOR",
         },
       ];
@@ -184,7 +189,10 @@ function plain(runs: Run[]): string {
 }
 
 function whatsApp(runs: Run[]): string {
-  return runs.map((run) => (run.bold ? `*${run.text}*` : run.text)).join("");
+  return runs
+    .map((run) => (run.bold ? `*${run.text}*` : run.text))
+    .join("")
+    .trimEnd();
 }
 
 export function renderSpeechText(speech: SpeechTexts, data: SpeechData): string {

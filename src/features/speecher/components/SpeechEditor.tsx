@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextAreaField } from "@/components/ui/TextAreaField";
 import { TextField } from "@/components/ui/TextField";
+import { configStore, useStore } from "../lib/speechStore";
 import { SelectField } from "@/components/ui/SelectField";
 import {
   DEFAULT_SPEECH,
@@ -13,7 +14,6 @@ import {
 } from "../lib/speechDefaults";
 import {
   deleteSpeech,
-  R2R_SPEECH_ID,
   MAX_SPEECH_NAME_LENGTH,
   restoreBuiltinSpeech,
   saveSpeech,
@@ -22,7 +22,20 @@ import {
 } from "../lib/speechLibrary";
 
 const SAVED_FLASH_MS = 2200;
-const KEYS = ["TRATO", "NOMBRE", "DNI", "MES", "ANIO", "CARTERA", "FECHA", "LABORAL", "OPERADOR", "INTERNO"];
+const KEYS = [
+  "TRATO",
+  "NOMBRE",
+  "DNI",
+  "MES",
+  "ANIO",
+  "CARTERA",
+  "FECHA",
+  "LABORAL",
+  "OPERADOR",
+  "INTERNO",
+  "TELEFONO",
+  "HORARIO",
+];
 
 const FIELD_LABELS: Record<(typeof SPEECH_FIELDS)[number], { label: string; hint: string; rows: number }> = {
   encabezado: { label: "Encabezado", hint: "Línea 1: destinatario. Línea 2: título.", rows: 2 },
@@ -37,6 +50,7 @@ export function SpeechEditor() {
 }
 
 function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
+  const isR2r = useStore(configStore).estudio === "r2r";
   const [values, setValues] = useState<SpeechTexts>(() => ({ ...speech.texts }));
   const [name, setName] = useState(speech.name);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +116,7 @@ function SpeechEditorForm({ speech }: { speech: SpeechEntry }) {
             }}
           />
         )}
-        {speech.id === R2R_SPEECH_ID ? null : (
+        {isR2r ? null : (
         <SelectField
           label="Diseño del PDF"
           options={PDF_PRESET_OPTIONS}

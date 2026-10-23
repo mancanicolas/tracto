@@ -163,7 +163,7 @@ export function SpeecherPanel() {
           </div>
         )}
 
-        {isR2r ? null : isAddingSpeech ? (
+        {isAddingSpeech ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-end gap-1.5">
               <div className="min-w-0 flex-1">

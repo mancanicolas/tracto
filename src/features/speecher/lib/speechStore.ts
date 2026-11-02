@@ -75,6 +75,10 @@ export interface SpeecherConfig {
   estudio: Studio;
   carteras: string[];
   cartera: string;
+  fideicomisos: string[];
+  fideicomiso: string;
+  origen: string;
+  automotor: string;
   operador: string;
   interno: string;
   carpeta: string;
@@ -90,6 +94,10 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
   estudio: "5ol",
   carteras: [],
   cartera: "",
+  fideicomisos: [],
+  fideicomiso: "",
+  origen: "",
+  automotor: "",
   operador: "",
   interno: "",
   carpeta: "",

@@ -36,6 +36,9 @@ function readInputs() {
       interno: isOperatorFixed ? "" : config.interno.trim(),
       telefono: profile.telefono,
       horario: profile.horario,
+      origen: config.origen.trim(),
+      fideicomiso: config.fideicomiso,
+      automotor: config.automotor.trim(),
     },
   };
 }
@@ -77,6 +80,30 @@ export function useSpeecher() {
     configStore.set({ carteras, cartera: carteras[0] ?? "" });
   }, []);
 
+  const selectFideicomiso = useCallback((fideicomiso: string) => configStore.set({ fideicomiso }), []);
+
+  const addFideicomiso = useCallback((rawName: string) => {
+    const name = rawName.trim();
+    if (!name) return;
+    const current = configStore.get();
+    const existing = current.fideicomisos.find((item) => item.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      configStore.set({ fideicomiso: existing });
+      return;
+    }
+    configStore.set({ fideicomisos: [...current.fideicomisos, name], fideicomiso: name });
+  }, []);
+
+  const removeFideicomiso = useCallback(() => {
+    const current = configStore.get();
+    if (!current.fideicomiso) return;
+    const fideicomisos = current.fideicomisos.filter((item) => item !== current.fideicomiso);
+    configStore.set({ fideicomisos, fideicomiso: fideicomisos[0] ?? "" });
+  }, []);
+
+  const setOrigen = useCallback((origen: string) => configStore.set({ origen }), []);
+  const setAutomotor = useCallback((automotor: string) => configStore.set({ automotor }), []);
+
   const setOperador = useCallback((operador: string) => configStore.set({ operador }), []);
   const setInterno = useCallback((interno: string) => configStore.set({ interno }), []);
 
@@ -89,6 +116,7 @@ export function useSpeecher() {
       return;
     }
     fichaStore.set({ ficha: result.data });
+    configStore.set({ origen: "", automotor: "" });
     setJustPasted(true);
     pasteTimerRef.current = window.setTimeout(() => setJustPasted(false), PASTE_FLASH_MS);
     setStatus({ text: result.data.NOMBRE || `DNI ${result.data.DNI}`, tone: "neutral" });
@@ -153,6 +181,11 @@ export function useSpeecher() {
     selectCartera,
     addCartera,
     removeCartera,
+    selectFideicomiso,
+    addFideicomiso,
+    removeFideicomiso,
+    setOrigen,
+    setAutomotor,
     setOperador,
     setInterno,
     chooseFolder: () => void chooseFolder(),

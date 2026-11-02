@@ -1,9 +1,10 @@
-import { Check, ClipboardPaste, Copy, Download, FolderOpen, Image, Minus, PencilLine, Plus, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Download, FolderOpen, Image, PencilLine, Plus, X } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { SelectField } from "@/components/ui/SelectField";
+import { TextField } from "@/components/ui/TextField";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { cn } from "@/lib/cn";
 import {
@@ -17,6 +18,7 @@ import {
 } from "../lib/speechLibrary";
 import type { Studio } from "../lib/speechStore";
 import { useSpeecher } from "../useSpeecher";
+import { OptionListField } from "./OptionListField";
 
 const STUDIO_OPTIONS = [
   { value: "5ol", label: "5 Online" },
@@ -36,8 +38,6 @@ const STATUS_CLASSES = {
 export function SpeecherPanel() {
   const speecher = useSpeecher();
   const { config } = speecher;
-  const [isAdding, setIsAdding] = useState(false);
-  const [newName, setNewName] = useState("");
   const [isAddingSpeech, setIsAddingSpeech] = useState(false);
   const [newSpeechName, setNewSpeechName] = useState("");
   const [newSpeechBase, setNewSpeechBase] = useState(DEFAULT_SPEECH_ID);
@@ -45,29 +45,6 @@ export function SpeecherPanel() {
   const { entries, active } = useSpeeches();
   const isR2r = config.estudio === "r2r";
 
-  const confirmNew = () => {
-    speecher.addCartera(newName);
-    setNewName("");
-    setIsAdding(false);
-  };
-
-  const cancelNew = () => {
-    setNewName("");
-    setIsAdding(false);
-  };
-
-  const handleNewKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      confirmNew();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-      cancelNew();
-    }
-  };
-
-  const options = config.carteras.map((name) => ({ value: name, label: name }));
   const speechOptions = entries.map((entry) => ({ value: entry.id, label: entry.name }));
 
   const confirmNewSpeech = () => {
@@ -113,55 +90,53 @@ export function SpeecherPanel() {
           onChange={(event) => speecher.selectEstudio(event.target.value as Studio)}
         />
 
-        {isAdding ? (
-          <div className="flex items-end gap-1.5">
-            <div className="min-w-0 flex-1">
-              <label htmlFor="speecher-new-cartera" className="mb-1.5 block text-xs leading-4 font-medium text-fg-secondary">
-                Nueva cartera
-              </label>
-              <input
-                id="speecher-new-cartera"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-                onKeyDown={handleNewKeyDown}
-                maxLength={60}
-                autoComplete="off"
-                autoFocus
-                placeholder="Nombre de la cartera"
-                className={cn(INPUT_CLASS, "w-full px-2.5")}
-              />
-            </div>
-            <IconButton label="Guardar cartera" onClick={confirmNew} className={SQUARE_BUTTON_CLASS}>
-              <Check strokeWidth={1.75} />
-            </IconButton>
-            <IconButton label="Cancelar" onClick={cancelNew} className={SQUARE_BUTTON_CLASS}>
-              <X strokeWidth={1.75} />
-            </IconButton>
-          </div>
-        ) : (
-          <div className="flex items-end gap-1.5">
-            <div className="min-w-0 flex-1">
-              <SelectField
-                label="Cartera"
-                options={options}
-                placeholder={options.length === 0 ? "Agregá una con +" : undefined}
-                value={config.cartera}
-                onChange={(event) => speecher.selectCartera(event.target.value)}
-              />
-            </div>
-            <IconButton label="Agregar cartera" onClick={() => setIsAdding(true)} className={SQUARE_BUTTON_CLASS}>
-              <Plus strokeWidth={1.75} />
-            </IconButton>
-            <IconButton
-              label="Quitar la cartera elegida"
-              onClick={speecher.removeCartera}
-              disabled={options.length === 0}
-              className={SQUARE_BUTTON_CLASS}
-            >
-              <Minus strokeWidth={1.75} />
-            </IconButton>
-          </div>
-        )}
+        <OptionListField
+          id="speecher-new-cartera"
+          label="Cartera"
+          addLabel="Nueva cartera"
+          saveLabel="Guardar cartera"
+          removeLabel="Quitar la cartera elegida"
+          namePlaceholder="Nombre de la cartera"
+          items={config.carteras}
+          value={config.cartera}
+          onSelect={speecher.selectCartera}
+          onAdd={speecher.addCartera}
+          onRemove={speecher.removeCartera}
+        />
+
+        <OptionListField
+          id="speecher-new-fideicomiso"
+          label="Fideicomiso"
+          addLabel="Nuevo fideicomiso"
+          saveLabel="Guardar fideicomiso"
+          removeLabel="Quitar el fideicomiso elegido"
+          namePlaceholder="Nombre del fideicomiso"
+          items={config.fideicomisos}
+          value={config.fideicomiso}
+          onSelect={speecher.selectFideicomiso}
+          onAdd={speecher.addFideicomiso}
+          onRemove={speecher.removeFideicomiso}
+        />
+
+        <div className="grid grid-cols-2 gap-1.5">
+          <TextField
+            label="Origen de la deuda"
+            autoComplete="off"
+            maxLength={30}
+            placeholder="dd/mm/aaaa"
+            value={config.origen}
+            onChange={(event) => speecher.setOrigen(event.target.value)}
+            className="font-mono tabular-nums"
+          />
+          <TextField
+            label="Automotor"
+            autoComplete="off"
+            maxLength={60}
+            placeholder="Patente o modelo"
+            value={config.automotor}
+            onChange={(event) => speecher.setAutomotor(event.target.value)}
+          />
+        </div>
 
         {isAddingSpeech ? (
           <div className="flex flex-col gap-1">

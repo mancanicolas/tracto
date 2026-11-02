@@ -401,11 +401,16 @@ function buildBackground(speech: SpeechTexts, data: SpeechData, preset: PdfPrese
   ];
 }
 
+const URL_PATTERN = /^https?:\/\//;
+
 function runToText(run: Run, color: string, forceBold: boolean): ContentText {
+  const isLink = URL_PATTERN.test(run.text);
   return {
     text: run.text,
     bold: forceBold || run.bold,
-    color: run.isValue || run.bold ? color : undefined,
+    color: run.isValue || run.bold || isLink ? color : undefined,
+    link: isLink ? run.text : undefined,
+    decoration: isLink ? "underline" : undefined,
   };
 }
 

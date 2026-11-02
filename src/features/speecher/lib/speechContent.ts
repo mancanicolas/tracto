@@ -22,6 +22,9 @@ export interface SpeechSettings {
   interno: string;
   telefono: string;
   horario: string;
+  origen: string;
+  fideicomiso: string;
+  automotor: string;
 }
 
 const MONTHS = [
@@ -42,7 +45,8 @@ const MONTHS = [
 const CLOSING_DELAY_DAYS = 2;
 const WHATSAPP_LINK_BASE = "https://wa.me/";
 const ARGENTINA_MOBILE_PREFIX = "549";
-const PLAIN_KEYS = new Set(["LABORAL", "TELEFONO", "HORARIO"]);
+export const BCRA_LINK = "https://www.bcra.gob.ar/situacion-crediticia/";
+const PLAIN_KEYS = new Set(["LABORAL", "TELEFONO", "HORARIO", "BCRA"]);
 const KEY_PATTERN = /\{([A-Z_]+)\}/g;
 const TOKEN_PATTERN = /(\{[A-Z_]+\}|\*\*.+?\*\*)/;
 
@@ -69,6 +73,10 @@ export function buildSpeechData(ficha: Ficha, settings: SpeechSettings, now: Dat
     INTERNO: settings.interno,
     TELEFONO: settings.telefono,
     HORARIO: settings.horario,
+    ORIGEN: settings.origen,
+    FIDEICOMISO: settings.fideicomiso,
+    AUTO: settings.automotor,
+    BCRA: BCRA_LINK,
   };
 }
 

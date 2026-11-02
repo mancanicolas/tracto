@@ -35,6 +35,10 @@ const KEYS = [
   "INTERNO",
   "TELEFONO",
   "HORARIO",
+  "ORIGEN",
+  "FIDEICOMISO",
+  "AUTO",
+  "BCRA",
 ];
 
 const FIELD_LABELS: Record<(typeof SPEECH_FIELDS)[number], { label: string; hint: string; rows: number }> = {

@@ -437,11 +437,17 @@ function buildParagraph(block: Extract<SpeechBlock, { type: "p" }>, data: Speech
   const runs = pdfRuns(marker ? rest : block.text, data);
   if (block.last) {
     return {
-      text: runs.map((run) => ({ text: run.text, bold: run.bold, italics: true })),
+      text: runs.map((run) => ({
+        text: run.text,
+        bold: run.bold,
+        italics: true,
+        link: URL_PATTERN.test(run.text) ? run.text : undefined,
+        decoration: URL_PATTERN.test(run.text) ? "underline" : undefined,
+      })),
       color: MUTED,
       alignment: "left",
       fontSize: BODY_FONT_SIZE,
-      margin: [0, mm(1.2), 0, mm(3.8)],
+      margin: [0, mm(1.2), 0, 0],
     };
   }
   const text: Content = {

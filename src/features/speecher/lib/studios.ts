@@ -8,28 +8,31 @@ export const R2R_WHATSAPP = "11 5741 4680";
 export const R2R_PHONE = "(011) 3220-3010";
 export const R2R_EMAIL = "Gestor35@r2r.com.ar";
 
-const R2R_PIE = `R2R
-Estudio de cobranza
-Teléfono fijo: ${R2R_PHONE}
-WhatsApp: ${R2R_WHATSAPP}
-${R2R_EMAIL}`;
+function buildR2rPie(operator: string): string {
+  return ["R2R", "Estudio de cobranza", `Teléfono fijo: ${R2R_PHONE}`, operator ? `WhatsApp: ${operator}` : "", R2R_EMAIL]
+    .filter(Boolean)
+    .join("\n");
+}
 
 interface StudioProfile {
   telefono: string;
   horario: string;
-  fixedOperator: string | null;
-  pie: string | null;
+  buildPie: ((operator: string) => string) | null;
   preset: PdfPresetId | null;
 }
 
 export const STUDIO_PROFILES: Record<Studio, StudioProfile> = {
-  "5ol": { telefono: LEGACY_PHONE, horario: LEGACY_HOURS, fixedOperator: null, pie: null, preset: null },
-  r2r: { telefono: R2R_PHONE, horario: "", fixedOperator: R2R_WHATSAPP, pie: R2R_PIE, preset: "r2r" },
+  "5ol": { telefono: LEGACY_PHONE, horario: LEGACY_HOURS, buildPie: null, preset: null },
+  r2r: { telefono: R2R_PHONE, horario: "", buildPie: buildR2rPie, preset: "r2r" },
 };
 
-export function applyStudio(texts: SpeechTexts, studio: Studio): SpeechTexts {
+export function applyStudio(texts: SpeechTexts, studio: Studio, operator: string): SpeechTexts {
   const profile = STUDIO_PROFILES[studio];
-  return { ...texts, preset: profile.preset ?? texts.preset, pie: profile.pie ?? texts.pie };
+  return {
+    ...texts,
+    preset: profile.preset ?? texts.preset,
+    pie: profile.buildPie ? profile.buildPie(operator) : texts.pie,
+  };
 }
 
 export function upgradeLegacyContact(texts: SpeechTexts): SpeechTexts {

@@ -43,7 +43,6 @@ export function SpeecherPanel() {
   const [newSpeechBase, setNewSpeechBase] = useState(DEFAULT_SPEECH_ID);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const { entries, active } = useSpeeches();
-  const isR2r = config.estudio === "r2r";
 
   const speechOptions = entries.map((entry) => ({ value: entry.id, label: entry.name }));
 
@@ -196,7 +195,6 @@ export function SpeecherPanel() {
           </div>
         )}
 
-        {isR2r ? null : (
         <div role="group" aria-labelledby="speecher-operator-label" className="flex flex-col gap-1.5">
           <span id="speecher-operator-label" className="text-xs leading-4 font-medium text-fg-secondary">
             Operador · Interno
@@ -209,7 +207,7 @@ export function SpeecherPanel() {
                 inputMode="tel"
                 autoComplete="off"
                 maxLength={30}
-                value={config.operador}
+                value={speecher.contact.operador}
                 onChange={(event) => speecher.setOperador(event.target.value)}
                 aria-label="Número de WhatsApp del operador"
                 placeholder="11 1234 5678"
@@ -221,7 +219,7 @@ export function SpeecherPanel() {
               inputMode="numeric"
               autoComplete="off"
               maxLength={8}
-              value={config.interno}
+              value={speecher.contact.interno}
               onChange={(event) => speecher.setInterno(event.target.value)}
               aria-label="Interno"
               placeholder="Interno"
@@ -230,7 +228,6 @@ export function SpeecherPanel() {
           </div>
         </div>
 
-        )}
 
         <Button className="w-full" onClick={speecher.paste}>
           {speecher.justPasted ? (

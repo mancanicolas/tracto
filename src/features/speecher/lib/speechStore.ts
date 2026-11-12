@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Ficha } from "./parser";
 import type { SavedSpeech } from "./speechLibrary";
+import { R2R_WHATSAPP } from "./studios";
 import { DEFAULT_SPEECH, SOFT_SPEECH, type SpeechTexts } from "./speechDefaults";
 
 interface LocalStore<T> {
@@ -81,6 +82,8 @@ export interface SpeecherConfig {
   automotor: string;
   operador: string;
   interno: string;
+  operadorR2r: string;
+  internoR2r: string;
   carpeta: string;
   sobrescribir: boolean;
   lastGeneratedPdfPath: string;
@@ -100,6 +103,8 @@ export const configStore = createLocalStore<SpeecherConfig>("tracto.speecher.con
   automotor: "",
   operador: "",
   interno: "",
+  operadorR2r: R2R_WHATSAPP,
+  internoR2r: "",
   carpeta: "",
   sobrescribir: true,
   lastGeneratedPdfPath: "",

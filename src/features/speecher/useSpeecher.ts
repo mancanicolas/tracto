@@ -9,7 +9,7 @@ import {
 import { pickFolder } from "@/lib/saveFile";
 import { getActiveSpeech } from "./lib/speechLibrary";
 import { applyStudio, STUDIO_PROFILES } from "./lib/studios";
-import { configStore, fichaStore, useStore, type Studio } from "./lib/speechStore";
+import { configStore, fichaStore, useStore, type SpeecherConfig, type Studio } from "./lib/speechStore";
 import { openSpeechEditor } from "./speechEditorWindow";
 
 export type StatusTone = "neutral" | "success" | "error";
@@ -23,17 +23,24 @@ const PASTE_FLASH_MS = 2500;
 const EMPTY_STATUS: SpeecherStatus = { text: "", tone: "neutral" };
 const FOLDER_REQUIRED_MESSAGE = "Elegí una carpeta de descarga para guardar el archivo";
 
+function readContact(config: SpeecherConfig) {
+  return config.estudio === "r2r"
+    ? { operador: config.operadorR2r, interno: config.internoR2r }
+    : { operador: config.operador, interno: config.interno };
+}
+
 function readInputs() {
   const config = configStore.get();
   const profile = STUDIO_PROFILES[config.estudio];
-  const isOperatorFixed = profile.fixedOperator !== null;
+  const contact = readContact(config);
+  const operador = contact.operador.trim();
   return {
-    speech: applyStudio(getActiveSpeech().texts, config.estudio),
+    speech: applyStudio(getActiveSpeech().texts, config.estudio, operador),
     ficha: fichaStore.get().ficha,
     settings: {
       cartera: config.cartera,
-      operador: profile.fixedOperator ?? config.operador.trim(),
-      interno: isOperatorFixed ? "" : config.interno.trim(),
+      operador,
+      interno: contact.interno.trim(),
       telefono: profile.telefono,
       horario: profile.horario,
       origen: config.origen.trim(),
@@ -104,8 +111,15 @@ export function useSpeecher() {
   const setOrigen = useCallback((origen: string) => configStore.set({ origen }), []);
   const setAutomotor = useCallback((automotor: string) => configStore.set({ automotor }), []);
 
-  const setOperador = useCallback((operador: string) => configStore.set({ operador }), []);
-  const setInterno = useCallback((interno: string) => configStore.set({ interno }), []);
+  const setOperador = useCallback(
+    (operador: string) =>
+      configStore.set(configStore.get().estudio === "r2r" ? { operadorR2r: operador } : { operador }),
+    [],
+  );
+  const setInterno = useCallback(
+    (interno: string) => configStore.set(configStore.get().estudio === "r2r" ? { internoR2r: interno } : { interno }),
+    [],
+  );
 
   const paste = useCallback(async () => {
     const result = await pasteFicha();
@@ -174,6 +188,7 @@ export function useSpeecher() {
 
   return {
     config,
+    contact: readContact(config),
     status,
     justPasted,
     isDownloading,

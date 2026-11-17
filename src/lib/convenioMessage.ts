@@ -1,5 +1,7 @@
 import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
+import type { Studio } from "@/features/speecher/lib/speechStore";
 import { completeProducts, type ConvenioCase, type ConvenioProduct } from "./convenio";
+import { CONVENIO_BRANDS } from "./convenioStudio";
 import { installmentLabel } from "./agreements";
 import { formatArs } from "./format";
 import { getConvenioWording } from "./convenioWording";
@@ -8,8 +10,8 @@ import type { Agreement, Installment } from "./types";
 
 const COPY_ERROR_MESSAGE = "No se pudo copiar el convenio. Probá de nuevo.";
 
-const LIBRE_DE_DEUDA_LINE =
-  "Acreditado el pago total, podrá solicitar el certificado de Libre de Deuda dentro de los 15 días hábiles a través de su asesor o vía email a info@5ol.com.ar";
+const buildLibreDeDeudaLine = (email: string): string =>
+  `Acreditado el pago total, podrá solicitar el certificado de Libre de Deuda dentro de los 15 días hábiles a través de su asesor o vía email a ${email}`;
 
 const INCUMPLIMIENTO_LINE =
   "En caso de incumplimiento, el presente acuerdo quedará sin efecto de forma automática, perdiéndose los beneficios y bonificaciones otorgados";
@@ -46,12 +48,16 @@ export function buildConvenioMessage(
   account: ConvenioCase,
   agreement: Agreement,
   products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
 ): string {
+  const brand = CONVENIO_BRANDS[studio];
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const total = agreement.cuotas.reduce((sum, installment) => sum + installment.monto, 0);
   const { planTitle } = getConvenioWording(account.entidad, agreement);
   const importantLines =
-    agreement.tipo === "parcial" ? [INCUMPLIMIENTO_LINE] : [LIBRE_DE_DEUDA_LINE, INCUMPLIMIENTO_LINE];
+    agreement.tipo === "parcial"
+      ? [INCUMPLIMIENTO_LINE]
+      : [buildLibreDeDeudaLine(brand.messageEmail), INCUMPLIMIENTO_LINE];
 
   return [
     `Estimado/a ${account.nombre} -${account.dni}:`,
@@ -67,7 +73,7 @@ export function buildConvenioMessage(
     "IMPORTANTE:",
     ...importantLines.map((line) => `> ${line}`),
     "",
-    `Dpto. de Cobranzas - 5oL / ${account.entidad}`,
+    `${brand.messageSignature} / ${account.entidad}`,
   ].join("\n");
 }
 
@@ -75,9 +81,10 @@ export async function copyConvenioMessage(
   account: ConvenioCase,
   agreement: Agreement,
   products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
 ): Promise<Result> {
   try {
-    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, products));
+    await navigator.clipboard.writeText(buildConvenioMessage(account, agreement, products, studio));
     return ok();
   } catch {
     return fail(COPY_ERROR_MESSAGE);

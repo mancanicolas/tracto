@@ -66,6 +66,7 @@ export function convenioSchema() {
     .object({
       nombre: z.string().trim().min(1, "Ingresá el nombre y apellido del titular.").max(80, "Máximo 80 caracteres."),
       entidad: z.string(),
+      estudio: z.enum(["5ol", "r2r"]),
       productoAcuerdo: z.string(),
       productos: z.array(
       z.object({

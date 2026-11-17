@@ -1,25 +1,21 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
 import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
-import logoSvg from "../../5ol.svg?raw";
+import { gradientBar } from "@/features/speecher/lib/speechPdf";
+import type { Studio } from "@/features/speecher/lib/speechStore";
 import { parseIsoDate, todayIso } from "./dates";
+import { CONVENIO_BRANDS, LOGO_COLUMN_WIDTH, type ConvenioBrand } from "./convenioStudio";
 import { getConvenioWording } from "./convenioWording";
 import { formatDni, formatMoney } from "./format";
 import { fail, type Result } from "./result";
 import { SAVE_ERROR_MESSAGE, saveBytesWithDialog, type SaveOutcome } from "./saveFile";
 import type { Agreement, Case, Installment } from "./types";
 
-const COMPANY_LINE = "Carlos Pellegrini 1163, Piso 13 CABA | Tel: (011) 60918325 | info@5ol.com.ar";
 const FOOTER_TEXT = "Documento generado electrónicamente - Válido sin firma ológrafa";
 
 const PAGE_WIDTH = 595.28;
 const PAGE_MARGIN = 44;
-const LOGO_WIDTH = 90;
+const TOP_BAR_HEIGHT = 11.3;
 
-const BRAND_PRIMARY = "#155595";
-const BRAND_DEEP = "#24377A";
-const BRAND_SKY = "#2598D3";
-const TINT = "#F1F7FB";
-const RULE = "#CCDDEB";
 const WHITE = "#FFFFFF";
 const MUTED = "#6B7280";
 
@@ -79,7 +75,7 @@ function installmentDescription(installment: Installment, isFinal: boolean, fina
   return isFinal ? finalLabel : "Cuota Convenio";
 }
 
-function sectionBar(title: string): ContentTable {
+function sectionBar(title: string, brand: ConvenioBrand): ContentTable {
   return {
     table: {
       widths: ["*"],
@@ -87,18 +83,18 @@ function sectionBar(title: string): ContentTable {
     },
     layout: {
       hLineWidth: (index) => (index === 1 ? 1.5 : 0),
-      hLineColor: () => BRAND_SKY,
+      hLineColor: () => brand.sky,
       vLineWidth: () => 0,
-      fillColor: () => BRAND_PRIMARY,
+      fillColor: () => brand.primary,
     },
     margin: [0, 12, 0, 6],
   };
 }
 
-function clauseTitle(title: string): Content {
+function clauseTitle(title: string, brand: ConvenioBrand): Content {
   return {
     stack: [
-      { text: title, bold: true, fontSize: 9, color: BRAND_PRIMARY },
+      { text: title, bold: true, fontSize: 9, color: brand.clause },
       {
         canvas: [
           {
@@ -108,7 +104,7 @@ function clauseTitle(title: string): Content {
             x2: PAGE_WIDTH - PAGE_MARGIN * 2,
             y2: 2,
             lineWidth: 0.6,
-            lineColor: BRAND_PRIMARY,
+            lineColor: brand.clause,
           },
         ],
       },
@@ -117,7 +113,7 @@ function clauseTitle(title: string): Content {
   };
 }
 
-function buildIntroduction(entidad: string, products: ConvenioProduct[]): Content[] {
+function buildIntroduction(entidad: string, products: ConvenioProduct[], brand: ConvenioBrand): Content[] {
   const instructions = `Por medio del presente, y siguiendo expresas instrucciones de nuestro cliente ${entidad}`;
   const agreementText =
     "se formaliza el convenio de pago con el titular, sujeto a los términos y condiciones que se detallan a continuación:";
@@ -126,18 +122,18 @@ function buildIntroduction(entidad: string, products: ConvenioProduct[]): Conten
     {
       text: `${instructions}, se informa que el titular mantiene una deuda al día de la fecha originada con la entidad con los siguientes productos:`,
     },
-    buildProductsTable(products),
+    buildProductsTable(products, brand),
     { text: `En virtud de ello, ${agreementText}`, margin: [0, 4, 0, 0] },
   ];
 }
 
-function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
+function buildPlanTable(agreement: Agreement, finalLabel: string, brand: ConvenioBrand): Content {
   const regular = agreement.cuotas.filter((installment) => installment.tipo === "cuota");
   const lastId = regular.at(-1)?.id;
   const headerCells: TableCell[] = ["CUOTA", "DESCRIPCION", "VENCIMIENTO", "IMPORTE"].map((text, index) => ({
     text,
     bold: true,
-    color: BRAND_DEEP,
+    color: brand.deep,
     alignment: index === 3 ? "right" : "left",
   }));
   const rows: TableCell[][] = agreement.cuotas.map((installment) => [
@@ -154,7 +150,7 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
     },
     layout: {
       hLineWidth: (index, node) => (index === 1 || index === node.table.body.length ? 1.2 : 0.4),
-      hLineColor: (index, node) => (index === 1 || index === node.table.body.length ? BRAND_PRIMARY : RULE),
+      hLineColor: (index, node) => (index === 1 || index === node.table.body.length ? brand.primary : brand.rule),
       vLineWidth: () => 0,
       paddingTop: () => 4,
       paddingBottom: () => 4,
@@ -162,13 +158,13 @@ function buildPlanTable(agreement: Agreement, finalLabel: string): Content {
       paddingRight: () => 8,
       fillColor: (rowIndex) => {
         if (rowIndex === 0) return null;
-        return rowIndex % 2 === 0 ? TINT : null;
+        return rowIndex % 2 === 0 ? brand.tint : null;
       },
     },
   };
 }
 
-function buildProductsTable(products: ConvenioProduct[]): Content {
+function buildProductsTable(products: ConvenioProduct[], brand: ConvenioBrand): Content {
   const header = (text: string): TableCell => ({ text, bold: true, color: WHITE, alignment: "center" });
   const lastRowIndex = products.length;
   return {
@@ -186,13 +182,13 @@ function buildProductsTable(products: ConvenioProduct[]): Content {
     layout: {
       hLineWidth: (index, node) => (index === node.table.body.length ? 1.2 : 0.4),
       vLineWidth: () => 0.4,
-      hLineColor: (index, node) => (index === node.table.body.length ? BRAND_PRIMARY : RULE),
-      vLineColor: () => RULE,
+      hLineColor: (index, node) => (index === node.table.body.length ? brand.primary : brand.rule),
+      vLineColor: () => brand.rule,
       paddingTop: () => 4,
       paddingBottom: () => 4,
       fillColor: (rowIndex) => {
-        if (rowIndex === 0) return BRAND_PRIMARY;
-        return rowIndex % 2 === 0 && rowIndex <= lastRowIndex ? TINT : null;
+        if (rowIndex === 0) return brand.primary;
+        return rowIndex % 2 === 0 && rowIndex <= lastRowIndex ? brand.tint : null;
       },
     },
     margin: [0, 8, 0, 4],
@@ -219,7 +215,7 @@ function labelValueTable(entries: [string, string][]): Content {
   };
 }
 
-function paymentCard(methods: MetodoPago[]): Content {
+function paymentCard(methods: MetodoPago[], brand: ConvenioBrand): Content {
   const entries: [string, string][] =
     methods.length > 0
       ? methods.map(({ etiqueta, valor }) => [etiqueta, valor])
@@ -232,12 +228,13 @@ function paymentCard(methods: MetodoPago[]): Content {
     layout: {
       hLineWidth: () => 0.8,
       vLineWidth: () => 0.8,
-      hLineColor: () => BRAND_PRIMARY,
-      vLineColor: () => BRAND_PRIMARY,
-      fillColor: () => TINT,
+      hLineColor: () => brand.primary,
+      vLineColor: () => brand.primary,
+      fillColor: () => brand.tint,
     },
   };
 }
+
 function signatureBlock(lines: string[]): Content {
   const block = {
     width: "*",
@@ -254,7 +251,7 @@ function signatureBlock(lines: string[]): Content {
   return block as Content;
 }
 
-function buildFooter(): Content {
+function buildFooter(brand: ConvenioBrand): Content {
   return {
     stack: [
       {
@@ -266,7 +263,7 @@ function buildFooter(): Content {
             x2: PAGE_WIDTH - PAGE_MARGIN,
             y2: 0,
             lineWidth: 0.5,
-            lineColor: RULE,
+            lineColor: brand.rule,
           },
         ],
       },
@@ -281,7 +278,9 @@ export function buildConvenioDefinition(
   agreement: Agreement,
   today: string = todayIso(),
   products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
 ): TDocumentDefinitions {
+  const brand = CONVENIO_BRANDS[studio];
   const methods = getPaymentMethods(account.entidad, agreement.producto);
   const productRows = completeProducts(products);
   const wording = getConvenioWording(account.entidad, agreement);
@@ -291,26 +290,27 @@ export function buildConvenioDefinition(
     pageSize: "A4",
     pageMargins: [PAGE_MARGIN, 32, PAGE_MARGIN, 52],
     defaultStyle: { font: "Roboto", fontSize: 9.5, lineHeight: 1.15 },
-    footer: () => buildFooter(),
+    footer: () => buildFooter(brand),
+    background: () => (brand.topBarStops ? gradientBar(0, TOP_BAR_HEIGHT, brand.topBarStops) : []),
     content: [
       {
         columns: [
-          { svg: logoSvg, width: LOGO_WIDTH },
+          brand.logo(),
           {
             width: "*",
             stack: [
-              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: BRAND_DEEP },
-              { text: COMPANY_LINE, alignment: "center", fontSize: 8, color: MUTED, margin: [0, 6, 0, 0] },
+              { text: "CONVENIO DE PAGO", alignment: "center", bold: true, fontSize: 18, color: brand.deep },
+              { text: brand.companyLine, alignment: "center", fontSize: 8, color: MUTED, margin: [0, 6, 0, 0] },
             ],
             margin: [0, 8, 0, 0],
           },
-          { text: "", width: LOGO_WIDTH },
+          { text: "", width: LOGO_COLUMN_WIDTH },
         ],
         margin: [0, 0, 0, 8],
       },
       { text: `Buenos Aires, ${formatLongDate(today)}`, alignment: "right", margin: [0, 0, 0, 8] },
-      ...buildIntroduction(account.entidad, productRows),
-      sectionBar("DATOS DEL DEUDOR"),
+      ...buildIntroduction(account.entidad, productRows, brand),
+      sectionBar("DATOS DEL DEUDOR", brand),
       {
         text: [
           { text: "Apellido y Nombre: ", bold: true },
@@ -319,18 +319,18 @@ export function buildConvenioDefinition(
           formatDni(account.dni),
         ],
       },
-      sectionBar(wording.planTitle),
-      buildPlanTable(agreement, wording.finalInstallment),
-      sectionBar("MEDIOS DE PAGO HABILITADOS"),
-      paymentCard(methods),
+      sectionBar(wording.planTitle, brand),
+      buildPlanTable(agreement, wording.finalInstallment, brand),
+      sectionBar("MEDIOS DE PAGO HABILITADOS", brand),
+      paymentCard(methods, brand),
       ...(agreement.tipo === "parcial"
         ? []
-        : [clauseTitle("LIBRE DE DEUDA"), { text: LIBRE_DE_DEUDA_TEXT, fontSize: 8, alignment: "justify" } as Content]),
-      clauseTitle("CLAUSULA DE INCUMPLIMIENTO"),
+        : [clauseTitle("LIBRE DE DEUDA", brand), { text: LIBRE_DE_DEUDA_TEXT, fontSize: 8, alignment: "justify" } as Content]),
+      clauseTitle("CLAUSULA DE INCUMPLIMIENTO", brand),
       { text: INCUMPLIMIENTO_TEXT, fontSize: 8, alignment: "justify" },
       {
         columns: [
-          signatureBlock(["DPTO. DE COBRANZA - 5ol"]),
+          signatureBlock([brand.signatureLabel]),
           signatureBlock(["CLIENTE/DEUDOR", `${debtorName} - DNI ${account.dni}`]),
         ],
         columnGap: 40,
@@ -345,13 +345,14 @@ export async function buildConvenioBytes(
   account: ConvenioCase,
   agreement: Agreement,
   products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
 ): Promise<Uint8Array> {
   const [{ default: pdfMake }, { default: vfs }] = await Promise.all([
     import("pdfmake/build/pdfmake"),
     import("pdfmake/build/vfs_fonts"),
   ]);
   pdfMake.addVirtualFileSystem(vfs);
-  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement, todayIso(), products)).getBuffer();
+  const buffer = await pdfMake.createPdf(buildConvenioDefinition(account, agreement, todayIso(), products, studio)).getBuffer();
   return new Uint8Array(buffer);
 }
 
@@ -363,6 +364,7 @@ async function saveConvenio(
   account: Case,
   format: ConvenioFormat,
   products: ConvenioProduct[],
+  studio: Studio,
 ): Promise<Result<SaveOutcome>> {
   const { acuerdo, nombre, entidad } = account;
   if (!acuerdo || !nombre?.trim() || !entidad?.trim()) {
@@ -370,7 +372,7 @@ async function saveConvenio(
   }
   let bytes: Uint8Array;
   try {
-    const pdfBytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo, products);
+    const pdfBytes = await buildConvenioBytes({ ...account, nombre, entidad }, acuerdo, products, studio);
     bytes = format === "png" ? await (await import("./pdfToPng")).renderPdfToPng(pdfBytes) : pdfBytes;
   } catch {
     return fail(SAVE_ERROR_MESSAGE);
@@ -383,10 +385,18 @@ async function saveConvenio(
   });
 }
 
-export function downloadConvenio(account: Case, products: ConvenioProduct[] = []): Promise<Result<SaveOutcome>> {
-  return saveConvenio(account, "pdf", products);
+export function downloadConvenio(
+  account: Case,
+  products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
+): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "pdf", products, studio);
 }
 
-export function downloadConvenioImage(account: Case, products: ConvenioProduct[] = []): Promise<Result<SaveOutcome>> {
-  return saveConvenio(account, "png", products);
+export function downloadConvenioImage(
+  account: Case,
+  products: ConvenioProduct[] = [],
+  studio: Studio = "5ol",
+): Promise<Result<SaveOutcome>> {
+  return saveConvenio(account, "png", products, studio);
 }

@@ -17,13 +17,9 @@ import {
   useSpeeches,
 } from "../lib/speechLibrary";
 import type { Studio } from "../lib/speechStore";
+import { STUDIO_OPTIONS } from "../lib/studios";
 import { useSpeecher } from "../useSpeecher";
 import { OptionListField } from "./OptionListField";
-
-const STUDIO_OPTIONS = [
-  { value: "5ol", label: "5 Online" },
-  { value: "r2r", label: "R2R" },
-];
 
 const INPUT_CLASS =
   "h-8 rounded-sm border border-line bg-input text-[13px] text-fg transition-colors duration-100 placeholder:text-fg-muted hover:border-line-strong motion-reduce:transition-none";

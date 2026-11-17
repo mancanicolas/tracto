@@ -192,7 +192,7 @@ function gradientColor(stops: string[], position: number): string {
   return mixColor(stops[index] ?? "#000000", stops[index + 1] ?? "#000000", scaled - index);
 }
 
-function gradientBar(y: number, height: number, stops: string[]): Content[] {
+export function gradientBar(y: number, height: number, stops: string[]): Content[] {
   const width = PAGE_WIDTH / GRADIENT_SLICES;
   return Array.from({ length: GRADIENT_SLICES }, (_, index) =>
     rect(index * width, y, width + 0.6, height, gradientColor(stops, index / (GRADIENT_SLICES - 1))),

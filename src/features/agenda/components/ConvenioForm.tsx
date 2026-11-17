@@ -8,6 +8,8 @@ import { Kbd } from "@/components/ui/Kbd";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
 import { findEntity, hasMultipleProducts } from "@/constants/entidades";
+import { configStore } from "@/features/speecher/lib/speechStore";
+import { STUDIO_OPTIONS } from "@/features/speecher/lib/studios";
 import { useEntityCatalog } from "@/hooks/useEntityCatalog";
 import { useSubmitShortcut } from "@/hooks/useSubmitShortcut";
 import { cn } from "@/lib/cn";
@@ -52,6 +54,7 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
     defaultValues: {
       nombre: account.nombre ?? "",
       entidad: currentEntity,
+      estudio: configStore.get().estudio,
       productoAcuerdo: currentProduct,
       productos: [EMPTY_PRODUCT_ROW],
     },
@@ -86,6 +89,8 @@ export function ConvenioForm({ mode, account, onConfirm, onCancel }: ConvenioFor
         tabIndex={-1}
         className="cursor-default font-mono tabular-nums text-fg-secondary"
       />
+
+      <SelectField label="Estudio" options={STUDIO_OPTIONS} {...register("estudio")} />
 
       <SelectField
         label="Entidad"

@@ -14,6 +14,11 @@ function buildR2rPie(operator: string): string {
     .join("\n");
 }
 
+export const STUDIO_OPTIONS: { value: Studio; label: string }[] = [
+  { value: "5ol", label: "5 Online" },
+  { value: "r2r", label: "R2R" },
+];
+
 interface StudioProfile {
   telefono: string;
   horario: string;

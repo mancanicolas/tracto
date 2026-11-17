@@ -1,8 +1,10 @@
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
 import { DEFAULT_PRODUCT, getEntityCatalog, getPaymentMethods } from "@/constants/entidades";
+import type { Studio } from "@/features/speecher/lib/speechStore";
 import { buildConvenioDefinition, type ConvenioCase } from "./convenio";
 import type { Agreement, Installment } from "./types";
 
+const TEST_STUDIOS: Studio[] = ["5ol", "r2r"];
 const TEST_FILE_NAME = "test_convenios_todos.pdf";
 const TEST_TODAY = "2026-10-04";
 const TEST_DEBTOR = { nombre: "Juan Pérez", dni: "30.123.456" };
@@ -16,6 +18,7 @@ const INSTALLMENT_DATES = ["2026-10-15", "2026-11-15", "2026-12-15"];
 const FORBIDDEN_TOKENS = ["undefined", "null", "NaN", "[object"];
 
 interface TestScenario {
+  studio: Studio;
   entidad: string;
   producto: string;
   label: string;
@@ -49,14 +52,16 @@ function installmentsAgreement(producto: string): Agreement {
 }
 
 function buildScenarios(): TestScenario[] {
-  return Object.entries(getEntityCatalog()).flatMap(([entidad, config]) =>
-    (config.productos.length > 0 ? config.productos : [DEFAULT_PRODUCT]).flatMap((producto) => {
-      const name = producto === DEFAULT_PRODUCT ? entidad : `${entidad} ${producto}`;
-      return [
-        { entidad, producto, label: `${name} - pago parcial`, agreement: partialAgreement(producto) },
-        { entidad, producto, label: `${name} - cuotas`, agreement: installmentsAgreement(producto) },
-      ];
-    }),
+  return TEST_STUDIOS.flatMap((studio) =>
+    Object.entries(getEntityCatalog()).flatMap(([entidad, config]) =>
+      (config.productos.length > 0 ? config.productos : [DEFAULT_PRODUCT]).flatMap((producto) => {
+        const name = producto === DEFAULT_PRODUCT ? entidad : `${entidad} ${producto}`;
+        return [
+          { studio, entidad, producto, label: `${studio} ${name} - pago parcial`, agreement: partialAgreement(producto) },
+          { studio, entidad, producto, label: `${studio} ${name} - cuotas`, agreement: installmentsAgreement(producto) },
+        ];
+      }),
+    ),
   );
 }
 
@@ -76,7 +81,13 @@ function assertScenarioIsComplete(scenario: TestScenario, definition: TDocumentD
 export function buildAllConveniosDefinition(): TDocumentDefinitions {
   const scenarios = buildScenarios();
   const definitions = scenarios.map((scenario) => {
-    const definition = buildConvenioDefinition(buildTestCase(scenario.entidad), scenario.agreement, TEST_TODAY, TEST_PRODUCTS);
+    const definition = buildConvenioDefinition(
+      buildTestCase(scenario.entidad),
+      scenario.agreement,
+      TEST_TODAY,
+      TEST_PRODUCTS,
+      scenario.studio,
+    );
     assertScenarioIsComplete(scenario, definition);
     return definition;
   });

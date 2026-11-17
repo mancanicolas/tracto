@@ -54,14 +54,15 @@ export function ConvenioAction({ account, onFillCaseData, onSetAgreementProduct 
     const products = completeProducts(values.productos);
 
     if (mode === "copy") {
-      const result = await copyConvenioMessage(merged, agreement, products);
+      const result = await copyConvenioMessage(merged, agreement, products, values.estudio);
       if (result.ok) toast.show("Convenio copiado");
       else setFeedback({ text: result.error, tone: "error" });
       return;
     }
 
     setIsGenerating(true);
-    const result = mode === "image" ? await downloadConvenioImage(merged, products) : await downloadConvenio(merged, products);
+    const download = mode === "image" ? downloadConvenioImage : downloadConvenio;
+    const result = await download(merged, products, values.estudio);
     setIsGenerating(false);
     if (!result.ok) setFeedback({ text: result.error, tone: "error" });
     else if (result.data === "saved") setFeedback({ text: "Convenio guardado.", tone: "success" });

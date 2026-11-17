@@ -1,8 +1,8 @@
 import type { Content, ContentTable, TableCell, TDocumentDefinitions } from "pdfmake/interfaces";
 import { getPaymentMethods, type MetodoPago } from "@/constants/entidades";
-import { gradientBar } from "@/features/speecher/lib/speechPdf";
 import type { Studio } from "@/features/speecher/lib/speechStore";
 import { parseIsoDate, todayIso } from "./dates";
+import { gradientBar } from "./pdfGradient";
 import { CONVENIO_BRANDS, LOGO_COLUMN_WIDTH, type ConvenioBrand } from "./convenioStudio";
 import { getConvenioWording } from "./convenioWording";
 import { formatDni, formatMoney } from "./format";

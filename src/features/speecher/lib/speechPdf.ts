@@ -1,6 +1,7 @@
 import type { Content, ContentText, TDocumentDefinitions } from "pdfmake/interfaces";
 import logoSvg from "../../../../5ol.svg?raw";
 import r2rLogo from "@/assets/r2r.png?inline";
+import { gradientBar } from "@/lib/pdfGradient";
 import type { PdfPresetId, SpeechTexts } from "./speechDefaults";
 import {
   buildWhatsAppLink,
@@ -39,7 +40,6 @@ const R2R_MINT = "#7be0a0";
 const R2R_SUBTITLE = "#b7e3c7";
 const R2R_RING = ["#0b1a2a", "#5e9aa6", "#3dbb5c"];
 const R2R_LOGO_SIZE = mm(27.5);
-const GRADIENT_SLICES = 72;
 const WHATSAPP_GREEN = "#25d366";
 const BUTTON_PADDING = "\u00A0".repeat(7);
 const SOFT_TOP_BAR = "#7fcdf2";
@@ -177,27 +177,6 @@ const PRESETS: Record<PdfPresetId, PdfPreset> = {
     isHeadingUppercase: true,
   },
 };
-
-function mixColor(from: string, to: string, ratio: number): string {
-  const channel = (hex: string, offset: number) => Number.parseInt(hex.slice(offset, offset + 2), 16);
-  return `#${[1, 3, 5]
-    .map((offset) => Math.round(channel(from, offset) + (channel(to, offset) - channel(from, offset)) * ratio))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
-
-function gradientColor(stops: string[], position: number): string {
-  const scaled = position * (stops.length - 1);
-  const index = Math.min(Math.floor(scaled), stops.length - 2);
-  return mixColor(stops[index] ?? "#000000", stops[index + 1] ?? "#000000", scaled - index);
-}
-
-export function gradientBar(y: number, height: number, stops: string[]): Content[] {
-  const width = PAGE_WIDTH / GRADIENT_SLICES;
-  return Array.from({ length: GRADIENT_SLICES }, (_, index) =>
-    rect(index * width, y, width + 0.6, height, gradientColor(stops, index / (GRADIENT_SLICES - 1))),
-  );
-}
 
 type ListKind = "blue" | "red" | "reach";
 
